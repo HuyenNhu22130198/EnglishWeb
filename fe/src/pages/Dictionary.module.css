@@ -1,0 +1,142 @@
+.dictionaryPage {
+  background-color: #fbf9f8;
+  min-height: 100vh;
+}
+
+.searchSection {
+  max-width: 800px;
+  margin: 0 auto 60px;
+}
+
+.searchForm {
+  display: flex;
+  gap: 12px;
+  background: white;
+  padding: 8px;
+  border-radius: 9999px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e4e2e1;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 18px 24px;
+  border: none;
+  font-size: 18px;
+  font-family: 'Lexend', sans-serif;
+  outline: none;
+  border-radius: 9999px;
+}
+
+.searchButton {
+  padding: 0 32px;
+  background: #0e3377;
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.searchButton:hover {
+  background: #1a4a9e;
+}
+
+.resultContainer {
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 24px;
+  padding: 48px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.wordHeader {
+  margin-bottom: 32px;
+  border-bottom: 1px solid #f0eded;
+  padding-bottom: 24px;
+}
+
+.wordTitle {
+  font-size: 36px;
+  font-weight: 700;
+  color: #1b1c1c;
+  margin-bottom: 8px;
+}
+
+.phonetic {
+  color: #444650;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.audio {
+  cursor: pointer;
+  color: #0e3377;
+}
+
+.wordType {
+  display: inline-block;
+  background: #f0eded;
+  color: #444650;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.definitionBox, .translationBox, .synonymsBox, .moreExamples {
+  margin-bottom: 40px;
+}
+
+.definitionBox h3, .translationBox h3, .synonymsBox h3, .moreExamples h3 {
+  color: #0e3377;
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+
+.definition {
+  font-size: 19px;
+  line-height: 1.6;
+  color: #1b1c1c;
+  margin-bottom: 24px;
+}
+
+.examples ul {
+  padding-left: 20px;
+}
+
+.examples li {
+  margin-bottom: 12px;
+  color: #444650;
+}
+
+.vietMeaning {
+  font-size: 20px;
+  color: #0e3377;
+  font-weight: 600;
+}
+
+.synonyms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.synonyms span {
+  background: #f0eded;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  font-size: 15px;
+  color: #1b1c1c;
+}
+
+.moreExamples ul {
+  padding-left: 20px;
+}
+
+.moreExamples li {
+  margin-bottom: 10px;
+  color: #444650;
+}

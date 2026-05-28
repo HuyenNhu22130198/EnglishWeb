@@ -1,0 +1,1115 @@
+.practicePage {
+  --page-bg: #fbf9f8;
+  --primary: #0e3377;
+  --primary-hover: #17499c;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --text-main: #111827;
+  --text-soft: #6b7280;
+  --border: #dfe5ef;
+  --card-border: rgba(196, 198, 210, 0.38);
+  --shadow-soft: 0 14px 38px rgba(15, 23, 42, 0.06);
+
+  --top-bar-height: 92px;
+  --side-nav-width: 300px;
+  --layout-gap: 20px;
+
+  min-height: 100vh;
+  padding-top: var(--top-bar-height);
+  padding-bottom: 72px;
+  background: var(--page-bg);
+  color: var(--text-main);
+  font-family: 'Lexend', system-ui, sans-serif;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* =========================
+   TOP FIXED AUDIO BAR
+========================= */
+
+.stickyExamBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+
+  background: rgba(251, 249, 248, 0.98);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid #e5eaf3;
+  box-sizing: border-box;
+}
+
+.examBarInner {
+  width: 100%;
+  margin: 0;
+  padding: 12px 24px;
+  box-sizing: border-box;
+}
+
+.examBarControls {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) 112px;
+  align-items: center;
+  gap: 12px;
+}
+
+.backButton {
+  width: 92px;
+  height: 52px;
+  padding: 0 10px;
+
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #ffffff;
+  color: var(--primary);
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.backButton:hover {
+  background: #eef4ff;
+}
+
+.audioDock {
+  width: 100%;
+  min-width: 0;
+  position: static;
+}
+
+.audioBox {
+  width: 100%;
+  min-width: 0;
+  height: 68px;
+  padding: 8px 10px;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 94px 144px;
+  grid-template-areas: "player marker panel";
+  align-items: center;
+  gap: 10px;
+
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(196, 198, 210, 0.45);
+  border-radius: 18px;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+  backdrop-filter: blur(16px);
+  box-sizing: border-box;
+}
+
+.audioBox p {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.audioPlayer {
+  grid-area: player;
+  width: 100%;
+  height: 42px;
+  display: block;
+}
+
+.audioMarkerTopBar {
+  grid-area: marker;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.audioMarkerButton {
+  width: 100%;
+  height: 34px;
+  padding: 0 12px;
+
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--primary), #284fb3);
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 6px 14px rgba(14, 51, 119, 0.12);
+}
+
+.audioMarkerButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--primary-hover), #315fd0);
+}
+
+.audioMarkerButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.audioMarkerPanelWrap {
+  grid-area: panel;
+  position: relative;
+  min-width: 0;
+}
+
+.audioMarkerPanelToggle {
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 10px;
+
+  border: 1px solid rgba(14, 51, 119, 0.14);
+  border-radius: 14px;
+  background: #f6f8ff;
+  color: var(--primary);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.audioMarkerPanelToggle span {
+  min-width: 28px;
+  height: 20px;
+  padding: 0 8px;
+
+  border-radius: 999px;
+  background: var(--primary);
+  color: #ffffff;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.audioMarkerPanelToggle strong {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.audioMarkerPanel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 1200;
+
+  width: 280px;
+  max-height: 220px;
+  overflow-y: auto;
+
+  padding: 10px;
+  border: 1px solid rgba(196, 198, 210, 0.45);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.16);
+}
+
+.audioMarkerPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.audioMarkerPanelHeader span {
+  color: var(--text-main);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.audioMarkerPanelClear {
+  border: none;
+  background: transparent;
+  color: var(--danger-hover);
+
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.audioMarkerGrid {
+  display: grid;
+  gap: 8px;
+}
+
+.audioMarkerRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 26px;
+  align-items: center;
+  gap: 6px;
+}
+
+.audioMarkerJump {
+  height: 32px;
+  padding: 0 10px;
+
+  border: 1px solid rgba(14, 51, 119, 0.14);
+  border-radius: 12px;
+  background: #f5f8ff;
+  color: var(--primary);
+
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 850;
+  text-align: left;
+  cursor: pointer;
+}
+
+.audioMarkerJump:hover {
+  border-color: rgba(14, 51, 119, 0.32);
+  background: #ebf2ff;
+}
+
+.audioMarkerDelete {
+  width: 26px;
+  height: 26px;
+
+  border: 1px solid rgba(185, 28, 28, 0.16);
+  border-radius: 50%;
+  background: #fff1f2;
+  color: var(--danger-hover);
+
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.audioMarkerDelete:hover {
+  background: #ffe4e6;
+}
+
+.audioMarkersEmpty {
+  margin: 4px 0 0;
+  color: var(--text-soft);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.submitButton {
+  width: 112px;
+  min-width: 112px;
+  height: 52px;
+
+  border: none;
+  border-radius: 16px;
+  background: var(--danger);
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+
+  box-shadow: 0 12px 28px rgba(220, 38, 38, 0.2);
+  transition: all 0.22s ease;
+}
+
+.submitButton:hover {
+  background: var(--danger-hover);
+  transform: translateY(-2px);
+}
+
+.submitButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.examBarTop,
+.examMeta,
+.progressBox,
+.progressHeader,
+.progressBar {
+  display: none;
+}
+
+/* =========================
+   MAIN LAYOUT
+========================= */
+
+.bodyLayout {
+  width: 100%;
+  margin: 0;
+  padding: 24px 24px 0;
+
+  display: grid;
+  grid-template-columns: var(--side-nav-width) minmax(0, 1fr);
+  gap: var(--layout-gap);
+  align-items: start;
+
+  box-sizing: border-box;
+}
+
+.examContent {
+  grid-column: 2;
+  min-width: 0;
+  display: grid;
+  gap: 24px;
+}
+
+/* =========================
+   LEFT QUESTION NAVIGATOR
+========================= */
+
+.questionNavigator {
+  position: fixed;
+  top: calc(var(--top-bar-height) + 24px);
+  left: 24px;
+  z-index: 900;
+
+  width: var(--side-nav-width);
+  max-height: calc(100vh - var(--top-bar-height) - 48px);
+  overflow-y: auto;
+
+  padding: 18px;
+  background: #ffffff;
+  border: 1px solid var(--card-border);
+  border-radius: 24px;
+  box-shadow: var(--shadow-soft);
+  box-sizing: border-box;
+}
+
+.questionNavigator::-webkit-scrollbar,
+.audioMarkerPanel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.questionNavigator::-webkit-scrollbar-thumb,
+.audioMarkerPanel::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.questionNavigator::-webkit-scrollbar-track,
+.audioMarkerPanel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.navigatorHeader h3 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.navigatorHeader p {
+  margin: 6px 0 18px;
+  color: var(--text-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.partNavBlock {
+  padding: 14px 0;
+  border-top: 1px solid #edf0f6;
+}
+
+.partNavTitle {
+  width: 100%;
+  height: 36px;
+  margin-bottom: 12px;
+
+  border: none;
+  border-radius: 999px;
+  background: #f5f6fa;
+  color: #4b5563;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.activePart {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.numberGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
+}
+
+.numberButton {
+  height: 34px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+  color: #4b5563;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.numberButton:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.answeredNumber {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+/* =========================
+   EXAM CONTENT
+========================= */
+
+.partSection {
+  scroll-margin-top: calc(var(--top-bar-height) + 24px);
+}
+
+.partHeader {
+  margin-bottom: 18px;
+  padding: 20px 26px;
+
+  background: var(--primary);
+  color: #ffffff;
+  border-radius: 22px;
+  box-shadow: 0 14px 34px rgba(14, 51, 119, 0.16);
+}
+
+.partHeader h2 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.partGroups {
+  display: grid;
+  gap: 20px;
+}
+
+.groupCard {
+  min-width: 0;
+  padding: 18px;
+
+  background: #ffffff;
+  border: 1px solid var(--card-border);
+  border-radius: 24px;
+  box-shadow: var(--shadow-soft);
+}
+
+.materialGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.materialImageCard,
+.questionImageBox {
+  min-width: 0;
+  padding: 10px;
+
+  background: var(--page-bg);
+  border: 1px solid #edf0f6;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.materialImageCard img,
+.questionImageBox img {
+  width: 100%;
+  max-height: 340px;
+  display: block;
+  object-fit: contain;
+  border-radius: 14px;
+}
+
+.questionImageBox {
+  margin-bottom: 14px;
+}
+
+.passageBox {
+  margin-bottom: 18px;
+  padding: 24px;
+
+  background: var(--page-bg);
+  border: 1px solid #edf0f6;
+  border-radius: 20px;
+}
+
+.passageBox p {
+  margin: 0 0 12px;
+  color: #374151;
+  font-size: 16.5px;
+  line-height: 1.82;
+  white-space: pre-line;
+}
+
+.passageBox p:last-child {
+  margin-bottom: 0;
+}
+
+.questionList {
+  display: grid;
+  gap: 14px;
+}
+
+.questionCard {
+  min-width: 0;
+  padding: 18px;
+
+  background: #ffffff;
+  border: 1px solid #e5eaf3;
+  border-radius: 22px;
+
+  scroll-margin-top: calc(var(--top-bar-height) + 24px);
+  transition: all 0.2s ease;
+}
+
+.questionCard:hover {
+  border-color: rgba(14, 51, 119, 0.25);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.questionTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.questionTop span,
+.questionIndex {
+  width: fit-content;
+  height: 34px;
+  padding: 0 14px;
+
+  border-radius: 999px;
+  background: #eef4ff;
+  color: var(--primary);
+
+  display: inline-flex;
+  align-items: center;
+
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.questionTop strong {
+  padding: 8px 12px;
+
+  color: #067647;
+  background: #ecfdf3;
+  border-radius: 999px;
+
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.questionText {
+  margin: 0 0 12px;
+  color: var(--text-main);
+  font-size: 16.5px;
+  line-height: 1.72;
+  font-weight: 750;
+  white-space: pre-line;
+}
+
+/* =========================
+   OPTIONS
+========================= */
+
+.optionList {
+  display: grid;
+  gap: 8px;
+}
+
+.shortOptionList {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.optionItem {
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px 12px;
+
+  display: grid;
+  grid-template-columns: 22px 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #ffffff;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shortOptionItem {
+  grid-template-columns: 22px 38px;
+  justify-content: center;
+}
+
+.optionItem:hover {
+  border-color: var(--primary);
+  background: #f8fbff;
+}
+
+.optionItem input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+.selectedOption {
+  border-color: var(--primary);
+  background: #eef4ff;
+  box-shadow: 0 10px 24px rgba(14, 51, 119, 0.08);
+}
+
+.optionLabel {
+  width: 30px;
+  height: 30px;
+
+  border-radius: 50%;
+  background: #f0f2f6;
+  color: var(--primary);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 900;
+  font-size: 13px;
+}
+
+.selectedOption .optionLabel {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.optionText {
+  min-width: 0;
+  color: #374151;
+  font-size: 14.5px;
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+/* =========================
+   EMPTY / LOADING STATE
+========================= */
+
+.emptyState {
+  max-width: 760px;
+  margin: 72px auto;
+  padding: 54px 24px;
+
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid var(--card-border);
+  border-radius: 24px;
+  box-shadow: var(--shadow-soft);
+}
+
+.emptyState h2 {
+  margin: 0 0 10px;
+  color: var(--text-main);
+  font-size: 24px;
+}
+
+.emptyState p {
+  margin: 0;
+  color: #596275;
+}
+
+.emptyState button {
+  height: 42px;
+  margin-top: 20px;
+  padding: 0 24px;
+
+  border: none;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+/* =========================
+   CHATBOT
+========================= */
+
+.examChatbot {
+  position: fixed;
+  right: 28px;
+  bottom: 28px;
+  z-index: 1300;
+}
+
+.chatFloatingButton {
+  height: 56px;
+  padding: 0 20px;
+
+  border: none;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 16px 36px rgba(14, 51, 119, 0.28);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.22s ease;
+}
+
+.chatFloatingButton:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
+.chatFloatingButton span {
+  font-size: 22px;
+}
+
+.chatFloatingButton strong {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.chatWindow {
+  width: 380px;
+  height: 520px;
+
+  background: #ffffff;
+  border: 1px solid rgba(196, 198, 210, 0.45);
+  border-radius: 24px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.chatHeader {
+  padding: 18px 20px;
+
+  background: var(--primary);
+  color: #ffffff;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.chatHeader strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.chatHeader span {
+  display: block;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.chatHeader button {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.chatHeader button:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.chatBody {
+  flex: 1;
+  padding: 18px;
+  overflow-y: auto;
+
+  background: var(--page-bg);
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chatMessage {
+  max-width: 86%;
+  padding: 12px 14px;
+
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.55;
+  font-weight: 600;
+  white-space: pre-line;
+}
+
+.assistantMessage {
+  align-self: flex-start;
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #e5eaf3;
+  border-bottom-left-radius: 6px;
+}
+
+.userMessage {
+  align-self: flex-end;
+  background: var(--primary);
+  color: #ffffff;
+  border-bottom-right-radius: 6px;
+}
+
+.chatForm {
+  padding: 14px;
+
+  background: #ffffff;
+  border-top: 1px solid #e5eaf3;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 68px;
+  align-items: end;
+  gap: 10px;
+}
+
+.chatForm textarea {
+  width: 100%;
+  resize: none;
+  box-sizing: border-box;
+
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 11px 12px;
+
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-main);
+  outline: none;
+}
+
+.chatForm textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(14, 51, 119, 0.1);
+}
+
+.chatForm button {
+  height: 44px;
+
+  border: none;
+  border-radius: 14px;
+  background: var(--primary);
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.chatForm button:hover {
+  background: var(--primary-hover);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1160px) {
+  .practicePage {
+    --top-bar-height: 158px;
+    --side-nav-width: 100%;
+  }
+
+  .examBarControls {
+    grid-template-columns: 92px minmax(0, 1fr) 112px;
+    grid-template-areas:
+      "back audio submit";
+  }
+
+  .backButton {
+    grid-area: back;
+  }
+
+  .audioDock {
+    grid-area: audio;
+  }
+
+  .submitButton {
+    grid-area: submit;
+  }
+
+  .audioBox {
+    height: auto;
+    min-height: 68px;
+    grid-template-columns: minmax(0, 1fr) 94px 136px;
+  }
+
+  .bodyLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .questionNavigator {
+    position: sticky;
+    top: calc(var(--top-bar-height) + 12px);
+    left: auto;
+    width: 100%;
+    max-height: calc(100vh - var(--top-bar-height) - 28px);
+  }
+
+  .examContent {
+    grid-column: auto;
+  }
+
+  .numberGrid {
+    grid-template-columns: repeat(10, 1fr);
+  }
+}
+
+@media (max-width: 860px) {
+  .practicePage {
+    --top-bar-height: 210px;
+  }
+
+  .examBarInner,
+  .bodyLayout {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .examBarControls {
+    grid-template-columns: 92px 112px;
+    grid-template-areas:
+      "back submit"
+      "audio audio";
+    justify-content: space-between;
+  }
+
+  .audioBox {
+    grid-template-columns: minmax(0, 1fr) 94px;
+    grid-template-areas:
+      "player player"
+      "marker panel";
+  }
+
+  .numberGrid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .materialGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .shortOptionList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .optionItem {
+    grid-template-columns: 20px 34px minmax(0, 1fr);
+    padding: 10px 12px;
+  }
+
+  .shortOptionItem {
+    grid-template-columns: 20px 34px;
+  }
+}
+
+@media (max-width: 640px) {
+  .practicePage {
+    --top-bar-height: 220px;
+  }
+
+  .questionNavigator {
+    position: static;
+    max-height: none;
+  }
+
+  .audioMarkerPanel {
+    right: auto;
+    left: 0;
+    width: min(280px, calc(100vw - 32px));
+  }
+
+  .questionTop {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .examChatbot {
+    right: 14px;
+    left: 14px;
+    bottom: 16px;
+  }
+
+  .chatFloatingButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .chatWindow {
+    width: 100%;
+    height: 500px;
+  }
+}
+
+@media (max-width: 480px) {
+  .numberGrid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .shortOptionList {
+    grid-template-columns: 1fr;
+  }
+
+  .optionItem {
+    grid-template-columns: 20px 32px minmax(0, 1fr);
+  }
+
+  .shortOptionItem {
+    grid-template-columns: 20px 32px;
+  }
+}

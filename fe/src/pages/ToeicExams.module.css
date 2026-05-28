@@ -1,0 +1,324 @@
+.toeicPage {
+  min-height: 100vh;
+  background: #fbf9f8;
+  color: #111827;
+}
+
+.pageHeader {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 56px 56px 28px;
+}
+
+.eyebrow {
+  display: inline-block;
+  color: #0e3377;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.pageHeader h1 {
+  margin: 0;
+  color: #111827;
+  font-size: 42px;
+  line-height: 1.2;
+  font-weight: 850;
+  letter-spacing: -0.6px;
+}
+
+.pageHeader p {
+  max-width: 780px;
+  margin: 18px 0 0;
+  color: #596275;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.searchSection {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 56px;
+}
+
+.searchCard {
+  width: 100%;
+  min-height: 88px;
+  background: #ffffff;
+  border: 1px solid rgba(196, 198, 210, 0.35);
+  border-radius: 18px;
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.07);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  box-sizing: border-box;
+}
+
+.searchBox {
+  flex: 1;
+  height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: #fbf9f8;
+  border: 1px solid rgba(14, 51, 119, 0.14);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.searchIcon {
+  color: #98a2b3;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.searchBox input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #111827;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.searchBox input::placeholder {
+  color: #98a2b3;
+}
+
+.resultCount {
+  color: #596275;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.resultCount strong {
+  color: #0e3377;
+}
+
+.examSection {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 34px 56px 74px;
+}
+
+.examGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.examCard {
+  background: #ffffff;
+  border: 1px solid rgba(196, 198, 210, 0.35);
+  border-radius: 24px;
+  padding: 26px;
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.06);
+  transition: all 0.24s ease;
+}
+
+.examCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 24px 55px rgba(15, 23, 42, 0.1);
+  border-color: rgba(14, 51, 119, 0.18);
+}
+
+.examCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.statusBadge,
+.yearBadge {
+  height: 32px;
+  padding: 0 13px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-weight: 850;
+}
+
+.statusBadge {
+  color: #067647;
+  background: #ecfdf3;
+}
+
+.yearBadge {
+  color: #0e3377;
+  background: #eef4ff;
+}
+
+.examCard h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 22px;
+  line-height: 1.35;
+  font-weight: 850;
+}
+
+.examDescription {
+  margin: 12px 0 22px;
+  color: #596275;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.examInfoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.examInfoGrid div {
+  background: #fbf9f8;
+  border: 1px solid #edf0f6;
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.examInfoGrid span {
+  display: block;
+  color: #7a8496;
+  font-size: 12.5px;
+  font-weight: 750;
+  margin-bottom: 6px;
+}
+
+.examInfoGrid strong {
+  color: #111827;
+  font-size: 14.5px;
+}
+
+.examFooter {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.examFooter span {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.examFooter button {
+  height: 42px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 999px;
+  background: #0e3377;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: all 0.22s ease;
+}
+
+.examFooter button:hover {
+  background: #17499c;
+  transform: translateY(-2px);
+}
+
+.emptyState {
+  background: #ffffff;
+  border: 1px solid rgba(196, 198, 210, 0.35);
+  border-radius: 24px;
+  padding: 54px 24px;
+  text-align: center;
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.06);
+}
+
+.emptyState h2 {
+  margin: 0 0 10px;
+  color: #111827;
+  font-size: 24px;
+}
+
+.emptyState p {
+  margin: 0;
+  color: #596275;
+}
+
+@media (max-width: 900px) {
+  .pageHeader {
+    padding: 42px 22px 24px;
+  }
+
+  .pageHeader h1 {
+    font-size: 34px;
+  }
+
+  .searchSection {
+    padding: 0 22px;
+  }
+
+  .searchCard {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .resultCount {
+    white-space: normal;
+  }
+
+  .examSection {
+    padding: 28px 22px 60px;
+  }
+
+  .examGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .pageHeader h1 {
+    font-size: 30px;
+  }
+
+  .examInfoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .examFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .examFooter button {
+    width: 100%;
+  }
+}
+.reloadButton {
+  height: 42px;
+  margin-top: 20px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 999px;
+  background: #0e3377;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: all 0.22s ease;
+}
+
+.reloadButton:hover {
+  background: #17499c;
+  transform: translateY(-2px);
+}

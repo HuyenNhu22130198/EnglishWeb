@@ -1,0 +1,163 @@
+.page {
+  background-color: #fbf9f8;
+  min-height: 100vh;
+}
+
+.filters {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 48px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 320px;
+  padding: 16px 24px;
+  border: 1px solid #e4e2e1;
+  border-radius: 9999px;
+  font-size: 16px;
+  font-family: 'Lexend', sans-serif;
+  background: white;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #0e3377;
+  box-shadow: 0 0 0 3px rgba(14, 51, 119, 0.1);
+}
+
+.filterGroup {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filterSelect {
+  padding: 16px 20px;
+  border: 1px solid #e4e2e1;
+  border-radius: 9999px;
+  font-size: 15px;
+  font-family: 'Lexend', sans-serif;
+  background: white;
+  cursor: pointer;
+  min-width: 160px;
+}
+
+.examGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 24px;
+}
+
+.examCard {
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  transition: all 0.4s ease;
+  border: 1px solid #f0eded;
+}
+
+.examCard:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  border-color: #0e3377;
+}
+
+.cardTop {
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid #f0eded;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.examNumber {
+  font-weight: 700;
+  font-size: 18px;
+  color: #1b1c1c;
+}
+
+.difficulty {
+  font-size: 14px;
+  font-weight: 600;
+  color: #904d00;
+  background: #fff4e6;
+  padding: 4px 14px;
+  border-radius: 9999px;
+}
+
+.cardInfo {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: #444650;
+  font-size: 15px;
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cardFooter {
+  padding: 20px 28px 28px;
+  display: flex;
+  gap: 12px;
+}
+
+.btnPrimary {
+  flex: 1;
+  padding: 16px;
+  background-color: #0e3377;
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btnPrimary:hover {
+  background-color: #1a4a9e;
+  transform: translateY(-2px);
+}
+
+.btnSecondary {
+  flex: 1;
+  padding: 16px;
+  background: transparent;
+  color: #0e3377;
+  border: 2px solid #0e3377;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btnSecondary:hover {
+  background-color: #f0eded;
+}
+
+.loadMore {
+  padding: 16px 48px;
+  background: white;
+  color: #0e3377;
+  border: 2px solid #0e3377;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.loadMore:hover {
+  background-color: #0e3377;
+  color: white;
+}
