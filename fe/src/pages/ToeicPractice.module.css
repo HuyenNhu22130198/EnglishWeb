@@ -422,6 +422,196 @@
   line-height: 1.5;
 }
 
+.highlightTool {
+  margin-bottom: 14px;
+  padding: 12px;
+
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  border: 1px solid #edf0f6;
+  border-radius: 18px;
+}
+
+.highlightToggle {
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 10px;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 850;
+  cursor: pointer;
+  text-align: left;
+}
+
+.highlightToggleLabel {
+  line-height: 1.2;
+}
+
+.highlightSwitch {
+  width: 38px;
+  height: 22px;
+  padding: 3px;
+
+  border-radius: 999px;
+  background: #cbd5e1;
+  box-sizing: border-box;
+  transition: background 0.18s ease;
+}
+
+.highlightSwitchKnob {
+  width: 16px;
+  height: 16px;
+  display: block;
+
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+  transform: translateX(0);
+  transition: transform 0.18s ease;
+}
+
+.highlightToggleActive .highlightSwitch {
+  background: #0e3377;
+}
+
+.highlightToggleActive .highlightSwitchKnob {
+  transform: translateX(16px);
+}
+
+.highlightInfoIcon {
+  width: 18px;
+  height: 18px;
+
+  border-radius: 50%;
+  background: #eef4ff;
+  color: var(--primary);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.highlightTextBlock {
+  cursor: text;
+  user-select: text;
+}
+
+.audioStorageWarning {
+  margin: 8px 0 0;
+  color: #b45309;
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.textHighlight {
+  background: #fef08a;
+  color: inherit;
+  border-radius: 4px;
+  padding: 0 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.highlightSegment {
+  border-radius: 4px;
+  padding: 0 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.underlineHighlight {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+.strikeHighlight {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.highlightToolbar {
+  position: fixed;
+  z-index: 1500;
+  min-width: 300px;
+  max-width: 380px;
+  padding: 8px 10px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  background: #5a5a5a;
+  border-radius: 4px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.24);
+  color: #ffffff;
+}
+
+.highlightToolbarText {
+  display: none;
+}
+
+.highlightToolbarActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.highlightColorButton,
+.highlightStyleButton,
+.highlightRemoveButton {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 3px;
+  color: #111827;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.highlightColorButton {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.highlightColorButtonActive {
+  outline: 2px solid #ffffff;
+  outline-offset: 1px;
+}
+
+.highlightStyleButton {
+  width: 24px;
+  background: #ffffff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.highlightRemoveButton {
+  width: 24px;
+  background: #ffffff;
+  color: #dc2626;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 900;
+}
+
 .partNavBlock {
   padding: 14px 0;
   border-top: 1px solid #edf0f6;

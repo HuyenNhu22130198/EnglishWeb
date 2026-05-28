@@ -1,9 +1,124 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toeicAPI } from '../services/toeicService';
 import styles from './ToeicResult.module.css';
 
 const normalizeText = (value) => (value || '').replace(/\r\n/g, '\n').trim();
+const AUDIO_MARKER_STORAGE_PREFIX = 'toeic-practice-audio-markers';
+const MARKER_STORAGE_NAMES = ['sessionStorage', 'localStorage'];
+
+const getAudioMarkerStorageKey = (examId) => `${AUDIO_MARKER_STORAGE_PREFIX}:${examId}`;
+
+const formatAudioTime = (seconds) => {
+  if (!Number.isFinite(seconds) || seconds < 0) {
+    return '0:00';
+  }
+
+  const totalSeconds = Math.floor(seconds);
+  const minutes = Math.floor(totalSeconds / 60);
+  const remainderSeconds = totalSeconds % 60;
+
+  return `${minutes}:${String(remainderSeconds).padStart(2, '0')}`;
+};
+
+const clampTime = (value, max) => Math.max(0, Math.min(value, max || 0));
+
+const getMarkerStorage = () => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  for (const storageName of MARKER_STORAGE_NAMES) {
+    try {
+      const storage = window[storageName];
+      const probeKey = '__toeic_marker_probe__';
+      storage.setItem(probeKey, '1');
+      storage.removeItem(probeKey);
+      return storage;
+    } catch (error) {
+      // Try the next storage option.
+    }
+  }
+
+  return null;
+};
+
+const readAudioMarkers = (examId) => {
+  if (!examId) {
+    return [];
+  }
+
+  try {
+    const storage = getMarkerStorage();
+
+    if (!storage) {
+      return [];
+    }
+
+    const rawValue = storage.getItem(getAudioMarkerStorageKey(examId));
+
+    if (!rawValue) {
+      return [];
+    }
+
+    const parsed = JSON.parse(rawValue);
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .map((marker) => ({
+        id: marker.id || `${examId}-${marker.time}`,
+        time: Number(marker.time) || 0,
+      }))
+      .filter((marker) => Number.isFinite(marker.time) && marker.time >= 0)
+      .sort((a, b) => a.time - b.time);
+  } catch (error) {
+    console.error('Failed to read audio markers:', error);
+    return [];
+  }
+};
+
+const writeAudioMarkers = (examId, markers) => {
+  if (!examId) {
+    return false;
+  }
+
+  try {
+    const storage = getMarkerStorage();
+
+    if (!storage) {
+      return false;
+    }
+
+    storage.setItem(getAudioMarkerStorageKey(examId), JSON.stringify(markers));
+    return true;
+  } catch (error) {
+    console.error('Failed to save audio markers:', error);
+    return false;
+  }
+};
+
+const removeAudioMarkersFromStorage = (examId) => {
+  if (!examId) {
+    return false;
+  }
+
+  try {
+    const storage = getMarkerStorage();
+
+    if (!storage) {
+      return false;
+    }
+
+    storage.removeItem(getAudioMarkerStorageKey(examId));
+    return true;
+  } catch (error) {
+    console.error('Failed to remove audio markers:', error);
+    return false;
+  }
+};
 
 const stripMarker = (line) =>
   line
@@ -173,13 +288,19 @@ const ToeicResult = () => {
   const [listeningAudioUrl, setListeningAudioUrl] = useState('');
   const [showAllSolutions, setShowAllSolutions] = useState(false);
   const [expandedQuestions, setExpandedQuestions] = useState(() => new Set());
+  const [audioMarkers, setAudioMarkers] = useState([]);
+  const [isAudioMarkerPanelOpen, setIsAudioMarkerPanelOpen] = useState(true);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+  const [markerStorageWarning, setMarkerStorageWarning] = useState('');
+  const audioRef = useRef(null);
 
   const clearPracticeAudioMarkers = () => {
     if (typeof window === 'undefined' || !result?.examId) {
       return;
     }
 
-    window.localStorage.removeItem(`toeic-practice-audio-markers:${result.examId}`);
+    removeAudioMarkersFromStorage(result.examId);
   };
 
   const handleBackToExamList = () => {
@@ -236,6 +357,31 @@ const ToeicResult = () => {
     };
 
     loadAudio();
+  }, [result?.examId]);
+
+  useEffect(() => {
+    if (!result?.examId) {
+      setAudioMarkers([]);
+      return;
+    }
+
+    setAudioMarkers(readAudioMarkers(result.examId));
+    setIsAudioMarkerPanelOpen(true);
+    setMarkerStorageWarning(
+      getMarkerStorage()
+        ? ''
+        : 'Trình duyệt đang chặn lưu đánh dấu. Hãy cho phép lưu dữ liệu trang để giữ danh sách mốc thời gian.'
+    );
+  }, [result?.examId]);
+
+  useEffect(() => {
+    if (!result?.examId) {
+      return undefined;
+    }
+
+    return () => {
+      removeAudioMarkersFromStorage(result.examId);
+    };
   }, [result?.examId]);
 
   const detailedQuestions = useMemo(() => {
@@ -300,6 +446,24 @@ const ToeicResult = () => {
   };
 
   const isOpen = (questionId) => showAllSolutions || expandedQuestions.has(questionId);
+
+  const handleAudioLoadedMetadata = (event) => {
+    setAudioDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0);
+  };
+
+  const handleAudioTimeUpdate = (event) => {
+    setAudioCurrentTime(event.currentTarget.currentTime || 0);
+  };
+
+  const handleJumpToMarker = (markerTime) => {
+    if (!audioRef.current) {
+      return;
+    }
+
+    const nextTime = clampTime(markerTime, audioDuration);
+    audioRef.current.currentTime = nextTime;
+    setAudioCurrentTime(nextTime);
+  };
 
   const renderTranscriptPlain = (transcript) => {
     const english = normalizeText(transcript?.english);
@@ -444,9 +608,63 @@ const ToeicResult = () => {
         <div className={styles.audioDockInner}>
           <div className={styles.audioPlayerWrap}>
             {listeningAudioUrl ? (
-              <audio controls src={listeningAudioUrl} className={styles.audioPlayer}>
-                Trình duyệt của bạn không hỗ trợ audio.
-              </audio>
+              <>
+                <audio
+                  ref={audioRef}
+                  controls
+                  src={listeningAudioUrl}
+                  className={styles.audioPlayer}
+                  onLoadedMetadata={handleAudioLoadedMetadata}
+                  onTimeUpdate={handleAudioTimeUpdate}
+                >
+                  Trình duyệt của bạn không hỗ trợ audio.
+                </audio>
+
+                <div className={styles.audioMarkerArea}>
+                  <button
+                    type="button"
+                    className={styles.audioMarkerPanelToggle}
+                    onClick={() => setIsAudioMarkerPanelOpen((prev) => !prev)}
+                    aria-expanded={isAudioMarkerPanelOpen}
+                  >
+                    <span>Đã đánh dấu {audioMarkers.length}</span>
+                    <strong>{isAudioMarkerPanelOpen ? 'Thu gọn' : 'Mở rộng'}</strong>
+                  </button>
+
+                  {markerStorageWarning && (
+                    <p className={styles.audioStorageWarning}>{markerStorageWarning}</p>
+                  )}
+
+                  {isAudioMarkerPanelOpen && (
+                    <div className={styles.audioMarkerPanel}>
+                      <div className={styles.audioMarkerPanelHeader}>
+                        <span>Danh sách mốc thời gian</span>
+                        <small>
+                          {formatAudioTime(audioCurrentTime)} / {formatAudioTime(audioDuration)}
+                        </small>
+                      </div>
+
+                      {audioMarkers.length > 0 ? (
+                        <div className={styles.audioMarkerGrid}>
+                          {audioMarkers.map((marker, index) => (
+                            <button
+                              key={marker.id}
+                              type="button"
+                              className={styles.audioMarkerJump}
+                              onClick={() => handleJumpToMarker(marker.time)}
+                              title="Bấm để chuyển đến mốc"
+                            >
+                              {index + 1}. {formatAudioTime(marker.time)}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className={styles.audioMarkersEmpty}>Chưa có đánh dấu nào.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
             ) : (
               <p>Chưa có audio cho đề này.</p>
             )}

@@ -15,8 +15,20 @@ const isTextMaterial = (material) => {
 
 const normalizeContent = (value) => (value || '').replace(/\s+/g, ' ').trim().toLowerCase();
 const AUDIO_MARKER_STORAGE_PREFIX = 'toeic-practice-audio-markers';
+const HIGHLIGHT_STORAGE_PREFIX = 'toeic-practice-highlights';
+const HIGHLIGHT_PALETTE = [
+  { key: 'cyan', color: '#a5f3fc' },
+  { key: 'pink', color: '#fbcfe8' },
+  { key: 'green', color: '#bbf7d0' },
+  { key: 'yellow', color: '#fef08a' },
+];
+const MARKER_STORAGE_NAMES = ['sessionStorage', 'localStorage'];
 
 const getAudioMarkerStorageKey = (examId) => `${AUDIO_MARKER_STORAGE_PREFIX}:${examId}`;
+const getHighlightStorageKey = (examId) => `${HIGHLIGHT_STORAGE_PREFIX}:${examId}`;
+const getHighlightColor = (colorKey) =>
+  HIGHLIGHT_PALETTE.find((item) => item.key === colorKey)?.color || '#fef08a';
+const isPlainObject = (value) => !!value && typeof value === 'object' && !Array.isArray(value);
 
 const formatAudioTime = (seconds) => {
   if (!Number.isFinite(seconds) || seconds < 0) {
@@ -32,13 +44,170 @@ const formatAudioTime = (seconds) => {
 
 const clampTime = (value, max) => Math.max(0, Math.min(value, max || 0));
 
-const readAudioMarkers = (examId) => {
+const normalizeHighlightAnnotations = (annotations = []) => {
+  return annotations
+    .filter(isPlainObject)
+    .map((annotation) => {
+      const start = Math.max(0, Number(annotation.start) || 0);
+      const end = Math.max(0, Number(annotation.end) || 0);
+      const kind = ['underline', 'strike'].includes(annotation.kind) ? annotation.kind : 'highlight';
+      const colorKey = HIGHLIGHT_PALETTE.some((item) => item.key === annotation.colorKey)
+        ? annotation.colorKey
+        : 'yellow';
+
+      return { start, end, kind, colorKey };
+    })
+    .filter((annotation) => annotation.end > annotation.start)
+    .sort((a, b) => a.start - b.start || a.end - b.end);
+};
+
+const normalizeLegacyHighlightAnnotations = (annotations = []) => {
+  return annotations
+    .filter(isPlainObject)
+    .map((annotation) => ({
+      start: annotation.start,
+      end: annotation.end,
+      kind: 'highlight',
+      colorKey: 'yellow',
+    }));
+};
+
+const readHighlights = (examId) => {
   if (!examId || typeof window === 'undefined') {
+    return {};
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(getHighlightStorageKey(examId));
+
+    if (!rawValue) {
+      return {};
+    }
+
+    const parsed = JSON.parse(rawValue);
+
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
+    }
+
+    return Object.entries(parsed).reduce((acc, [blockKey, annotations]) => {
+      if (!Array.isArray(annotations)) {
+        return acc;
+      }
+
+      const normalizedAnnotations = normalizeHighlightAnnotations(
+        annotations.some((annotation) =>
+          isPlainObject(annotation) && ('kind' in annotation || 'colorKey' in annotation)
+        )
+          ? annotations
+          : normalizeLegacyHighlightAnnotations(annotations)
+      );
+
+      if (normalizedAnnotations.length > 0) {
+        acc[blockKey] = normalizedAnnotations;
+      }
+
+      return acc;
+    }, {});
+  } catch (error) {
+    console.error('Failed to read highlights:', error);
+    return {};
+  }
+};
+
+const getTextOffsetWithinRoot = (root, targetNode, targetOffset) => {
+  if (!root || !targetNode || typeof document === 'undefined') {
+    return null;
+  }
+
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let currentNode = walker.nextNode();
+  let offset = 0;
+
+  while (currentNode) {
+    if (currentNode === targetNode) {
+      return offset + targetOffset;
+    }
+
+    offset += currentNode.textContent?.length || 0;
+    currentNode = walker.nextNode();
+  }
+
+  return null;
+};
+
+const renderHighlightedText = (text, annotations = [], stylesMap = {}) => {
+  if (!text) {
+    return '';
+  }
+
+  const normalizedAnnotations = normalizeHighlightAnnotations(annotations);
+
+  if (normalizedAnnotations.length === 0) {
+    return text;
+  }
+
+  const nodes = [];
+  let cursor = 0;
+
+  normalizedAnnotations.forEach((annotation, index) => {
+    if (annotation.start > cursor) {
+      nodes.push(text.slice(cursor, annotation.start));
+    }
+
+    nodes.push(
+      <span
+        key={`${annotation.start}-${annotation.end}-${index}`}
+        className={`${stylesMap.segment || ''} ${stylesMap[annotation.kind] || ''}`}
+        style={annotation.kind === 'highlight' ? { backgroundColor: getHighlightColor(annotation.colorKey) } : {}}
+      >
+        {text.slice(annotation.start, annotation.end)}
+      </span>
+    );
+
+    cursor = annotation.end;
+  });
+
+  if (cursor < text.length) {
+    nodes.push(text.slice(cursor));
+  }
+
+  return nodes;
+};
+
+const getMarkerStorage = () => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  for (const storageName of MARKER_STORAGE_NAMES) {
+    try {
+      const storage = window[storageName];
+      const probeKey = '__toeic_marker_probe__';
+      storage.setItem(probeKey, '1');
+      storage.removeItem(probeKey);
+      return storage;
+    } catch (error) {
+      // Try next storage option.
+    }
+  }
+
+  return null;
+};
+
+const readAudioMarkers = (examId) => {
+  if (!examId) {
     return [];
   }
 
   try {
-    const rawValue = window.localStorage.getItem(getAudioMarkerStorageKey(examId));
+    const storage = getMarkerStorage();
+
+    if (!storage) {
+      return [];
+    }
+
+    const rawValue = storage.getItem(getAudioMarkerStorageKey(examId));
 
     if (!rawValue) {
       return [];
@@ -63,6 +232,46 @@ const readAudioMarkers = (examId) => {
   }
 };
 
+const writeAudioMarkers = (examId, markers) => {
+  if (!examId) {
+    return false;
+  }
+
+  try {
+    const storage = getMarkerStorage();
+
+    if (!storage) {
+      return false;
+    }
+
+    storage.setItem(getAudioMarkerStorageKey(examId), JSON.stringify(markers));
+    return true;
+  } catch (error) {
+    console.error('Failed to save audio markers:', error);
+    return false;
+  }
+};
+
+const removeAudioMarkersFromStorage = (examId) => {
+  if (!examId) {
+    return false;
+  }
+
+  try {
+    const storage = getMarkerStorage();
+
+    if (!storage) {
+      return false;
+    }
+
+    storage.removeItem(getAudioMarkerStorageKey(examId));
+    return true;
+  } catch (error) {
+    console.error('Failed to remove audio markers:', error);
+    return false;
+  }
+};
+
 const ToeicPractice = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
@@ -77,7 +286,10 @@ const ToeicPractice = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [isAudioMarkerPanelOpen, setIsAudioMarkerPanelOpen] = useState(true);
+  const [isAudioMarkerPanelOpen, setIsAudioMarkerPanelOpen] = useState(false);
+  const [isHighlightModeEnabled, setIsHighlightModeEnabled] = useState(false);
+  const [highlightToolbar, setHighlightToolbar] = useState(null);
+  const [markerStorageWarning, setMarkerStorageWarning] = useState('');
   const [chatMessages, setChatMessages] = useState([
     {
       id: 1,
@@ -89,6 +301,8 @@ const ToeicPractice = () => {
   const [audioDuration, setAudioDuration] = useState(0);
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const [audioMarkers, setAudioMarkers] = useState([]);
+  const [highlights, setHighlights] = useState({});
+  const [activeHighlightColor, setActiveHighlightColor] = useState('yellow');
 
   const fetchPracticeExam = async () => {
     try {
@@ -119,7 +333,26 @@ const ToeicPractice = () => {
     setAudioMarkers(readAudioMarkers(testId));
     setAudioDuration(0);
     setAudioCurrentTime(0);
-    setIsAudioMarkerPanelOpen(true);
+    setIsAudioMarkerPanelOpen(false);
+  }, [testId]);
+
+  useEffect(() => {
+    if (!testId) {
+      setMarkerStorageWarning('');
+      return;
+    }
+
+    setMarkerStorageWarning(
+      getMarkerStorage()
+        ? ''
+        : 'Trình duyệt đang chặn lưu đánh dấu. Hãy cho phép lưu dữ liệu trang để giữ danh sách mốc thời gian.'
+    );
+  }, [testId]);
+
+  useEffect(() => {
+    setHighlights(readHighlights(testId));
+    setIsHighlightModeEnabled(false);
+    setHighlightToolbar(null);
   }, [testId]);
 
   useEffect(() => {
@@ -132,8 +365,20 @@ const ToeicPractice = () => {
       return;
     }
 
-    window.localStorage.setItem(getAudioMarkerStorageKey(testId), JSON.stringify(audioMarkers));
+    writeAudioMarkers(testId, audioMarkers);
   }, [audioMarkers, testId]);
+
+  useEffect(() => {
+    if (!testId || typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(getHighlightStorageKey(testId), JSON.stringify(highlights));
+    } catch (error) {
+      console.error('Failed to save highlights:', error);
+    }
+  }, [highlights, testId]);
 
   const questions = useMemo(() => {
     if (!examData?.groups) return [];
@@ -204,10 +449,7 @@ const ToeicPractice = () => {
   const clearAudioMarkers = () => {
     suppressAudioMarkerPersist.current = true;
     setAudioMarkers([]);
-
-    if (typeof window !== 'undefined' && testId) {
-      window.localStorage.removeItem(getAudioMarkerStorageKey(testId));
-    }
+    removeAudioMarkersFromStorage(testId);
   };
 
   const handleBackToExamList = () => {
@@ -247,7 +489,12 @@ const ToeicPractice = () => {
       time: markerTime,
     };
 
-    setAudioMarkers((prev) => [...prev, marker].sort((a, b) => a.time - b.time));
+    setAudioMarkers((prev) => {
+      const nextMarkers = [...prev, marker].sort((a, b) => a.time - b.time);
+      writeAudioMarkers(testId, nextMarkers);
+
+      return nextMarkers;
+    });
   };
 
   const handleJumpToMarker = (markerTime) => {
@@ -261,7 +508,109 @@ const ToeicPractice = () => {
   };
 
   const handleRemoveAudioMarker = (markerId) => {
-    setAudioMarkers((prev) => prev.filter((marker) => marker.id !== markerId));
+    setAudioMarkers((prev) => {
+      const nextMarkers = prev.filter((marker) => marker.id !== markerId);
+      writeAudioMarkers(testId, nextMarkers);
+
+      return nextMarkers;
+    });
+  };
+
+  const removeHighlightsInRange = (blockHighlights, start, end) => {
+    return (blockHighlights || []).filter((annotation) => {
+      return annotation.end <= start || annotation.start >= end;
+    });
+  };
+
+  const applyHighlightAnnotation = (kind, colorKey = activeHighlightColor) => {
+    if (!highlightToolbar) {
+      return;
+    }
+
+    const { blockKey, start, end } = highlightToolbar;
+
+    setHighlights((prev) => {
+      const nextHighlights = removeHighlightsInRange(prev[blockKey] || [], start, end);
+
+      if (kind !== 'remove') {
+        nextHighlights.push({
+          start,
+          end,
+          kind,
+          colorKey: kind === 'highlight' ? colorKey : 'yellow',
+        });
+      }
+
+      return {
+        ...prev,
+        [blockKey]: normalizeHighlightAnnotations(nextHighlights),
+      };
+    });
+
+    setHighlightToolbar(null);
+
+    if (typeof window !== 'undefined') {
+      window.getSelection?.().removeAllRanges?.();
+    }
+  };
+
+  const handleHighlightTextMouseUp = (blockKey, text, event) => {
+    if (!isHighlightModeEnabled || !text || typeof window === 'undefined') {
+      return;
+    }
+
+    const selection = window.getSelection?.();
+
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+      return;
+    }
+
+    const root = event.currentTarget;
+    const anchorNode = selection.anchorNode;
+    const focusNode = selection.focusNode;
+
+    if (!root.contains(anchorNode) || !root.contains(focusNode)) {
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const start = getTextOffsetWithinRoot(root, range.startContainer, range.startOffset);
+    const end = getTextOffsetWithinRoot(root, range.endContainer, range.endOffset);
+
+    if (start == null || end == null) {
+      return;
+    }
+
+    const normalizedStart = Math.max(0, Math.min(start, end));
+    const normalizedEnd = Math.min(text.length, Math.max(start, end));
+    const selectedText = text.slice(normalizedStart, normalizedEnd).trim();
+
+    if (!selectedText) {
+      return;
+    }
+
+    const rect = range.getBoundingClientRect();
+    const toolbarWidth = 320;
+    const toolbarHeight = 42;
+    const preferredTop = rect.top - toolbarHeight - 10;
+    const fallbackTop = rect.bottom + 10;
+    const top =
+      preferredTop >= 8
+        ? preferredTop
+        : Math.min(fallbackTop, Math.max(8, window.innerHeight - toolbarHeight - 8));
+    const left = Math.min(
+      Math.max(rect.left + rect.width / 2 - toolbarWidth / 2, 12),
+      Math.max(12, window.innerWidth - toolbarWidth - 12)
+    );
+
+    setHighlightToolbar({
+      blockKey,
+      start: normalizedStart,
+      end: normalizedEnd,
+      text: selectedText,
+      top,
+      left,
+    });
   };
 
   const getVisibleOptions = (options = [], partNo) => {
@@ -289,6 +638,13 @@ const ToeicPractice = () => {
     }
 
     return null;
+  };
+
+  const highlightRenderStyles = {
+    segment: styles.highlightSegment,
+    highlight: styles.textHighlight,
+    underline: styles.underlineHighlight,
+    strike: styles.strikeHighlight,
   };
 
   // Nộp bài thi và chuyển đến trang kết quả
@@ -320,7 +676,6 @@ const ToeicPractice = () => {
       const response = await toeicAPI.submitToeicExam(testId, answerPayload);
 
       if (response.success) {
-        clearAudioMarkers();
         navigate(`/practice/toeic/result/${response.data.attemptId}`, {
           state: {
             result: response.data,
@@ -444,7 +799,7 @@ const ToeicPractice = () => {
                     </button>
                   </div>
 
-                      <div className={styles.audioMarkerPanelWrap}>
+                  <div className={styles.audioMarkerPanelWrap}>
                     <button
                       type="button"
                       className={styles.audioMarkerPanelToggle}
@@ -456,6 +811,10 @@ const ToeicPractice = () => {
                         {isAudioMarkerPanelOpen ? 'Thu gọn' : 'Mở rộng'}
                       </strong>
                     </button>
+
+                    {markerStorageWarning && (
+                      <p className={styles.audioStorageWarning}>{markerStorageWarning}</p>
+                    )}
 
                     {isAudioMarkerPanelOpen && (
                       <div className={styles.audioMarkerPanel}>
@@ -539,6 +898,31 @@ const ToeicPractice = () => {
             <p>Click vào số câu để di chuyển nhanh.</p>
           </div>
 
+          <div className={styles.highlightTool}>
+              <button
+                type="button"
+                className={`${styles.highlightToggle} ${
+                  isHighlightModeEnabled ? styles.highlightToggleActive : ''
+                }`}
+              onClick={() => {
+                setIsHighlightModeEnabled((prev) => {
+                  const next = !prev;
+                  if (!next) {
+                    setHighlightToolbar(null);
+                  }
+                  return next;
+                });
+              }}
+              aria-pressed={isHighlightModeEnabled}
+            >
+              <span className={styles.highlightSwitch}>
+                <span className={styles.highlightSwitchKnob} />
+              </span>
+              <span className={styles.highlightToggleLabel}>Highlight nội dung</span>
+              {/* <span className={styles.highlightInfoIcon}>i</span> */}
+            </button>
+          </div>
+
           {Object.entries(questionsByPart).map(([partNo, partQuestions]) => (
             <div key={partNo} className={styles.partNavBlock}>
               <button
@@ -570,6 +954,61 @@ const ToeicPractice = () => {
             </div>
           ))}
         </aside>
+
+        {highlightToolbar && isHighlightModeEnabled && (
+          <div
+            className={styles.highlightToolbar}
+            style={{ top: `${highlightToolbar.top}px`, left: `${highlightToolbar.left}px` }}
+            onMouseDown={(event) => event.preventDefault()}
+          >
+            <div className={styles.highlightToolbarText}>{highlightToolbar.text}</div>
+
+            <div className={styles.highlightToolbarActions}>
+              {HIGHLIGHT_PALETTE.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  className={`${styles.highlightColorButton} ${
+                    activeHighlightColor === item.key ? styles.highlightColorButtonActive : ''
+                  }`}
+                  style={{ backgroundColor: item.color }}
+                  aria-label={`Highlight màu ${item.key}`}
+                  onClick={() => {
+                    setActiveHighlightColor(item.key);
+                    applyHighlightAnnotation('highlight', item.key);
+                  }}
+                />
+              ))}
+
+              <button
+                type="button"
+                className={styles.highlightStyleButton}
+                onClick={() => applyHighlightAnnotation('underline')}
+                aria-label="Gạch dưới"
+              >
+                U
+              </button>
+
+              <button
+                type="button"
+                className={styles.highlightStyleButton}
+                onClick={() => applyHighlightAnnotation('strike')}
+                aria-label="Gạch ngang"
+              >
+                abc
+              </button>
+
+              <button
+                type="button"
+                className={styles.highlightRemoveButton}
+                onClick={() => applyHighlightAnnotation('remove')}
+                aria-label="Bỏ highlight"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
 
         <section className={styles.examContent}>
           {Object.entries(groupsByPart).map(([partNo, partGroups]) => (
@@ -617,8 +1056,21 @@ const ToeicPractice = () => {
 
                       {shouldShowPassage && (
                         <div className={styles.passageBox}>
-                          {Array.from(passageMap.entries()).map(([key, text]) => (
-                            <p key={key}>{text}</p>
+                              {Array.from(passageMap.entries()).map(([key, text]) => (
+                            <p
+                              key={key}
+                              className={styles.highlightTextBlock}
+                              data-highlight-target={key}
+                              onMouseUp={(event) =>
+                                handleHighlightTextMouseUp(`passage-${group.groupId}-${key}`, text, event)
+                              }
+                            >
+                              {renderHighlightedText(
+                                text,
+                                highlights[`passage-${group.groupId}-${key}`] || [],
+                                highlightRenderStyles
+                              )}
+                            </p>
                           ))}
                         </div>
                       )}
@@ -660,7 +1112,23 @@ const ToeicPractice = () => {
                               )}
 
                               {shouldShowQuestionText(numberPart, question.questionText) && (
-                                <p className={styles.questionText}>{question.questionText}</p>
+                                <p
+                                  className={`${styles.questionText} ${styles.highlightTextBlock}`}
+                                  data-highlight-target={`question-${question.questionId}`}
+                                  onMouseUp={(event) =>
+                                    handleHighlightTextMouseUp(
+                                      `question-${question.questionId}`,
+                                      question.questionText,
+                                      event
+                                    )
+                                  }
+                                >
+                                  {renderHighlightedText(
+                                    question.questionText,
+                                    highlights[`question-${question.questionId}`] || [],
+                                    highlightRenderStyles
+                                  )}
+                                </p>
                               )}
 
                               <div
@@ -700,8 +1168,24 @@ const ToeicPractice = () => {
                                     </span>
 
                                     {!hideOptionText && (
-                                      <span className={styles.optionText}>
-                                        {option.optionText || `Đáp án ${option.optionLabel}`}
+                                      <span
+                                        className={`${styles.optionText} ${styles.highlightTextBlock}`}
+                                        data-highlight-target={`option-${question.questionId}-${option.optionLabel}`}
+                                        onMouseUp={(event) =>
+                                          handleHighlightTextMouseUp(
+                                            `option-${question.questionId}-${option.optionLabel}`,
+                                            option.optionText || `Đáp án ${option.optionLabel}`,
+                                            event
+                                          )
+                                        }
+                                      >
+                                        {renderHighlightedText(
+                                          option.optionText || `Đáp án ${option.optionLabel}`,
+                                          highlights[
+                                            `option-${question.questionId}-${option.optionLabel}`
+                                          ] || [],
+                                          highlightRenderStyles
+                                        )}
                                       </span>
                                     )}
                                   </label>
