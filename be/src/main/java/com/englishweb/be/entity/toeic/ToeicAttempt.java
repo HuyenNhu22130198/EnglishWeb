@@ -43,7 +43,7 @@ public class ToeicAttempt {
     @Builder.Default
     private Integer correctCount = 0;
 
-    @Column(precision = 6, scale = 2)
+   @Column(precision = 6, scale = 2)
     private BigDecimal score;
 
     @Column(nullable = false, length = 20)

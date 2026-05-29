@@ -2,8 +2,10 @@ package com.englishweb.be.controller;
 
 import com.englishweb.be.dto.ApiResponse;
 import com.englishweb.be.dto.UpdateRoleRequest;
+import com.englishweb.be.dto.toeic.ToeicAttemptHistoryResponse;
 import com.englishweb.be.entity.User;
 import com.englishweb.be.service.AuthService;
+import com.englishweb.be.service.ToeicSubmitService;
 import com.englishweb.be.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ public class UserController {
 
     private final AuthService authService;
     private final UserService userService;
+    private final ToeicSubmitService toeicSubmitService;
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
@@ -29,6 +32,16 @@ public class UserController {
         String email = authentication.getName();
         User user = authService.getUserByEmail(email);
         return ResponseEntity.ok(ApiResponse.success("Lấy thông tin thành công", user));
+    }
+
+    @GetMapping("/me/toeic-history")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<ToeicAttemptHistoryResponse>>> getMyToeicHistory(
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+        List<ToeicAttemptHistoryResponse> history = toeicSubmitService.getMyAttemptHistory(email);
+        return ResponseEntity.ok(ApiResponse.success("Lấy lịch sử TOEIC thành công", history));
     }
 
     @GetMapping("/{id}")
