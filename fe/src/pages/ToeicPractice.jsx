@@ -679,6 +679,7 @@ const ToeicPractice = () => {
         navigate(`/practice/toeic/result/${response.data.attemptId}`, {
           state: {
             result: response.data,
+            audioMarkers,
           },
         });
       } else {
