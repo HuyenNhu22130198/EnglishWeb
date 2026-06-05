@@ -52,6 +52,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/hello").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/toeic/exams/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/dictionary/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(httpBasic -> httpBasic.disable())

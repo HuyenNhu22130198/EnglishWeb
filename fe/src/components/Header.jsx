@@ -106,7 +106,7 @@ const Header = () => {
             type="text"
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
-            placeholder="Tìm kiếm đề thi..."
+            placeholder="Tìm từ vựng..."
           />
         </form>
 
@@ -177,7 +177,7 @@ const Header = () => {
               type="text"
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
-              placeholder="Tìm kiếm đề thi..."
+              placeholder="Tìm từ vựng..."
             />
           </form>
 
