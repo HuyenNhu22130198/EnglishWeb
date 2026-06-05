@@ -1,142 +1,476 @@
 .dictionaryPage {
-  background-color: #fbf9f8;
   min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(14, 51, 119, 0.1), transparent 32%),
+    radial-gradient(circle at top right, rgba(242, 153, 74, 0.13), transparent 28%),
+    linear-gradient(180deg, #f8f5f2 0%, #fffdfb 42%, #f6f2ee 100%);
 }
 
-.searchSection {
-  max-width: 800px;
-  margin: 0 auto 60px;
+.dictionaryPage :global(.container) {
+  max-width: 1180px;
+}
+
+.heroSection {
+  padding: 48px 0 28px;
+}
+
+.searchShell {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px;
+  border: 1px solid rgba(232, 228, 223, 0.92);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 18px 46px rgba(17, 24, 39, 0.07);
+  backdrop-filter: blur(12px);
+}
+
+.heroText {
+  margin-bottom: 22px;
+}
+
+.heroLabel {
+  margin: 0 0 8px;
+  color: #0e3377;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.heroText h1 {
+  margin: 0;
+  color: #1b1c1c;
+  font-size: clamp(34px, 4.6vw, 52px);
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+}
+
+.heroText p:last-child {
+  max-width: 760px;
+  margin: 12px 0 0;
+  color: #555b63;
+  font-size: 16px;
+  line-height: 1.7;
 }
 
 .searchForm {
   display: flex;
   gap: 12px;
-  background: white;
-  padding: 8px;
-  border-radius: 9999px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e4e2e1;
+  width: 100%;
+  padding: 10px;
+  border-radius: 22px;
+  background: #fff;
+  border: 1px solid #e8e4df;
+  box-shadow: 0 14px 30px rgba(17, 24, 39, 0.07);
 }
 
 .searchInput {
   flex: 1;
-  padding: 18px 24px;
+  min-width: 0;
+  padding: 18px 22px;
   border: none;
-  font-size: 18px;
-  font-family: 'Lexend', sans-serif;
+  border-radius: 16px;
+  background: transparent;
+  color: #1b1c1c;
+  font: inherit;
+  font-size: 17px;
   outline: none;
-  border-radius: 9999px;
+}
+
+.searchInput::placeholder {
+  color: #838790;
+}
+
+.searchButton,
+.primaryButton,
+.secondaryButton,
+.retryButton,
+.audioButton,
+.synonymChip {
+  border: none;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease,
+    background 180ms ease;
 }
 
 .searchButton {
-  padding: 0 32px;
-  background: #0e3377;
-  color: white;
-  border: none;
-  border-radius: 9999px;
-  font-size: 20px;
-  cursor: pointer;
-  transition: all 0.3s;
+  min-width: 132px;
+  padding: 0 28px;
+  border-radius: 17px;
+  background: linear-gradient(135deg, #0e3377, #1a4a9e);
+  color: #fff;
+  box-shadow: 0 14px 24px rgba(14, 51, 119, 0.22);
 }
 
-.searchButton:hover {
-  background: #1a4a9e;
+.searchButton:hover,
+.primaryButton:hover,
+.secondaryButton:hover,
+.retryButton:hover,
+.audioButton:hover,
+.synonymChip:hover {
+  transform: translateY(-1px);
 }
 
-.resultContainer {
-  max-width: 900px;
+.searchButton:disabled,
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.retryButton:disabled,
+.audioButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.contentSection {
+  padding: 4px 0 72px;
+}
+
+.resultCard,
+.stateCard,
+.emptyIntro {
+  border: 1px solid rgba(228, 226, 225, 0.92);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 48px rgba(17, 24, 39, 0.07);
+  backdrop-filter: blur(10px);
+}
+
+.resultCard {
+  width: 100%;
+  max-width: 1120px;
   margin: 0 auto;
-  background: white;
-  border-radius: 24px;
-  padding: 48px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 28px;
+  border-radius: 30px;
+}
+
+.stateCard,
+.emptyIntro {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 28px;
+  border-radius: 26px;
+  text-align: center;
+}
+
+.stateCard h2,
+.emptyIntro h2 {
+  margin: 0;
+  color: #1b1c1c;
+  font-size: 27px;
+}
+
+.stateCard p,
+.emptyIntro p {
+  margin: 12px 0 0;
+  color: #555b63;
+  line-height: 1.7;
+}
+
+.spinner {
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  border: 4px solid rgba(14, 51, 119, 0.12);
+  border-top-color: #0e3377;
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.retryButton {
+  margin-top: 18px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0e3377, #1a4a9e);
+  color: #fff;
+  box-shadow: 0 14px 24px rgba(14, 51, 119, 0.2);
 }
 
 .wordHeader {
-  margin-bottom: 32px;
-  border-bottom: 1px solid #f0eded;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
   padding-bottom: 24px;
+  border-bottom: 1px solid #f0edea;
+}
+
+.wordHeaderMain {
+  min-width: 0;
+  flex: 1;
+}
+
+.wordLabel {
+  display: inline-flex;
+  margin-bottom: 10px;
+  color: #0e3377;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.wordTitleRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 14px;
+  align-items: center;
 }
 
 .wordTitle {
-  font-size: 36px;
-  font-weight: 700;
+  margin: 0;
   color: #1b1c1c;
-  margin-bottom: 8px;
+  font-size: clamp(38px, 5vw, 62px);
+  line-height: 1;
+  letter-spacing: -0.05em;
 }
 
-.phonetic {
-  color: #444650;
-  font-size: 16px;
-  margin-bottom: 8px;
-}
-
-.audio {
-  cursor: pointer;
-  color: #0e3377;
-}
-
-.wordType {
-  display: inline-block;
-  background: #f0eded;
-  color: #444650;
-  padding: 4px 12px;
-  border-radius: 9999px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.definitionBox, .translationBox, .synonymsBox, .moreExamples {
-  margin-bottom: 40px;
-}
-
-.definitionBox h3, .translationBox h3, .synonymsBox h3, .moreExamples h3 {
-  color: #0e3377;
-  font-size: 20px;
-  margin-bottom: 16px;
-}
-
-.definition {
-  font-size: 19px;
-  line-height: 1.6;
-  color: #1b1c1c;
-  margin-bottom: 24px;
-}
-
-.examples ul {
-  padding-left: 20px;
-}
-
-.examples li {
-  margin-bottom: 12px;
-  color: #444650;
-}
-
-.vietMeaning {
-  font-size: 20px;
-  color: #0e3377;
-  font-weight: 600;
-}
-
-.synonyms {
+.wordTypeInline {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
 }
 
-.synonyms span {
-  background: #f0eded;
-  padding: 8px 18px;
-  border-radius: 9999px;
-  font-size: 15px;
+.wordTypePill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: rgba(14, 51, 119, 0.08);
+  color: #0e3377;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.actionGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.primaryButton,
+.secondaryButton {
+  padding: 12px 17px;
+  border-radius: 15px;
+}
+
+.primaryButton {
+  background: linear-gradient(135deg, #0e3377, #1a4a9e);
+  color: #fff;
+  box-shadow: 0 14px 24px rgba(14, 51, 119, 0.2);
+}
+
+.secondaryButton {
+  background: #f4f0eb;
   color: #1b1c1c;
 }
 
-.moreExamples ul {
-  padding-left: 20px;
+.requiredGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
 }
 
-.moreExamples li {
-  margin-bottom: 10px;
+.infoCard,
+.optionalCard,
+.wordFormsCard {
+  padding: 20px;
+  border: 1px solid #eee7e1;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #fff, #fbf8f5);
+}
+
+.infoCard {
+  min-height: 170px;
+}
+
+.infoCard h3,
+.optionalCard h3,
+.wordFormsCard h3 {
+  margin: 0 0 14px;
+  color: #0e3377;
+  font-size: 18px;
+}
+
+.infoCard p,
+.optionalCard p {
+  margin: 0;
+  color: #1b1c1c;
+  line-height: 1.75;
+}
+
+.mainMeaning {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.pronunciationBox {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.phoneticText {
+  color: #1b1c1c;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.audioButton {
+  padding: 10px 14px;
+  border-radius: 13px;
+  background: #f4f0eb;
+  color: #0e3377;
+  border: 1px solid #e8e4df;
+}
+
+.wordFormsSection {
+  margin-top: 16px;
+}
+
+.wordFormsList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wordFormItem {
+  padding: 13px 15px;
+  border-radius: 16px;
+  background: #fdfbf9;
+  border: 1px solid #f0edea;
+  color: #1b1c1c;
+  line-height: 1.65;
+}
+
+.wordFormItem strong {
+  font-weight: 900;
+}
+
+.wordFormCode {
+  color: #0e3377;
+  font-weight: 800;
+}
+
+.wordFormMeaning {
   color: #444650;
+}
+
+.optionalSection {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.85fr) minmax(0, 1.15fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.chipGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.synonymChip {
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: #f4f0eb;
+  color: #1b1c1c;
+  font-size: 14px;
+  border: 1px solid #ece4dc;
+}
+
+.synonymChip:hover {
+  background: #ebe4dd;
+}
+
+.exampleBox {
+  padding: 18px;
+  border-radius: 18px;
+  background: #fdfbf9;
+  border: 1px solid #f0edea;
+}
+
+.exampleEn {
+  color: #1b1c1c;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.exampleVi {
+  margin-top: 10px !important;
+  color: #555b63 !important;
+}
+
+.emptyArea {
+  min-height: 68px;
+}
+
+@media (max-width: 980px) {
+  .dictionaryPage :global(.container) {
+    max-width: 100%;
+  }
+
+  .requiredGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .optionalSection {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .heroSection {
+    padding: 34px 0 22px;
+  }
+
+  .searchShell,
+  .resultCard,
+  .stateCard,
+  .emptyIntro {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .searchForm {
+    flex-direction: column;
+  }
+
+  .searchButton {
+    width: 100%;
+    min-height: 54px;
+  }
+
+  .wordHeader {
+    flex-direction: column;
+  }
+
+  .actionGroup {
+    justify-content: flex-start;
+  }
+
+  .wordTitle {
+    font-size: 40px;
+  }
+
+  .wordTitleRow {
+    align-items: flex-start;
+  }
 }
