@@ -67,35 +67,48 @@ const Login = () => {
 
     setError('');
     setSuccess('');
+
+    if (!emailOrUsername.trim() || !password.trim()) {
+      setError('Vui lòng nhập đầy đủ email/username và mật khẩu');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      if (!emailOrUsername || !password) {
-        setError('Vui lòng nhập đầy đủ email/username và mật khẩu');
+      const response = await authAPI.login(emailOrUsername, password);
+
+      if (!response.success) {
+        setError(response.message || 'Đăng nhập thất bại');
         return;
       }
 
-      const response = await authAPI.login(emailOrUsername, password);
+      const loginData = response.data;
 
-      if (response.success) {
-        setSuccess(response.message || 'Đăng nhập thành công!');
-
-        if (response.data) {
-          loginContext(response.data);
-        }
-
-        if (remember) {
-          localStorage.setItem('rememberMe', emailOrUsername);
-        } else {
-          localStorage.removeItem('rememberMe');
-        }
-
-        setTimeout(() => {
-          navigate('/');
-        }, 900);
-      } else {
-        setError(response.message || 'Đăng nhập thất bại');
+      if (!loginData?.token) {
+        setError('Đăng nhập thất bại: server không trả về token.');
+        return;
       }
+
+      setSuccess(response.message || 'Đăng nhập thành công!');
+
+      loginContext(loginData);
+
+      if (remember) {
+        localStorage.setItem('rememberMe', emailOrUsername);
+      } else {
+        localStorage.removeItem('rememberMe');
+      }
+
+      const role = String(loginData.role || '').toUpperCase();
+
+      setTimeout(() => {
+        if (role === 'ADMIN') {
+          navigate('/admin/dictionary');
+        } else {
+          navigate('/');
+        }
+      }, 700);
     } catch (err) {
       setError(err.response?.data?.message || 'Lỗi kết nối đến server');
       console.error('Login error:', err);

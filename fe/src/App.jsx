@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -16,12 +16,20 @@ import ForgotPassword from './pages/ForgotPassword';
 import ToeicPractice from './pages/ToeicPractice';
 import ToeicResult from './pages/ToeicResult';
 
+import AdminRoute from './admin/AdminRoute';
+import AdminLayout from './admin/AdminLayout';
+import AdminEmptyPage from './admin/AdminEmptyPage';
+import AdminDictionaryPage from './admin/dictionary/AdminDictionaryPage';
+
 function App() {
   const location = useLocation();
 
   const noLayoutPages = ['/login', '/register', '/forgot-password'];
   const isPracticePage = location.pathname.startsWith('/practice/toeic/');
-  const hideLayout = noLayoutPages.includes(location.pathname) || isPracticePage;
+  const isAdminPage = location.pathname.startsWith('/admin');
+
+  const hideLayout =
+    noLayoutPages.includes(location.pathname) || isPracticePage || isAdminPage;
 
   return (
     <AuthProvider>
@@ -29,20 +37,33 @@ function App() {
         {!hideLayout && <Header />}
 
         <Routes>
-          {/* Trang chủ */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminLayout />
+              </AdminRoute>
+            }
+          >
+            <Route index element={<Navigate to="/admin/dictionary" replace />} />
+            <Route path="users" element={<AdminEmptyPage title="Quản lý người dùng" />} />
+            <Route path="dictionary" element={<AdminDictionaryPage />} />
+            <Route path="toeic-exams" element={<AdminEmptyPage title="Quản lý đề thi" />} />
+          </Route>
+
           <Route
             path="/"
             element={
               <>
                 <Hero />
 
-                {/* Courses Section */}
                 <section id="courses" style={{ padding: '96px 0', backgroundColor: 'white' }}>
                   <div className="container">
                     <div style={{ textAlign: 'center', marginBottom: '64px' }}>
                       <div style={{ color: '#904d00', fontWeight: '600', letterSpacing: '2px', fontSize: '15px' }}>
                         KHÓA HỌC NỔI BẬT
                       </div>
+
                       <h2 style={{ fontSize: '42px', fontWeight: '700', marginTop: '16px', color: '#1b1c1c' }}>
                         Chọn lộ trình phù hợp với bạn
                       </h2>
@@ -77,7 +98,6 @@ function App() {
                   </div>
                 </section>
 
-                {/* Final CTA */}
                 <section
                   style={{
                     backgroundColor: '#0e3377',
@@ -115,10 +135,8 @@ function App() {
             }
           />
 
-          {/* Trang từ điển */}
           <Route path="/dictionary" element={<Dictionary />} />
 
-          {/* Trang Kho đề TOEIC */}
           <Route path="/exams/toeic" element={<ToeicExams />} />
 
           <Route
@@ -129,11 +147,11 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route path="/practice/toeic/result/:attemptId" element={<ToeicResult />} />
 
           <Route path="/exams/ielts" element={<IeltsExams />} />
 
-          {/* Trang cá nhân - Cần login */}
           <Route
             path="/infor"
             element={
@@ -143,7 +161,6 @@ function App() {
             }
           />
 
-          {/* Các trang auth độc lập, không có Header/Footer */}
           <Route path="/login" element={<Login />} />
 
           <Route path="/register" element={<Register />} />
@@ -151,7 +168,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
         </Routes>
 
-      {!hideLayout && <Footer />}      
+      {!hideLayout && <Footer />}
       </div>
     </AuthProvider>
   );
