@@ -21,4 +21,13 @@ public interface ToeicUserAnswerRepository extends JpaRepository<ToeicUserAnswer
             ORDER BY q.questionNo ASC
             """)
     List<ToeicUserAnswer> findResultAnswers(@Param("attemptId") Integer attemptId);
+
+    @Query("""
+            SELECT COUNT(ua)
+            FROM ToeicUserAnswer ua
+            WHERE ua.attempt.id = :attemptId
+              AND ua.selectedLabel IS NOT NULL
+              AND TRIM(ua.selectedLabel) <> ''
+            """)
+    long countAnsweredAnswersByAttemptId(@Param("attemptId") Integer attemptId);
 }

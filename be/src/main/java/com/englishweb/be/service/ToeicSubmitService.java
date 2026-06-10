@@ -1,5 +1,6 @@
 package com.englishweb.be.service;
 
+import com.englishweb.be.dto.toeic.ToeicAttemptHistoryResponse;
 import com.englishweb.be.dto.toeic.ToeicResultResponse;
 import com.englishweb.be.dto.toeic.ToeicSubmitRequest;
 import com.englishweb.be.entity.User;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,6 +39,7 @@ public class ToeicSubmitService {
     private final ToeicAttemptRepository toeicAttemptRepository;
     private final ToeicUserAnswerRepository toeicUserAnswerRepository;
     private final ToeicScoreService toeicScoreService;
+//     private final ObjectMapper objectMapper;
 
     @Transactional
 public ToeicResultResponse submitExam(
@@ -142,6 +145,37 @@ public ToeicResultResponse submitExam(
                 .count();
 
         return buildResultResponse(attempt, answeredCount);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ToeicAttemptHistoryResponse> getMyAttemptHistory(String userEmail) {
+        List<ToeicAttempt> attempts = toeicAttemptRepository.findSubmittedAttemptsByUserEmail(userEmail);
+        List<ToeicAttemptHistoryResponse> history = new ArrayList<>();
+
+        for (ToeicAttempt attempt : attempts) {
+             int answeredCount = (int) toeicUserAnswerRepository.countAnsweredAnswersByAttemptId(attempt.getId());
+            ToeicResultResponse result = buildResultResponse(attempt, answeredCount);
+
+            history.add(ToeicAttemptHistoryResponse.builder()
+                    .attemptId(result.getAttemptId())
+                    .examId(result.getExamId())
+                    .examCode(result.getExamCode())
+                    .examName(result.getExamName())
+                    .totalQuestions(result.getTotalQuestions())
+                    .answeredCount(result.getAnsweredCount())
+                    .correctCount(result.getCorrectCount())
+                    .listeningCorrect(result.getListeningCorrect())
+                    .readingCorrect(result.getReadingCorrect())
+                    .listeningScore(result.getListeningScore())
+                    .readingScore(result.getReadingScore())
+                    .totalScore(result.getTotalScore())
+                    .submittedAt(result.getSubmittedAt())
+                    .status(attempt.getStatus())
+                    .partSummaries(result.getPartSummaries())
+                    .build());
+        }
+
+        return history;
     }
 
     private Map<Integer, String> buildSelectedMap(ToeicSubmitRequest request) {
