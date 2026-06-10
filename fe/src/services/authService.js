@@ -9,31 +9,45 @@ const api = axios.create({
   },
 });
 
-// Thêm token vào request nếu có
+const getStoredToken = () => {
+  try {
+    const rawUser = localStorage.getItem('user');
+
+    if (rawUser) {
+      const user = JSON.parse(rawUser);
+      if (user?.token) return user.token;
+    }
+
+    return localStorage.getItem('token') || '';
+  } catch {
+    return localStorage.getItem('token') || '';
+  }
+};
+
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = getStoredToken();
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
 
-// Xử lý error response
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token hết hạn, xóa và redirect login
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
+
     return Promise.reject(error);
   }
 );
 
 export const authAPI = {
-  // Đăng ký
   register: async (data) => {
     const response = await api.post('/auth/register', {
       email: data.email,
@@ -42,43 +56,48 @@ export const authAPI = {
       confirmPassword: data.confirmPassword,
       fullName: data.fullName,
     });
+
     return response.data;
   },
 
-  // Đăng nhập
   login: async (emailOrUsername, password) => {
     const response = await api.post('/auth/login', {
       emailOrUsername,
       password,
     });
-    if (response.data.success && response.data.data?.token) {
-      localStorage.setItem('token', response.data.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.data));
+
+    const apiResponse = response.data;
+    const loginData = apiResponse?.data;
+
+    if (apiResponse?.success && loginData?.token) {
+      localStorage.setItem('token', loginData.token);
+      localStorage.setItem('user', JSON.stringify(loginData));
     }
-    return response.data;
+
+    return apiResponse;
   },
 
-  // Lấy thông tin user hiện tại
   getCurrentUser: async () => {
     const response = await api.get('/users/me');
     return response.data;
   },
 
-  // Logout
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   },
 
-  // Kiểm tra đã login chưa
   isAuthenticated: () => {
-    return !!localStorage.getItem('token');
+    return !!getStoredToken();
   },
 
-  // Lấy user từ localStorage
   getStoredUser: () => {
-    const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+    try {
+      const user = localStorage.getItem('user');
+      return user ? JSON.parse(user) : null;
+    } catch {
+      return null;
+    }
   },
 };
 

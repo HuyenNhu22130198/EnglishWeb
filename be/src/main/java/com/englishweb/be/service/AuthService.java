@@ -73,7 +73,7 @@ public class AuthService {
                 .id(user.getId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
-                .role(user.getRole().getValue())
+                .role(user.getRole().name())
                 .token(token)
                 .message("Đăng nhập thành công!")
                 .build();

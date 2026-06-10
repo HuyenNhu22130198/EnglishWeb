@@ -53,6 +53,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/hello").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/toeic/exams/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/dictionary/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .httpBasic(httpBasic -> httpBasic.disable())
