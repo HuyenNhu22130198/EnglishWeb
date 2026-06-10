@@ -1,79 +1,24 @@
-package com.englishweb.be.dictionary;
+package com.englishweb.be.admin.dictionary.dto;
 
-import jakarta.persistence.*;
-import java.time.LocalDateTime;
+public class AdminDictionaryUpdateRequest {
 
-@Entity
-@Table(name = "dictionary_entries")
-public class DictionaryEntry {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(name = "keyword_normalized", nullable = false, unique = true)
     private String keywordNormalized;
-
-    @Column(nullable = false)
     private String word;
-
     private String phonetic;
-
-    @Column(name = "audio_url", columnDefinition = "TEXT")
     private String audioUrl;
 
-    @Column(name = "english_meaning", columnDefinition = "TEXT")
     private String englishMeaning;
-
-    @Column(name = "vietnamese_meaning", columnDefinition = "TEXT")
     private String vietnameseMeaning;
 
-    @Column(name = "synonyms_json", columnDefinition = "TEXT")
     private String synonymsJson;
-
-    @Column(name = "word_types_json", columnDefinition = "TEXT")
     private String wordTypesJson;
-
-    @Column(name = "example_en", columnDefinition = "TEXT")
-    private String exampleEn;
-
-    @Column(name = "example_vi", columnDefinition = "TEXT")
-    private String exampleVi;
-
-    @Column(name = "word_forms_json", columnDefinition = "TEXT")
     private String wordFormsJson;
 
-    @Column(name = "source")
+    private String exampleEn;
+    private String exampleVi;
+
     private String source;
-
-    @Column(name = "status")
     private String status;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-
-    @PrePersist
-    public void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-
-        if (status == null) {
-            status = "AUTO_GENERATED";
-        }
-    }
-
-    @PreUpdate
-    public void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    public Long getId() {
-        return id;
-    }
 
     public String getKeywordNormalized() {
         return keywordNormalized;
@@ -131,6 +76,22 @@ public class DictionaryEntry {
         this.synonymsJson = synonymsJson;
     }
 
+    public String getWordTypesJson() {
+        return wordTypesJson;
+    }
+
+    public void setWordTypesJson(String wordTypesJson) {
+        this.wordTypesJson = wordTypesJson;
+    }
+
+    public String getWordFormsJson() {
+        return wordFormsJson;
+    }
+
+    public void setWordFormsJson(String wordFormsJson) {
+        this.wordFormsJson = wordFormsJson;
+    }
+
     public String getExampleEn() {
         return exampleEn;
     }
@@ -161,29 +122,5 @@ public class DictionaryEntry {
 
     public void setStatus(String status) {
         this.status = status;
-    }
-
-    public String getWordTypesJson() {
-    return wordTypesJson;
-    }
-
-    public void setWordTypesJson(String wordTypesJson) {
-        this.wordTypesJson = wordTypesJson;
-    }
-
-    public String getWordFormsJson() {
-        return wordFormsJson;
-    }
-
-    public void setWordFormsJson(String wordFormsJson) {
-        this.wordFormsJson = wordFormsJson;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
     }
 }

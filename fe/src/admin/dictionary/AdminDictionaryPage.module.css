@@ -1,0 +1,356 @@
+.page {
+  min-height: 100%;
+  color: #1b1c1c;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+  margin-bottom: 22px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #0e3377;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 34px;
+  letter-spacing: -0.04em;
+}
+
+.header p {
+  margin: 8px 0 0;
+  color: #555b63;
+}
+
+.generateBox,
+.searchForm {
+  display: flex;
+  gap: 10px;
+}
+
+.generateBox {
+  min-width: 420px;
+  padding: 10px;
+  border: 1px solid #eee7e1;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(17, 24, 39, 0.06);
+}
+
+.generateBox input,
+.searchForm input,
+.toolbar select,
+.formGrid input,
+.formGrid select,
+.textareaGrid textarea {
+  border: 1px solid #e8e4df;
+  border-radius: 12px;
+  background: #fff;
+  color: #1b1c1c;
+  font: inherit;
+  outline: none;
+}
+
+.generateBox input,
+.searchForm input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+}
+
+.generateBox button,
+.searchForm button,
+.pagination button,
+.actions button,
+.modalHeader button,
+.modalFooter button {
+  border: none;
+  border-radius: 12px;
+  padding: 11px 15px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.generateBox button,
+.searchForm button,
+.modalFooter button[type='submit'] {
+  background: #0e3377;
+  color: #fff;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.searchForm {
+  flex: 1;
+}
+
+.ghostButton {
+  background: #f4f0eb !important;
+  color: #1b1c1c !important;
+}
+
+.toolbar select {
+  padding: 12px 14px;
+}
+
+.errorBox,
+.successBox {
+  margin-bottom: 14px;
+  padding: 13px 15px;
+  border-radius: 14px;
+  font-weight: 700;
+}
+
+.errorBox {
+  color: #9b1c1c;
+  background: #fff1f1;
+  border: 1px solid #ffd2d2;
+}
+
+.successBox {
+  color: #116149;
+  background: #ecfff8;
+  border: 1px solid #c6f7e2;
+}
+
+.tableCard {
+  border: 1px solid #eee7e1;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(17, 24, 39, 0.07);
+  overflow: hidden;
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 20px 22px;
+  border-bottom: 1px solid #f0edea;
+}
+
+.tableHeader h2 {
+  margin: 0;
+  color: #0e3377;
+  font-size: 20px;
+}
+
+.tableHeader span {
+  color: #747782;
+  font-weight: 700;
+}
+
+.tableScroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th,
+.table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid #f0edea;
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f8f5f2;
+  color: #0e3377;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.table tbody tr:hover {
+  background: #fdfbf9;
+}
+
+.strongCell {
+  font-weight: 900;
+}
+
+.statusPill {
+  display: inline-flex;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(14, 51, 119, 0.08);
+  color: #0e3377;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.actions button {
+  padding: 8px 10px;
+  background: #f4f0eb;
+  color: #1b1c1c;
+}
+
+.actions .deleteButton {
+  background: #fff1f1;
+  color: #c62828;
+}
+
+.emptyCell {
+  padding: 36px !important;
+  text-align: center !important;
+  color: #747782;
+  font-weight: 700;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  align-items: center;
+  padding: 18px 22px;
+}
+
+.pagination button {
+  background: #f4f0eb;
+  color: #1b1c1c;
+}
+
+.pagination span {
+  color: #555b63;
+  font-weight: 800;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px 20px;
+  background: rgba(17, 24, 39, 0.38);
+  overflow-y: auto;
+}
+
+.modal {
+  width: min(1080px, 100%);
+  border-radius: 26px;
+  background: #fff;
+  box-shadow: 0 30px 90px rgba(17, 24, 39, 0.24);
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 24px;
+  border-bottom: 1px solid #f0edea;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.modalHeader button,
+.modalFooter button {
+  background: #f4f0eb;
+  color: #1b1c1c;
+}
+
+.formGrid,
+.textareaGrid {
+  display: grid;
+  gap: 16px;
+  padding: 22px 24px;
+}
+
+.formGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.textareaGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-top: 0;
+}
+
+.formGrid label,
+.textareaGrid label {
+  display: grid;
+  gap: 8px;
+  color: #0e3377;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.formGrid input,
+.formGrid select {
+  padding: 12px 13px;
+}
+
+.textareaGrid textarea {
+  min-height: 112px;
+  padding: 12px 13px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #f0edea;
+}
+
+@media (max-width: 900px) {
+  .header,
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .generateBox {
+    min-width: 0;
+  }
+
+  .formGrid,
+  .textareaGrid {
+    grid-template-columns: 1fr;
+  }
+}
