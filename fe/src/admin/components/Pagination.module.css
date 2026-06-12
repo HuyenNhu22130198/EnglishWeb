@@ -1,0 +1,47 @@
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pageButton,
+.navigationButton {
+  min-width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d9dee8;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pageButton:hover,
+.navigationButton:hover:not(:disabled) {
+  border-color: #2f5da8;
+  color: #173f84;
+}
+
+.activePage {
+  border-color: #173f84;
+  background: #173f84;
+  color: #ffffff;
+}
+
+.activePage:hover {
+  color: #ffffff;
+}
+
+.navigationButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ellipsis {
+  width: 28px;
+  text-align: center;
+  color: #98a2b3;
+}
