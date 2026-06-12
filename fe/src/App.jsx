@@ -20,6 +20,8 @@ import AdminRoute from './admin/AdminRoute';
 import AdminLayout from './admin/AdminLayout';
 import AdminEmptyPage from './admin/AdminEmptyPage';
 import AdminDictionaryPage from './admin/dictionary/AdminDictionaryPage';
+import AdminUsers from "./admin/AdminUsers";
+
 
 function App() {
   const location = useLocation();
@@ -46,7 +48,7 @@ function App() {
             }
           >
             <Route index element={<Navigate to="/admin/dictionary" replace />} />
-            <Route path="users" element={<AdminEmptyPage title="Quản lý người dùng" />} />
+            <Route path="users" element={<AdminUsers />} />
             <Route path="dictionary" element={<AdminDictionaryPage />} />
             <Route path="toeic-exams" element={<AdminEmptyPage title="Quản lý đề thi" />} />
           </Route>
