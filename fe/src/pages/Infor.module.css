@@ -1,11 +1,38 @@
 .inforPage {
+  position: relative;
   background-color: #fbf9f8;
   min-height: 100vh;
+  overflow: hidden;
+}
+
+.pageBackdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top left, rgba(14, 51, 119, 0.12), transparent 34%),
+    radial-gradient(circle at top right, rgba(144, 77, 0, 0.12), transparent 28%);
+  pointer-events: none;
 }
 
 .header {
   text-align: center;
   margin-bottom: 60px;
+  position: relative;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  background: rgba(14, 51, 119, 0.08);
+  color: #0e3377;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .header h1 {
@@ -25,6 +52,7 @@
 .content {
   max-width: 1000px;
   margin: 0 auto;
+  position: relative;
 }
 
 /* Profile Card */
@@ -120,6 +148,14 @@
   color: #1b1c1c;
 }
 
+.progressValue {
+  font-size: 40px;
+  font-weight: 800;
+  color: #0e3377;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
 .progressBarContainer {
   height: 12px;
   background: #f0eded;
@@ -140,6 +176,31 @@
   color: #444650;
 }
 
+.progressSection,
+.historySection {
+  margin-bottom: 60px;
+}
+
+.sectionHeaderRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.sectionHeaderRow h3 {
+  margin-bottom: 8px;
+  color: #1b1c1c;
+  font-size: 24px;
+}
+
+.sectionHeaderRow p {
+  margin: 0;
+  color: #444650;
+  line-height: 1.6;
+}
+
 /* History Section */
 .historySection h3 {
   margin-bottom: 24px;
@@ -147,6 +208,216 @@
   font-size: 24px;
 }
 
+.historyState {
+  background: white;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  text-align: center;
+}
+
+.historyState h4 {
+  margin-bottom: 8px;
+  font-size: 20px;
+  color: #1b1c1c;
+}
+
+.historyState p {
+  margin: 0;
+  color: #444650;
+}
+
+.retryButton {
+  margin-top: 18px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 9999px;
+  background: #0e3377;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.historyList {
+  display: grid;
+  gap: 20px;
+}
+
+.historyCard {
+  background: white;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.06);
+}
+
+.historyTopRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.historyTopRow h4 {
+  margin: 6px 0 0;
+  font-size: 24px;
+  color: #1b1c1c;
+}
+
+.historyExamCode {
+  display: inline-flex;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  background: rgba(144, 77, 0, 0.08);
+  color: #904d00;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.scoreBadge {
+  min-width: 110px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #0e3377, #1a4a9e);
+  color: white;
+  text-align: center;
+}
+
+.scoreBadge span {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.scoreBadge strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.historyMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.historyMetaGrid div {
+  padding: 16px;
+  border-radius: 18px;
+  background: #faf8f6;
+}
+
+.historyMetaGrid strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #0e3377;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.historyMetaGrid span {
+  color: #1b1c1c;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.historyFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.historyDate {
+  color: #444650;
+  font-size: 15px;
+}
+
+.detailButton {
+  padding: 12px 22px;
+  border: none;
+  border-radius: 9999px;
+  background: #0e3377;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.detailButton:hover,
+.retryButton:hover,
+.editButton:hover {
+  transform: translateY(-1px);
+}
+
+.partSummaryWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.partSummaryChip {
+  padding: 8px 12px;
+  border-radius: 9999px;
+  background: #f0f4ff;
+  color: #0e3377;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 32px;
+  }
+
+  .header p {
+    font-size: 16px;
+  }
+
+  .profileCard {
+    padding: 28px;
+  }
+
+  .avatarSection {
+    align-items: flex-start;
+  }
+
+  .historyTopRow,
+  .historyFooter,
+  .sectionHeaderRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .historyMetaGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .progressCards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .infoGrid,
+  .historyMetaGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .historyCard {
+    padding: 22px;
+  }
+
+  .detailButton {
+    width: 100%;
+  }
+}
 .historyList {
   background: white;
   border-radius: 20px;

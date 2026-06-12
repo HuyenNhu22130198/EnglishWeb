@@ -75,4 +75,20 @@ export const toeicAPI = {
 
     return data;
   },
+
+  async getMyToeicHistory() {
+    const response = await fetch(`${API_BASE_URL}/users/me/toeic-history`, {
+      headers: {
+        ...getAuthHeaders(),
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Không thể tải lịch sử thi TOEIC của bạn');
+    }
+
+    return data;
+  },
 };

@@ -281,6 +281,12 @@ const ToeicResult = () => {
   const { attemptId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const hasNavigationMarkers =
+    !!location.state && Object.prototype.hasOwnProperty.call(location.state, 'audioMarkers');
+  const initialAudioMarkers = useMemo(
+    () => (hasNavigationMarkers ? location.state.audioMarkers || [] : []),
+    [hasNavigationMarkers, location.state]
+  );
 
   const [result, setResult] = useState(location.state?.result || null);
   const [loading, setLoading] = useState(!location.state?.result);
@@ -288,7 +294,7 @@ const ToeicResult = () => {
   const [listeningAudioUrl, setListeningAudioUrl] = useState('');
   const [showAllSolutions, setShowAllSolutions] = useState(false);
   const [expandedQuestions, setExpandedQuestions] = useState(() => new Set());
-  const [audioMarkers, setAudioMarkers] = useState([]);
+  const [audioMarkers, setAudioMarkers] = useState(initialAudioMarkers);
   const [isAudioMarkerPanelOpen, setIsAudioMarkerPanelOpen] = useState(true);
   const [audioDuration, setAudioDuration] = useState(0);
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
@@ -359,20 +365,39 @@ const ToeicResult = () => {
     loadAudio();
   }, [result?.examId]);
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   if (!result?.examId) {
+  //     setAudioMarkers([]);
+  //     return;
+  //   }
+
+  //   setAudioMarkers(readAudioMarkers(result.examId));
+  //   setIsAudioMarkerPanelOpen(true);
+  //   setMarkerStorageWarning(
+  //     getMarkerStorage()
+  //       ? ''
+  //       : 'Trình duyệt đang chặn lưu đánh dấu. Hãy cho phép lưu dữ liệu trang để giữ danh sách mốc thời gian.'
+  //   );
+  // }, [result?.examId]);
+
+   useEffect(() => {
     if (!result?.examId) {
       setAudioMarkers([]);
       return;
     }
 
-    setAudioMarkers(readAudioMarkers(result.examId));
+    if (hasNavigationMarkers) {
+      setAudioMarkers(initialAudioMarkers);
+    } else {
+      setAudioMarkers(readAudioMarkers(result.examId));
+    }
     setIsAudioMarkerPanelOpen(true);
     setMarkerStorageWarning(
       getMarkerStorage()
         ? ''
         : 'Trình duyệt đang chặn lưu đánh dấu. Hãy cho phép lưu dữ liệu trang để giữ danh sách mốc thời gian.'
     );
-  }, [result?.examId]);
+  }, [result?.examId, hasNavigationMarkers, initialAudioMarkers]);
 
   useEffect(() => {
     if (!result?.examId) {
