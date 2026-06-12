@@ -1103,95 +1103,236 @@ const ToeicPractice = () => {
                                 )}
                               </div>
 
-                              {questionImage && (
-                                <div className={styles.questionImageBox}>
-                                  <img
-                                    src={questionImage}
-                                    alt={`Question ${question.questionNo}`}
-                                  />
-                                </div>
-                              )}
-
-                              {shouldShowQuestionText(numberPart, question.questionText) && (
-                                <p
-                                  className={`${styles.questionText} ${styles.highlightTextBlock}`}
-                                  data-highlight-target={`question-${question.questionId}`}
-                                  onMouseUp={(event) =>
-                                    handleHighlightTextMouseUp(
-                                      `question-${question.questionId}`,
-                                      question.questionText,
-                                      event
-                                    )
-                                  }
+                              {questionImage ? (
+                                <div
+                                  className={`${styles.questionBodyWithImage} ${
+                                    numberPart === 1 ? styles.part1QuestionLayout : ''
+                                  }`}
                                 >
-                                  {renderHighlightedText(
-                                    question.questionText,
-                                    highlights[`question-${question.questionId}`] || [],
-                                    highlightRenderStyles
-                                  )}
-                                </p>
-                              )}
-
-                              <div
-                                className={`${styles.optionList} ${
-                                  hideOptionText ? styles.shortOptionList : ''
-                                }`}
-                              >
-                                {visibleOptions.map((option) => (
-                                  <label
-                                    key={
-                                      option.optionId ||
-                                      `${question.questionId}-${option.optionLabel}`
-                                    }
-                                    className={`${styles.optionItem} ${
-                                      answers[question.questionId] === option.optionLabel
-                                        ? styles.selectedOption
-                                        : ''
+                                  <div
+                                    className={`${styles.questionImageColumn} ${
+                                      numberPart === 1 ? styles.part1ImageColumn : ''
                                     }`}
                                   >
-                                    <input
-                                      type="radio"
-                                      name={`question-${question.questionId}`}
-                                      value={option.optionLabel}
-                                      checked={
-                                        answers[question.questionId] === option.optionLabel
-                                      }
-                                      onChange={() =>
-                                        handleChooseAnswer(
-                                          question.questionId,
-                                          option.optionLabel
-                                        )
-                                      }
-                                    />
+                                    <div className={styles.questionImageBox}>
+                                      <img
+                                        src={questionImage}
+                                        alt={`Question ${question.questionNo}`}
+                                      />
+                                    </div>
+                                  </div>
 
-                                    <span className={styles.optionLabel}>
-                                      {option.optionLabel}
-                                    </span>
-
-                                    {!hideOptionText && (
-                                      <span
-                                        className={`${styles.optionText} ${styles.highlightTextBlock}`}
-                                        data-highlight-target={`option-${question.questionId}-${option.optionLabel}`}
+                                  <div
+                                    className={`${styles.questionContentColumn} ${
+                                      numberPart === 1 ? styles.part1OptionColumn : ''
+                                    }`}
+                                  >
+                                    {shouldShowQuestionText(numberPart, question.questionText) && (
+                                      <p
+                                        className={`${styles.questionText} ${styles.highlightTextBlock}`}
+                                        data-highlight-target={`question-${question.questionId}`}
                                         onMouseUp={(event) =>
                                           handleHighlightTextMouseUp(
-                                            `option-${question.questionId}-${option.optionLabel}`,
-                                            option.optionText || `Đáp án ${option.optionLabel}`,
+                                            `question-${question.questionId}`,
+                                            question.questionText,
                                             event
                                           )
                                         }
                                       >
                                         {renderHighlightedText(
-                                          option.optionText || `Đáp án ${option.optionLabel}`,
-                                          highlights[
-                                            `option-${question.questionId}-${option.optionLabel}`
-                                          ] || [],
+                                          question.questionText,
+                                          highlights[`question-${question.questionId}`] || [],
                                           highlightRenderStyles
                                         )}
-                                      </span>
+                                      </p>
                                     )}
-                                  </label>
-                                ))}
-                              </div>
+
+                                    {numberPart === 1 ? (
+                                      <div
+                                        className={`${styles.optionList} ${styles.part1OptionList}`}
+                                      >
+                                        {visibleOptions.map((option) => (
+                                          <label
+                                            key={
+                                              option.optionId ||
+                                              `${question.questionId}-${option.optionLabel}`
+                                            }
+                                            className={`${styles.optionItem} ${
+                                              answers[question.questionId] === option.optionLabel
+                                                ? styles.selectedOption
+                                                : ''
+                                            }`}
+                                          >
+                                            <input
+                                              type="radio"
+                                              name={`question-${question.questionId}`}
+                                              value={option.optionLabel}
+                                              checked={
+                                                answers[question.questionId] === option.optionLabel
+                                              }
+                                              onChange={() =>
+                                                handleChooseAnswer(
+                                                  question.questionId,
+                                                  option.optionLabel
+                                                )
+                                              }
+                                            />
+
+                                            <span className={styles.optionLabel}>
+                                              {option.optionLabel}
+                                            </span>
+                                          </label>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div
+                                        className={`${styles.optionList} ${
+                                          hideOptionText ? styles.shortOptionList : ''
+                                        }`}
+                                      >
+                                        {visibleOptions.map((option) => (
+                                          <label
+                                            key={
+                                              option.optionId ||
+                                              `${question.questionId}-${option.optionLabel}`
+                                            }
+                                            className={`${styles.optionItem} ${
+                                              answers[question.questionId] === option.optionLabel
+                                                ? styles.selectedOption
+                                                : ''
+                                            }`}
+                                          >
+                                            <input
+                                              type="radio"
+                                              name={`question-${question.questionId}`}
+                                              value={option.optionLabel}
+                                              checked={
+                                                answers[question.questionId] === option.optionLabel
+                                              }
+                                              onChange={() =>
+                                                handleChooseAnswer(
+                                                  question.questionId,
+                                                  option.optionLabel
+                                                )
+                                              }
+                                            />
+
+                                            <span className={styles.optionLabel}>
+                                              {option.optionLabel}
+                                            </span>
+
+                                            {!hideOptionText && (
+                                              <span
+                                                className={`${styles.optionText} ${styles.highlightTextBlock}`}
+                                                data-highlight-target={`option-${question.questionId}-${option.optionLabel}`}
+                                                onMouseUp={(event) =>
+                                                  handleHighlightTextMouseUp(
+                                                    `option-${question.questionId}-${option.optionLabel}`,
+                                                    option.optionText ||
+                                                      `Đáp án ${option.optionLabel}`,
+                                                    event
+                                                  )
+                                                }
+                                              >
+                                                {renderHighlightedText(
+                                                  option.optionText || `Đáp án ${option.optionLabel}`,
+                                                  highlights[
+                                                    `option-${question.questionId}-${option.optionLabel}`
+                                                  ] || [],
+                                                  highlightRenderStyles
+                                                )}
+                                              </span>
+                                            )}
+                                          </label>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  {shouldShowQuestionText(numberPart, question.questionText) && (
+                                    <p
+                                      className={`${styles.questionText} ${styles.highlightTextBlock}`}
+                                      data-highlight-target={`question-${question.questionId}`}
+                                      onMouseUp={(event) =>
+                                        handleHighlightTextMouseUp(
+                                          `question-${question.questionId}`,
+                                          question.questionText,
+                                          event
+                                        )
+                                      }
+                                    >
+                                      {renderHighlightedText(
+                                        question.questionText,
+                                        highlights[`question-${question.questionId}`] || [],
+                                        highlightRenderStyles
+                                      )}
+                                    </p>
+                                  )}
+
+                                  <div
+                                    className={`${styles.optionList} ${
+                                      hideOptionText ? styles.shortOptionList : ''
+                                    }`}
+                                  >
+                                    {visibleOptions.map((option) => (
+                                      <label
+                                        key={
+                                          option.optionId ||
+                                          `${question.questionId}-${option.optionLabel}`
+                                        }
+                                        className={`${styles.optionItem} ${
+                                          answers[question.questionId] === option.optionLabel
+                                            ? styles.selectedOption
+                                            : ''
+                                        }`}
+                                      >
+                                        <input
+                                          type="radio"
+                                          name={`question-${question.questionId}`}
+                                          value={option.optionLabel}
+                                          checked={
+                                            answers[question.questionId] === option.optionLabel
+                                          }
+                                          onChange={() =>
+                                            handleChooseAnswer(
+                                              question.questionId,
+                                              option.optionLabel
+                                            )
+                                          }
+                                        />
+
+                                        <span className={styles.optionLabel}>
+                                          {option.optionLabel}
+                                        </span>
+
+                                        {!hideOptionText && (
+                                          <span
+                                            className={`${styles.optionText} ${styles.highlightTextBlock}`}
+                                            data-highlight-target={`option-${question.questionId}-${option.optionLabel}`}
+                                            onMouseUp={(event) =>
+                                              handleHighlightTextMouseUp(
+                                                `option-${question.questionId}-${option.optionLabel}`,
+                                                option.optionText || `Đáp án ${option.optionLabel}`,
+                                                event
+                                              )
+                                            }
+                                          >
+                                            {renderHighlightedText(
+                                              option.optionText || `Đáp án ${option.optionLabel}`,
+                                              highlights[
+                                                `option-${question.questionId}-${option.optionLabel}`
+                                              ] || [],
+                                              highlightRenderStyles
+                                            )}
+                                          </span>
+                                        )}
+                                      </label>
+                                    ))}
+                                  </div>
+                                </>
+                              )}
                             </div>
                           );
                         })}
