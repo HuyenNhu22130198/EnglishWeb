@@ -26,6 +26,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -268,6 +269,7 @@ public ToeicResultResponse submitExam(
                                 .filter(option -> option.getOptionLabel() != null
                                         && option.getOptionLabel().equalsIgnoreCase(answer.getSelectedLabel()))
                                 .map(ToeicQuestionOption::getOptionText)
+                                .filter(Objects::nonNull)
                                 .findFirst()
                                 .orElse(null);
                     }

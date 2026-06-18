@@ -1,6 +1,10 @@
 package com.englishweb.be.controller;
 
+import com.englishweb.be.dto.AccountActionRequest;
 import com.englishweb.be.dto.ApiResponse;
+import com.englishweb.be.dto.ChangePasswordRequest;
+import com.englishweb.be.dto.UpdateAccountSettingsRequest;
+import com.englishweb.be.dto.UpdateProfileRequest;
 import com.englishweb.be.dto.UpdateRoleRequest;
 import com.englishweb.be.dto.toeic.ToeicAttemptHistoryResponse;
 import com.englishweb.be.entity.User;
@@ -34,6 +38,50 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("Lấy thông tin thành công", user));
     }
 
+    @PutMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<User>> updateCurrentUser(
+            Authentication authentication,
+            @Valid @RequestBody UpdateProfileRequest request
+    ) {
+        String email = authentication.getName();
+        User user = userService.updateProfile(email, request);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật thông tin thành công", user));
+    }
+
+    @PutMapping("/me/settings")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<User>> updateAccountSettings(
+            Authentication authentication,
+            @RequestBody UpdateAccountSettingsRequest request
+    ) {
+        String email = authentication.getName();
+        User user = userService.updateAccountSettings(email, request);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật cài đặt tài khoản thành công", user));
+    }
+
+    @PutMapping("/me/change-password")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<String>> changePassword(
+            Authentication authentication,
+            @Valid @RequestBody ChangePasswordRequest request
+    ) {
+        String email = authentication.getName();
+        userService.changePassword(email, request);
+        return ResponseEntity.ok(ApiResponse.success("Đổi mật khẩu thành công", null));
+    }
+
+    @PutMapping("/me/delete")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<String>> deleteOwnAccount(
+            Authentication authentication,
+            @Valid @RequestBody AccountActionRequest request
+    ) {
+        String email = authentication.getName();
+        userService.deleteOwnAccount(email, request);
+        return ResponseEntity.ok(ApiResponse.success("Tài khoản đã được xóa", null));
+    }
+
     @GetMapping("/me/toeic-history")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<ToeicAttemptHistoryResponse>>> getMyToeicHistory(
@@ -51,7 +99,6 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("Lấy thông tin thành công", user));
     }
 
-    // Admin Endpoints
     @GetMapping("/admin/all")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<User>>> getAllUsers() {
