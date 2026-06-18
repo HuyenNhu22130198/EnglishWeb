@@ -14,6 +14,27 @@ const isTextMaterial = (material) => {
 };
 
 const normalizeContent = (value) => (value || '').replace(/\s+/g, ' ').trim().toLowerCase();
+const getMaterialQuestionNo = (material) => {
+  const source = material.assetUrl || material.content || '';
+  const fileName = decodeURIComponent(source.split(/[?#]/)[0].split('/').pop() || '');
+  const match = fileName.match(/[_-](\d{1,3})(?:\.[a-z0-9]+)?$/i);
+
+  return match ? Number(match[1]) : null;
+};
+const getStoredAuthToken = () => {
+  try {
+    const rawUser = window.localStorage.getItem('user');
+
+    if (rawUser) {
+      const user = JSON.parse(rawUser);
+      if (user?.token) return user.token;
+    }
+
+    return window.localStorage.getItem('token');
+  } catch {
+    return window.localStorage.getItem('token');
+  }
+};
 const AUDIO_MARKER_STORAGE_PREFIX = 'toeic-practice-audio-markers';
 const HIGHLIGHT_STORAGE_PREFIX = 'toeic-practice-highlights';
 const HIGHLIGHT_PALETTE = [
@@ -637,6 +658,14 @@ const ToeicPractice = () => {
       return imageMaterials[0].assetUrl;
     }
 
+    if ([3, 4].includes(Number(partNo))) {
+      const matchingMaterial = imageMaterials.find(
+        (material) => getMaterialQuestionNo(material) === Number(question.questionNo)
+      );
+
+      return matchingMaterial?.assetUrl || null;
+    }
+
     return null;
   };
 
@@ -649,7 +678,7 @@ const ToeicPractice = () => {
 
   // Nộp bài thi và chuyển đến trang kết quả
   const handleSubmitExam = async () => {
-    const token = typeof window !== 'undefined' ? window.localStorage.getItem('token') : null;
+    const token = typeof window !== 'undefined' ? getStoredAuthToken() : null;
 
     if (!token) {
       alert('Bạn cần đăng nhập để nộp bài và lưu kết quả.');
@@ -686,6 +715,14 @@ const ToeicPractice = () => {
         alert(response.message || 'Nộp bài thất bại');
       }
     } catch (err) {
+      if (err.status === 401 || err.status === 403) {
+        window.localStorage.removeItem('token');
+        window.localStorage.removeItem('user');
+        alert(err.message || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        navigate('/login');
+        return;
+      }
+
       alert(err.message || 'Có lỗi xảy ra khi nộp bài');
       console.error('Submit TOEIC exam error:', err);
     } finally {
@@ -1033,7 +1070,8 @@ const ToeicPractice = () => {
                     passageMap.set(normalized, text);
                   };
 
-                  const shouldShowGroupImages = numberPart >= 6 && imageMaterials.length > 0;
+                  const shouldShowGroupImages =
+                    [6, 7].includes(numberPart) && imageMaterials.length > 0;
                   const shouldShowPassage =
                     numberPart >= 6 && (group.sharedText || textMaterials.length > 0);
 
@@ -1043,7 +1081,11 @@ const ToeicPractice = () => {
                   return (
                     <article key={group.groupId} className={styles.groupCard}>
                       {shouldShowGroupImages && (
-                        <div className={styles.materialGrid}>
+                        <div
+                          className={`${styles.materialGrid} ${
+                            numberPart === 7 ? styles.part7MaterialStack : ''
+                          }`}
+                        >
                           {imageMaterials.map((material) => (
                             <div key={material.id} className={styles.materialImageCard}>
                               <img
@@ -1086,6 +1128,28 @@ const ToeicPractice = () => {
 
                           const visibleOptions = getVisibleOptions(question.options, numberPart);
                           const hideOptionText = !shouldShowOptionText(numberPart);
+                          const questionTextBlock = shouldShowQuestionText(
+                            numberPart,
+                            question.questionText
+                          ) ? (
+                            <p
+                              className={`${styles.questionText} ${styles.highlightTextBlock}`}
+                              data-highlight-target={`question-${question.questionId}`}
+                              onMouseUp={(event) =>
+                                handleHighlightTextMouseUp(
+                                  `question-${question.questionId}`,
+                                  question.questionText,
+                                  event
+                                )
+                              }
+                            >
+                              {renderHighlightedText(
+                                question.questionText,
+                                highlights[`question-${question.questionId}`] || [],
+                                highlightRenderStyles
+                              )}
+                            </p>
+                          ) : null;
 
                           return (
                             <div
@@ -1094,9 +1158,13 @@ const ToeicPractice = () => {
                               className={styles.questionCard}
                             >
                               <div className={styles.questionTop}>
-                                <span className={styles.questionIndex}>
+                                <div className={styles.questionTitleRow}>
+                                  <span className={styles.questionIndex}>
                                   Câu {question.questionNo}
-                                </span>
+                                  </span>
+
+                                  {questionTextBlock}
+                                </div>
 
                                 {answers[question.questionId] && (
                                   <strong>Đã chọn {answers[question.questionId]}</strong>
@@ -1107,6 +1175,8 @@ const ToeicPractice = () => {
                                 <div
                                   className={`${styles.questionBodyWithImage} ${
                                     numberPart === 1 ? styles.part1QuestionLayout : ''
+                                  } ${
+                                    [3, 4].includes(numberPart) ? styles.part34QuestionLayout : ''
                                   }`}
                                 >
                                   <div
@@ -1127,26 +1197,6 @@ const ToeicPractice = () => {
                                       numberPart === 1 ? styles.part1OptionColumn : ''
                                     }`}
                                   >
-                                    {shouldShowQuestionText(numberPart, question.questionText) && (
-                                      <p
-                                        className={`${styles.questionText} ${styles.highlightTextBlock}`}
-                                        data-highlight-target={`question-${question.questionId}`}
-                                        onMouseUp={(event) =>
-                                          handleHighlightTextMouseUp(
-                                            `question-${question.questionId}`,
-                                            question.questionText,
-                                            event
-                                          )
-                                        }
-                                      >
-                                        {renderHighlightedText(
-                                          question.questionText,
-                                          highlights[`question-${question.questionId}`] || [],
-                                          highlightRenderStyles
-                                        )}
-                                      </p>
-                                    )}
-
                                     {numberPart === 1 ? (
                                       <div
                                         className={`${styles.optionList} ${styles.part1OptionList}`}
@@ -1251,26 +1301,6 @@ const ToeicPractice = () => {
                                 </div>
                               ) : (
                                 <>
-                                  {shouldShowQuestionText(numberPart, question.questionText) && (
-                                    <p
-                                      className={`${styles.questionText} ${styles.highlightTextBlock}`}
-                                      data-highlight-target={`question-${question.questionId}`}
-                                      onMouseUp={(event) =>
-                                        handleHighlightTextMouseUp(
-                                          `question-${question.questionId}`,
-                                          question.questionText,
-                                          event
-                                        )
-                                      }
-                                    >
-                                      {renderHighlightedText(
-                                        question.questionText,
-                                        highlights[`question-${question.questionId}`] || [],
-                                        highlightRenderStyles
-                                      )}
-                                    </p>
-                                  )}
-
                                   <div
                                     className={`${styles.optionList} ${
                                       hideOptionText ? styles.shortOptionList : ''

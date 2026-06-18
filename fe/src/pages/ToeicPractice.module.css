@@ -716,6 +716,12 @@
   margin-bottom: 18px;
 }
 
+.part7MaterialStack {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 18px;
+}
+
 .materialImageCard,
 .questionImageBox {
   min-width: 0;
@@ -734,6 +740,14 @@
   display: block;
   object-fit: contain;
   border-radius: 14px;
+}
+
+.part7MaterialStack .materialImageCard {
+  width: min(100%, 550px);
+}
+
+.part7MaterialStack .materialImageCard img {
+  max-height: 550px;
 }
 
 .questionImageBox {
@@ -768,7 +782,7 @@
 
 .questionCard {
   min-width: 0;
-  padding: 18px;
+  padding: 14px 16px;
 
   background: #ffffff;
   border: 1px solid #e5eaf3;
@@ -785,14 +799,21 @@
 
 .questionTop {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
-.questionTop span,
+.questionTitleRow {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
 .questionIndex {
+  flex: 0 0 auto;
   width: fit-content;
   height: 34px;
   padding: 0 14px;
@@ -820,7 +841,8 @@
 }
 
 .questionText {
-  margin: 0 0 12px;
+  min-width: 0;
+  margin: 2px 0 0;
   color: var(--text-main);
   font-size: 16.5px;
   line-height: 1.72;
@@ -834,7 +856,7 @@
 
 .optionList {
   display: grid;
-  gap: 8px;
+  gap: 4px;
 }
 
 .shortOptionList {
@@ -843,17 +865,17 @@
 
 .optionItem {
   min-width: 0;
-  min-height: 44px;
-  padding: 9px 12px;
+  min-height: 36px;
+  padding: 5px 8px;
 
   display: grid;
   grid-template-columns: 22px 38px minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 16px;
-  background: #ffffff;
+  background: transparent;
 
   cursor: pointer;
   transition: all 0.2s ease;
@@ -865,7 +887,6 @@
 }
 
 .optionItem:hover {
-  border-color: var(--primary);
   background: #f8fbff;
 }
 
@@ -876,9 +897,8 @@
 }
 
 .selectedOption {
-  border-color: var(--primary);
   background: #eef4ff;
-  box-shadow: 0 10px 24px rgba(14, 51, 119, 0.08);
+  box-shadow: none;
 }
 
 .optionLabel {
@@ -956,7 +976,7 @@
   width: 100%;
   grid-template-columns: 1fr;
   align-content: start;
-  gap: 12px;
+  gap: 4px;
 }
 
 .questionBodyWithImage .shortOptionList {
@@ -966,8 +986,8 @@
 .part1OptionList .optionItem {
   grid-template-columns: 22px 38px;
   justify-content: flex-start;
-  min-height: 56px;
-  padding-inline: 16px;
+  min-height: 44px;
+  padding-inline: 12px;
 }
 
 /* =========================
@@ -1309,7 +1329,7 @@
 
   .optionItem {
     grid-template-columns: 20px 34px minmax(0, 1fr);
-    padding: 10px 12px;
+    padding: 5px 8px;
   }
 
   .shortOptionItem {
