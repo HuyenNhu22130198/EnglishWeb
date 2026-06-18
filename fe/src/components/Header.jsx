@@ -44,12 +44,12 @@ const Header = () => {
           </NavLink>
 
           <NavLink
-            to="/dictionary"
+            to="/flashcard"
             className={({ isActive }) =>
               `${styles.navLink} ${isActive ? styles.activeLink : ''}`
             }
           >
-            Từ điển
+            Flashcard
           </NavLink>
 
           <div
@@ -139,8 +139,8 @@ const Header = () => {
             Trang chủ
           </NavLink>
 
-          <NavLink to="/dictionary" onClick={closeMobileMenu}>
-            Từ điển
+          <NavLink to="/flashcard" onClick={closeMobileMenu}>
+            Flashcard
           </NavLink>
 
           <NavLink to="/exams/toeic" onClick={closeMobileMenu}>

@@ -6,9 +6,11 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import CourseCard from './components/CourseCard';
 import Footer from './components/Footer';
+import FloatingDictionary from './components/FloatingDictionary';
 import ToeicExams from './pages/ToeicExams';
 import IeltsExams from './pages/IeltsExams';
 import Dictionary from './pages/Dictionary';
+import Flashcard from './pages/Flashcard';
 import Infor from './pages/Infor';
 import Register from './pages/Register';
 import Login from './pages/Login';
@@ -140,6 +142,7 @@ function App() {
           />
 
           <Route path="/dictionary" element={<Dictionary />} />
+          <Route path="/flashcard" element={<Flashcard />} />
 
           <Route path="/exams/toeic" element={<ToeicExams />} />
           <Route path="/exams/toeic/:examId" element={<ToeicExamDetail />} />
@@ -175,7 +178,10 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
         </Routes>
 
-      {!hideLayout && <Footer />}
+        {!isAdminPage && !noLayoutPages.includes(location.pathname) && (
+          <FloatingDictionary />
+        )}
+        {!hideLayout && <Footer />}
       </div>
     </AuthProvider>
   );
