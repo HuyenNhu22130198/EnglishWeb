@@ -1,65 +1,83 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { adminDictionaryAPI } from './adminDictionaryService';
-import styles from './AdminDictionaryPage.module.css';
+import { useCallback, useEffect, useState } from "react";
+import { adminDictionaryAPI } from "./adminDictionaryService";
+import AdminPageHeader from "../components/AdminPageHeader";
+import Pagination from "../components/Pagination";
+import {
+  BookIcon,
+  RefreshIcon,
+  SearchIcon,
+} from "../components/AdminIcons";
+import AdminModal from "../components/AdminModal";
+import styles from "./AdminDictionaryPage.module.css";
+import shared from "../AdminShared.module.css";
 
 const emptyForm = {
-  keywordNormalized: '',
-  word: '',
-  phonetic: '',
-  audioUrl: '',
-  englishMeaning: '',
-  vietnameseMeaning: '',
-  synonymsJson: '[]',
-  wordTypesJson: '[]',
-  wordFormsJson: '[]',
-  exampleEn: '',
-  exampleVi: '',
-  source: '',
-  status: 'REVIEWED',
+  keywordNormalized: "",
+  word: "",
+  phonetic: "",
+  audioUrl: "",
+  englishMeaning: "",
+  vietnameseMeaning: "",
+  synonymsJson: "[]",
+  wordTypesJson: "[]",
+  wordFormsJson: "[]",
+  exampleEn: "",
+  exampleVi: "",
+  source: "",
+  status: "REVIEWED",
 };
 
-const truncate = (value, max = 80) => {
-  const text = String(value || '');
+function truncate(value, max = 80) {
+  const text = String(value ?? "");
   return text.length > max ? `${text.slice(0, max)}...` : text;
-};
+}
 
-const formatDate = (value) => {
-  if (!value) return '';
+function formatDate(value) {
+  if (!value) return "—";
 
-  try {
-    return new Date(value).toLocaleString('vi-VN');
-  } catch {
-    return value;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return date.toLocaleString("vi-VN");
+}
+
+function normalizeResponse(data) {
+  if (Array.isArray(data)) {
+    return {
+      content: data,
+      totalPages: 1,
+      totalElements: data.length,
+    };
   }
-};
 
-const AdminDictionaryPage = () => {
+  return {
+    content: data?.content || [],
+    totalPages: data?.totalPages || 0,
+    totalElements: data?.totalElements || 0,
+  };
+}
+
+export default function AdminDictionaryPage() {
   const [entries, setEntries] = useState([]);
-  const [keyword, setKeyword] = useState('');
-  const [generateKeyword, setGenerateKeyword] = useState('');
-
+  const [keywordInput, setKeywordInput] = useState("");
+  const [keyword, setKeyword] = useState("");
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [form, setForm] = useState(emptyForm);
 
-  const pageTitle = useMemo(() => {
-    return `Quản lý từ vựng`;
-  }, []);
+  const pageTitle = "Quản lý từ vựng";
 
   const loadEntries = useCallback(async () => {
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
       const data = await adminDictionaryAPI.getEntries({
         keyword,
@@ -67,11 +85,12 @@ const AdminDictionaryPage = () => {
         size,
       });
 
-      setEntries(data.content || []);
-      setTotalPages(data.totalPages || 0);
-      setTotalElements(data.totalElements || 0);
+      const normalized = normalizeResponse(data);
+      setEntries(normalized.content);
+      setTotalPages(normalized.totalPages);
+      setTotalElements(normalized.totalElements);
     } catch (err) {
-      setError(err.message || 'Không thể tải danh sách từ vựng.');
+      setError(err.message || "Không thể tải danh sách từ vựng.");
     } finally {
       setLoading(false);
     }
@@ -81,37 +100,40 @@ const AdminDictionaryPage = () => {
     loadEntries();
   }, [loadEntries]);
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    setPage(0);
-    loadEntries();
-  };
+  const openCreateModal = async () => {
+    const word = prompt("Nhập từ tiếng Anh muốn thêm (hệ thống sẽ tự động generate dữ liệu):");
+    if (!word || !word.trim()) return;
 
-  const handleGenerate = async (e) => {
-    e.preventDefault();
-
-    const word = generateKeyword.trim();
-
-    if (!word) {
-      setError('Vui lòng nhập từ cần generate.');
-      return;
-    }
-
+    const trimmedWord = word.trim();
     try {
       setSaving(true);
-      setError('');
-      setSuccess('');
+      setError("");
+      setSuccess("");
 
-      const generated = await adminDictionaryAPI.generateEntry(word);
+      const generated = await adminDictionaryAPI.generateEntry(trimmedWord);
+      setSuccess(`Đã tự động tạo từ "${generated.word || trimmedWord}".`);
 
-      setGenerateKeyword('');
-      setSuccess(`Đã generate từ "${generated.word}".`);
-
-      setKeyword('');
-      setPage(0);
       await loadEntries();
+
+      // Immediately open the edit modal for the newly generated entry
+      setSelectedEntry(generated);
+      setForm({
+        keywordNormalized: generated.keywordNormalized || "",
+        word: generated.word || "",
+        phonetic: generated.phonetic || "",
+        audioUrl: generated.audioUrl || "",
+        englishMeaning: generated.englishMeaning || "",
+        vietnameseMeaning: generated.vietnameseMeaning || "",
+        synonymsJson: generated.synonymsJson || "[]",
+        wordTypesJson: generated.wordTypesJson || "[]",
+        wordFormsJson: generated.wordFormsJson || "[]",
+        exampleEn: generated.exampleEn || "",
+        exampleVi: generated.exampleVi || "",
+        source: generated.source || "",
+        status: generated.status || "REVIEWED",
+      });
     } catch (err) {
-      setError(err.message || 'Generate từ vựng thất bại.');
+      setError(err.message || "Tự động tạo từ vựng thất bại.");
     } finally {
       setSaving(false);
     }
@@ -119,25 +141,24 @@ const AdminDictionaryPage = () => {
 
   const openEditModal = (entry) => {
     setSelectedEntry(entry);
-
     setForm({
-      keywordNormalized: entry.keywordNormalized || '',
-      word: entry.word || '',
-      phonetic: entry.phonetic || '',
-      audioUrl: entry.audioUrl || '',
-      englishMeaning: entry.englishMeaning || '',
-      vietnameseMeaning: entry.vietnameseMeaning || '',
-      synonymsJson: entry.synonymsJson || '[]',
-      wordTypesJson: entry.wordTypesJson || '[]',
-      wordFormsJson: entry.wordFormsJson || '[]',
-      exampleEn: entry.exampleEn || '',
-      exampleVi: entry.exampleVi || '',
-      source: entry.source || '',
-      status: entry.status || 'REVIEWED',
+      keywordNormalized: entry.keywordNormalized || "",
+      word: entry.word || "",
+      phonetic: entry.phonetic || "",
+      audioUrl: entry.audioUrl || "",
+      englishMeaning: entry.englishMeaning || "",
+      vietnameseMeaning: entry.vietnameseMeaning || "",
+      synonymsJson: entry.synonymsJson || "[]",
+      wordTypesJson: entry.wordTypesJson || "[]",
+      wordFormsJson: entry.wordFormsJson || "[]",
+      exampleEn: entry.exampleEn || "",
+      exampleVi: entry.exampleVi || "",
+      source: entry.source || "",
+      status: entry.status || "REVIEWED",
     });
   };
 
-  const closeEditModal = () => {
+  const closeModal = () => {
     setSelectedEntry(null);
     setForm(emptyForm);
   };
@@ -149,23 +170,33 @@ const AdminDictionaryPage = () => {
     }));
   };
 
-  const handleUpdate = async (e) => {
-    e.preventDefault();
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    setPage(0);
+    setKeyword(keywordInput.trim());
+  };
 
-    if (!selectedEntry) return;
+  const handleRefresh = () => {
+    loadEntries();
+  };
+
+  const handleUpdate = async (event) => {
+    event.preventDefault();
+
+    if (!selectedEntry || !selectedEntry.id) return;
 
     try {
       setSaving(true);
-      setError('');
-      setSuccess('');
+      setError("");
+      setSuccess("");
 
       await adminDictionaryAPI.updateEntry(selectedEntry.id, form);
-
       setSuccess(`Đã cập nhật từ "${form.word}".`);
-      closeEditModal();
+
+      closeModal();
       await loadEntries();
     } catch (err) {
-      setError(err.message || 'Cập nhật từ vựng thất bại.');
+      setError(err.message || "Cập nhật từ vựng thất bại.");
     } finally {
       setSaving(false);
     }
@@ -180,94 +211,87 @@ const AdminDictionaryPage = () => {
 
     try {
       setSaving(true);
-      setError('');
-      setSuccess('');
+      setError("");
+      setSuccess("");
 
       await adminDictionaryAPI.deleteEntry(entry.id);
-
       setSuccess(`Đã xóa từ "${entry.word}".`);
       await loadEntries();
     } catch (err) {
-      setError(err.message || 'Xóa từ vựng thất bại.');
+      setError(err.message || "Xóa từ vựng thất bại.");
     } finally {
       setSaving(false);
     }
   };
 
+  const pageCount = totalPages || (entries.length > 0 ? 1 : 0);
+
   return (
-    <main className={styles.page}>
-      <section className={styles.header}>
-        <div>
-          <p className={styles.eyebrow}>Admin / Dictionary</p>
-          <h1>{pageTitle}</h1>
-          <p>
-            Quản lý dữ liệu trong bảng <strong>dictionary_entries</strong>.
-            Tổng số: <strong>{totalElements}</strong> từ.
-          </p>
-        </div>
+    <div className={shared.page}>
+      <AdminPageHeader
+        title={pageTitle}
+        subtitle="Quản lý nội dung từ điển, nghĩa tiếng Việt, phát âm, ví dụ và các dạng từ."
+      >
+        <button
+          type="button"
+          className={shared.secondaryButton}
+          onClick={handleRefresh}
+          disabled={loading || saving}
+        >
+          <RefreshIcon size={18} />
+          Làm mới
+        </button>
 
-        <form className={styles.generateBox} onSubmit={handleGenerate}>
-          <input
-            value={generateKeyword}
-            onChange={(e) => setGenerateKeyword(e.target.value)}
-            placeholder="Nhập từ mới, ví dụ: reimbursement"
-          />
+        <button
+          type="button"
+          className={shared.primaryButton}
+          onClick={openCreateModal}
+          disabled={saving}
+        >
+          <BookIcon size={18} />
+          Thêm từ mới
+        </button>
+      </AdminPageHeader>
 
-          <button type="submit" disabled={saving}>
-            {saving ? 'Đang tạo...' : 'Generate'}
-          </button>
-        </form>
-      </section>
+      {error ? <div className={shared.errorBox}>{error}</div> : null}
+      {success ? <div className={shared.resultSummary}>{success}</div> : null}
 
-      <section className={styles.toolbar}>
-        <form className={styles.searchForm} onSubmit={handleSearchSubmit}>
-          <input
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            placeholder="Tìm theo keyword_normalized hoặc word..."
-          />
+      <section className={shared.panel}>
+        <form className={shared.toolbar} onSubmit={handleSearchSubmit}>
+          <div className={shared.searchWrap}>
+            <span className={shared.searchIcon}>
+              <SearchIcon size={19} />
+            </span>
 
-          <button type="submit">Tìm</button>
+            <input
+              className={shared.searchInput}
+              value={keywordInput}
+              onChange={(event) => setKeywordInput(event.target.value)}
+              placeholder="Tìm theo từ tiếng Anh hoặc nghĩa tiếng Việt..."
+            />
+          </div>
 
-          <button
-            type="button"
-            className={styles.ghostButton}
-            onClick={() => {
-              setKeyword('');
+          <select
+            className={shared.select}
+            value={size}
+            onChange={(event) => {
               setPage(0);
+              setSize(Number(event.target.value));
             }}
           >
-            Xóa lọc
-          </button>
+            <option value={10}>10 dòng</option>
+            <option value={20}>20 dòng</option>
+            <option value={50}>50 dòng</option>
+          </select>
         </form>
 
-        <select
-          value={size}
-          onChange={(e) => {
-            setSize(Number(e.target.value));
-            setPage(0);
-          }}
-        >
-          <option value={10}>10 dòng</option>
-          <option value={20}>20 dòng</option>
-          <option value={50}>50 dòng</option>
-        </select>
-      </section>
-
-      {error ? <div className={styles.errorBox}>{error}</div> : null}
-      {success ? <div className={styles.successBox}>{success}</div> : null}
-
-      <section className={styles.tableCard}>
-        <div className={styles.tableHeader}>
-          <h2>Danh sách từ vựng</h2>
-
-          <span>
-            Trang {totalPages === 0 ? 0 : page + 1}/{totalPages}
-          </span>
+        <div className={shared.resultSummary}>
+          Hiển thị <strong>{entries.length}</strong> /{" "}
+          <strong>{totalElements}</strong> từ vựng
         </div>
 
-        <div className={styles.tableScroll}>
-          <table className={styles.table}>
+        <div className={shared.tableWrap}>
+          <table className={shared.table}>
             <thead>
               <tr>
                 <th>id</th>
@@ -293,13 +317,13 @@ const AdminDictionaryPage = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="17" className={styles.emptyCell}>
+                  <td colSpan={17} className={shared.emptyState}>
                     Đang tải dữ liệu...
                   </td>
                 </tr>
               ) : entries.length === 0 ? (
                 <tr>
-                  <td colSpan="17" className={styles.emptyCell}>
+                  <td colSpan={17} className={shared.emptyState}>
                     Chưa có dữ liệu.
                   </td>
                 </tr>
@@ -307,9 +331,9 @@ const AdminDictionaryPage = () => {
                 entries.map((entry) => (
                   <tr key={entry.id}>
                     <td>{entry.id}</td>
-                    <td>{entry.keywordNormalized}</td>
-                    <td className={styles.strongCell}>{entry.word}</td>
-                    <td>{entry.phonetic}</td>
+                    <td>{entry.keywordNormalized || "—"}</td>
+                    <td className={styles.strongCell}>{entry.word || "—"}</td>
+                    <td>{entry.phonetic || "—"}</td>
                     <td title={entry.audioUrl}>{truncate(entry.audioUrl, 44)}</td>
                     <td title={entry.vietnameseMeaning}>
                       {truncate(entry.vietnameseMeaning, 70)}
@@ -328,17 +352,21 @@ const AdminDictionaryPage = () => {
                     </td>
                     <td title={entry.exampleEn}>{truncate(entry.exampleEn, 70)}</td>
                     <td title={entry.exampleVi}>{truncate(entry.exampleVi, 70)}</td>
-                    <td>{entry.source}</td>
+                    <td>{entry.source || "—"}</td>
                     <td>
                       <span className={styles.statusPill}>
-                        {entry.status || 'N/A'}
+                        {entry.status || "—"}
                       </span>
                     </td>
                     <td>{formatDate(entry.createdAt)}</td>
                     <td>{formatDate(entry.updatedAt)}</td>
                     <td>
                       <div className={styles.actions}>
-                        <button type="button" onClick={() => openEditModal(entry)}>
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(entry)}
+                          disabled={saving}
+                        >
                           Sửa
                         </button>
 
@@ -346,6 +374,7 @@ const AdminDictionaryPage = () => {
                           type="button"
                           className={styles.deleteButton}
                           onClick={() => handleDelete(entry)}
+                          disabled={saving}
                         >
                           Xóa
                         </button>
@@ -358,183 +387,184 @@ const AdminDictionaryPage = () => {
           </table>
         </div>
 
-        <div className={styles.pagination}>
-          <button
-            type="button"
-            disabled={page <= 0}
-            onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-          >
-            Trang trước
-          </button>
+        <div className={shared.panelFooter}>
+          <div className={shared.footerInfo}>
+            Trang <strong>{pageCount === 0 ? 0 : page + 1}</strong> /{" "}
+            <strong>{pageCount}</strong>
+          </div>
 
-          <span>
-            {totalPages === 0 ? 0 : page + 1} / {totalPages}
-          </span>
-
-          <button
-            type="button"
-            disabled={totalPages === 0 || page >= totalPages - 1}
-            onClick={() =>
-              setPage((prev) => Math.min(prev + 1, totalPages - 1))
-            }
-          >
-            Trang sau
-          </button>
+          <Pagination
+            currentPage={page + 1}
+            totalPages={pageCount}
+            onPageChange={(nextPage) => setPage(nextPage - 1)}
+          />
         </div>
       </section>
 
-      {selectedEntry ? (
-        <div className={styles.modalBackdrop}>
-          <form className={styles.modal} onSubmit={handleUpdate}>
-            <div className={styles.modalHeader}>
-              <div>
-                <p className={styles.eyebrow}>Edit dictionary entry</p>
-                <h2>{selectedEntry.word}</h2>
-              </div>
+      <AdminModal
+        open={Boolean(selectedEntry)}
+        size="lg"
+        title={selectedEntry?.id ? "Chỉnh sửa từ vựng" : "Thêm từ mới"}
+        description="Cập nhật thông tin từ điển và các trường dữ liệu liên quan."
+        onClose={() => {
+          if (!saving) closeModal();
+        }}
+        footer={
+          <>
+            <button
+              type="button"
+              className={shared.secondaryButton}
+              onClick={closeModal}
+              disabled={saving}
+            >
+              Hủy
+            </button>
 
-              <button type="button" onClick={closeEditModal}>
-                Đóng
-              </button>
-            </div>
+            <button
+              type="submit"
+              form="dictionary-form"
+              className={shared.primaryButton}
+              disabled={saving}
+            >
+              {saving ? "Đang lưu..." : "Lưu thay đổi"}
+            </button>
+          </>
+        }
+      >
+        <form id="dictionary-form" onSubmit={handleUpdate} className={styles.form}>
+          <div className={styles.formGrid}>
+            <label>
+              keyword_normalized
+              <input
+                value={form.keywordNormalized}
+                onChange={(event) =>
+                  updateFormValue("keywordNormalized", event.target.value)
+                }
+              />
+            </label>
 
-            <div className={styles.formGrid}>
-              <label>
-                keyword_normalized
-                <input
-                  value={form.keywordNormalized}
-                  onChange={(e) =>
-                    updateFormValue('keywordNormalized', e.target.value)
-                  }
-                />
-              </label>
+            <label>
+              word
+              <input
+                value={form.word}
+                onChange={(event) => updateFormValue("word", event.target.value)}
+              />
+            </label>
 
-              <label>
-                word
-                <input
-                  value={form.word}
-                  onChange={(e) => updateFormValue('word', e.target.value)}
-                />
-              </label>
+            <label>
+              phonetic
+              <input
+                value={form.phonetic}
+                onChange={(event) =>
+                  updateFormValue("phonetic", event.target.value)
+                }
+              />
+            </label>
 
-              <label>
-                phonetic
-                <input
-                  value={form.phonetic}
-                  onChange={(e) => updateFormValue('phonetic', e.target.value)}
-                />
-              </label>
+            <label>
+              audio_url
+              <input
+                value={form.audioUrl}
+                onChange={(event) =>
+                  updateFormValue("audioUrl", event.target.value)
+                }
+              />
+            </label>
 
-              <label>
-                audio_url
-                <input
-                  value={form.audioUrl}
-                  onChange={(e) => updateFormValue('audioUrl', e.target.value)}
-                />
-              </label>
+            <label>
+              source
+              <input
+                value={form.source}
+                onChange={(event) => updateFormValue("source", event.target.value)}
+              />
+            </label>
 
-              <label>
-                source
-                <input
-                  value={form.source}
-                  onChange={(e) => updateFormValue('source', e.target.value)}
-                />
-              </label>
+            <label>
+              status
+              <select
+                value={form.status}
+                onChange={(event) => updateFormValue("status", event.target.value)}
+              >
+                <option value="AUTO_GENERATED">AUTO_GENERATED</option>
+                <option value="REVIEWED">REVIEWED</option>
+                <option value="DISABLED">DISABLED</option>
+              </select>
+            </label>
+          </div>
 
-              <label>
-                status
-                <select
-                  value={form.status}
-                  onChange={(e) => updateFormValue('status', e.target.value)}
-                >
-                  <option value="AUTO_GENERATED">AUTO_GENERATED</option>
-                  <option value="REVIEWED">REVIEWED</option>
-                  <option value="DISABLED">DISABLED</option>
-                </select>
-              </label>
-            </div>
+          <div className={styles.textareaGrid}>
+            <label>
+              vietnamese_meaning
+              <textarea
+                value={form.vietnameseMeaning}
+                onChange={(event) =>
+                  updateFormValue("vietnameseMeaning", event.target.value)
+                }
+              />
+            </label>
 
-            <div className={styles.textareaGrid}>
-              <label>
-                vietnamese_meaning
-                <textarea
-                  value={form.vietnameseMeaning}
-                  onChange={(e) =>
-                    updateFormValue('vietnameseMeaning', e.target.value)
-                  }
-                />
-              </label>
+            <label>
+              english_meaning
+              <textarea
+                value={form.englishMeaning}
+                onChange={(event) =>
+                  updateFormValue("englishMeaning", event.target.value)
+                }
+              />
+            </label>
 
-              <label>
-                english_meaning
-                <textarea
-                  value={form.englishMeaning}
-                  onChange={(e) =>
-                    updateFormValue('englishMeaning', e.target.value)
-                  }
-                />
-              </label>
+            <label>
+              synonyms_json
+              <textarea
+                value={form.synonymsJson}
+                onChange={(event) =>
+                  updateFormValue("synonymsJson", event.target.value)
+                }
+              />
+            </label>
 
-              <label>
-                synonyms_json
-                <textarea
-                  value={form.synonymsJson}
-                  onChange={(e) =>
-                    updateFormValue('synonymsJson', e.target.value)
-                  }
-                />
-              </label>
+            <label>
+              word_types_json
+              <textarea
+                value={form.wordTypesJson}
+                onChange={(event) =>
+                  updateFormValue("wordTypesJson", event.target.value)
+                }
+              />
+            </label>
 
-              <label>
-                word_types_json
-                <textarea
-                  value={form.wordTypesJson}
-                  onChange={(e) =>
-                    updateFormValue('wordTypesJson', e.target.value)
-                  }
-                />
-              </label>
+            <label>
+              word_forms_json
+              <textarea
+                value={form.wordFormsJson}
+                onChange={(event) =>
+                  updateFormValue("wordFormsJson", event.target.value)
+                }
+              />
+            </label>
 
-              <label>
-                word_forms_json
-                <textarea
-                  value={form.wordFormsJson}
-                  onChange={(e) =>
-                    updateFormValue('wordFormsJson', e.target.value)
-                  }
-                />
-              </label>
+            <label>
+              example_en
+              <textarea
+                value={form.exampleEn}
+                onChange={(event) =>
+                  updateFormValue("exampleEn", event.target.value)
+                }
+              />
+            </label>
 
-              <label>
-                example_en
-                <textarea
-                  value={form.exampleEn}
-                  onChange={(e) => updateFormValue('exampleEn', e.target.value)}
-                />
-              </label>
-
-              <label>
-                example_vi
-                <textarea
-                  value={form.exampleVi}
-                  onChange={(e) => updateFormValue('exampleVi', e.target.value)}
-                />
-              </label>
-            </div>
-
-            <div className={styles.modalFooter}>
-              <button type="button" onClick={closeEditModal}>
-                Hủy
-              </button>
-
-              <button type="submit" disabled={saving}>
-                {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
-              </button>
-            </div>
-          </form>
-        </div>
-      ) : null}
-    </main>
+            <label>
+              example_vi
+              <textarea
+                value={form.exampleVi}
+                onChange={(event) =>
+                  updateFormValue("exampleVi", event.target.value)
+                }
+              />
+            </label>
+          </div>
+        </form>
+      </AdminModal>
+    </div>
   );
-};
-
-export default AdminDictionaryPage;
+}
