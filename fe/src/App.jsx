@@ -15,6 +15,7 @@ import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import ToeicPractice from './pages/ToeicPractice';
 import ToeicResult from './pages/ToeicResult';
+import ToeicExamDetail from './pages/ToeicExamDetail';
 
 import AdminRoute from './admin/AdminRoute';
 import AdminLayout from './admin/AdminLayout';
@@ -140,6 +141,7 @@ function App() {
           <Route path="/dictionary" element={<Dictionary />} />
 
           <Route path="/exams/toeic" element={<ToeicExams />} />
+          <Route path="/exams/toeic/:examId" element={<ToeicExamDetail />} />
 
           <Route
             path="/practice/toeic/:testId"

@@ -24,6 +24,10 @@
   box-sizing: border-box;
 }
 
+.practicePageCompact {
+  --top-bar-height: 92px;
+}
+
 /* =========================
    TOP FIXED AUDIO BAR
 ========================= */
@@ -54,6 +58,12 @@
   grid-template-columns: 92px minmax(0, 1fr) 112px;
   align-items: center;
   gap: 12px;
+}
+
+.examBarControlsCompact {
+  grid-template-columns: 92px 112px;
+  grid-template-areas: "back submit";
+  justify-content: space-between;
 }
 
 .backButton {
@@ -1414,10 +1424,20 @@
     --side-nav-width: 100%;
   }
 
+  .practicePageCompact {
+    --top-bar-height: 92px;
+  }
+
   .examBarControls {
     grid-template-columns: 92px minmax(0, 1fr) 112px;
     grid-template-areas:
       "back audio submit";
+  }
+
+  .examBarControlsCompact {
+    grid-template-columns: 92px 112px;
+    grid-template-areas: "back submit";
+    justify-content: space-between;
   }
 
   .backButton {
@@ -1464,6 +1484,10 @@
     --top-bar-height: 210px;
   }
 
+  .practicePageCompact {
+    --top-bar-height: 92px;
+  }
+
   .examBarInner,
   .bodyLayout {
     padding-left: 16px;
@@ -1476,6 +1500,10 @@
       "back submit"
       "audio audio";
     justify-content: space-between;
+  }
+
+  .examBarControlsCompact {
+    grid-template-areas: "back submit";
   }
 
   .submitNotice {
@@ -1531,6 +1559,10 @@
 @media (max-width: 640px) {
   .practicePage {
     --top-bar-height: 220px;
+  }
+
+  .practicePageCompact {
+    --top-bar-height: 92px;
   }
 
   .questionNavigator {

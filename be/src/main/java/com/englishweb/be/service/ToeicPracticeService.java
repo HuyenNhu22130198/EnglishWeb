@@ -15,7 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -29,12 +31,20 @@ public class ToeicPracticeService {
 
     @Transactional(readOnly = true)
     public ToeicPracticeResponse getPracticeExam(Integer examId) {
+        return getPracticeExam(examId, List.of());
+    }
+
+    @Transactional(readOnly = true)
+    public ToeicPracticeResponse getPracticeExam(Integer examId, List<Integer> parts) {
         ToeicExam exam = toeicExamRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đề TOEIC!"));
+
+        Set<Integer> selectedParts = normalizeParts(parts);
 
         List<ToeicPracticeResponse.GroupResponse> groups = toeicGroupRepository
                 .findByExam_IdOrderByPartNoAscGroupNoAscIdAsc(examId)
                 .stream()
+                .filter(group -> shouldIncludePart(group.getPartNo(), selectedParts))
                 .map(this::toGroupResponse)
                 .toList();
 
@@ -80,6 +90,26 @@ public class ToeicPracticeService {
                 .materials(materials)
                 .questions(questions)
                 .build();
+    }
+
+    private Set<Integer> normalizeParts(List<Integer> parts) {
+        if (parts == null || parts.isEmpty()) {
+            return Set.of();
+        }
+
+        Set<Integer> normalizedParts = new LinkedHashSet<>();
+
+        for (Integer part : parts) {
+            if (part != null && part >= 1 && part <= 7) {
+                normalizedParts.add(part);
+            }
+        }
+
+        return normalizedParts;
+    }
+
+    private boolean shouldIncludePart(Integer partNo, Set<Integer> selectedParts) {
+        return selectedParts.isEmpty() || selectedParts.contains(partNo);
     }
 
     private ToeicPracticeResponse.MaterialResponse toMaterialResponse(ToeicGroupMaterial material) {

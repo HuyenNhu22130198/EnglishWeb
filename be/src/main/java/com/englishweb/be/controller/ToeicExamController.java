@@ -38,9 +38,10 @@ public class ToeicExamController {
 
     @GetMapping("/{examId}/practice")
     public ResponseEntity<ApiResponse<ToeicPracticeResponse>> getPracticeExam(
-            @PathVariable Integer examId
+            @PathVariable Integer examId,
+            @RequestParam(required = false) List<Integer> parts
     ) {
-        ToeicPracticeResponse exam = toeicPracticeService.getPracticeExam(examId);
+        ToeicPracticeResponse exam = toeicPracticeService.getPracticeExam(examId, parts);
 
         return ResponseEntity.ok(
                 ApiResponse.success("Lấy nội dung đề TOEIC thành công", exam)
@@ -50,6 +51,7 @@ public class ToeicExamController {
     @PostMapping("/{examId}/submit")
     public ResponseEntity<ApiResponse<ToeicResultResponse>> submitExam(
             @PathVariable Integer examId,
+            @RequestParam(required = false) List<Integer> parts,
             @RequestBody ToeicSubmitRequest request,
             Authentication authentication
     ) {
@@ -58,6 +60,7 @@ public class ToeicExamController {
         ToeicResultResponse result = toeicSubmitService.submitExam(
                 examId,
                 userEmail,
+                parts,
                 request
         );
 

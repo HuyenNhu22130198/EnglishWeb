@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { getStoredToken } from '../services/authService';
 import { toeicAPI } from '../services/toeicService';
 import styles from './ToeicPractice.module.css';
@@ -293,6 +293,7 @@ const removeAudioMarkersFromStorage = (examId) => {
 const ToeicPractice = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const audioRef = useRef(null);
   const suppressAudioMarkerPersist = useRef(false);
 
@@ -324,13 +325,23 @@ const ToeicPractice = () => {
   const [activeHighlightColor, setActiveHighlightColor] = useState('yellow');
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [reviewQuestionIds, setReviewQuestionIds] = useState(() => new Set());
+  const selectedParts = useMemo(() => {
+    const rawParts = searchParams.getAll('parts').flatMap((value) => value.split(','));
+    const normalizedParts = rawParts
+      .map((value) => Number(value))
+      .filter((part) => Number.isInteger(part) && part >= 1 && part <= 7);
 
-  const fetchPracticeExam = async () => {
+    return Array.from(new Set(normalizedParts)).sort((a, b) => a - b);
+  }, [searchParams]);
+  const shouldShowAudioBar =
+    selectedParts.length === 0 || selectedParts.some((part) => part >= 1 && part <= 4);
+
+  const fetchPracticeExam = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
 
-      const response = await toeicAPI.getToeicPractice(testId);
+      const response = await toeicAPI.getToeicPractice(testId, selectedParts);
 
       if (response.success) {
         setExamData(response.data);
@@ -344,11 +355,11 @@ const ToeicPractice = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedParts, testId]);
 
   useEffect(() => {
     fetchPracticeExam();
-  }, [testId]);
+  }, [fetchPracticeExam]);
 
   useEffect(() => {
     setElapsedSeconds(0);
@@ -729,7 +740,7 @@ const ToeicPractice = () => {
         selectedLabel,
       }));
 
-      const response = await toeicAPI.submitToeicExam(testId, answerPayload);
+      const response = await toeicAPI.submitToeicExam(testId, answerPayload, selectedParts);
 
       if (response.success) {
         const resultWithElapsedTime = {
@@ -851,10 +862,18 @@ const ToeicPractice = () => {
   }
 
   return (
-    <main className={styles.practicePage}>
+    <main
+      className={`${styles.practicePage} ${
+        shouldShowAudioBar ? '' : styles.practicePageCompact
+      }`}
+    >
       <section className={styles.stickyExamBar}>
         <div className={styles.examBarInner}>
-          <div className={styles.examBarControls}>
+          <div
+            className={`${styles.examBarControls} ${
+              shouldShowAudioBar ? '' : styles.examBarControlsCompact
+            }`}
+          >
             <button
               type="button"
               className={styles.backButton}
@@ -863,104 +882,106 @@ const ToeicPractice = () => {
               ← Kho đề
             </button>
 
- <div className={styles.audioDock}>
-            <div className={styles.audioBox}>
-              {examData.listeningAudioUrl ? (
-                <>
-                  <audio
-                    ref={audioRef}
-                    controls
-                    src={examData.listeningAudioUrl}
-                    className={styles.audioPlayer}
-                    onLoadedMetadata={handleAudioLoadedMetadata}
-                    onTimeUpdate={handleAudioTimeUpdate}
-                  >
-                    Trình duyệt của bạn không hỗ trợ audio.
-                  </audio>
+            {shouldShowAudioBar && (
+              <div className={styles.audioDock}>
+                <div className={styles.audioBox}>
+                  {examData.listeningAudioUrl ? (
+                    <>
+                      <audio
+                        ref={audioRef}
+                        controls
+                        src={examData.listeningAudioUrl}
+                        className={styles.audioPlayer}
+                        onLoadedMetadata={handleAudioLoadedMetadata}
+                        onTimeUpdate={handleAudioTimeUpdate}
+                      >
+                        Trình duyệt của bạn không hỗ trợ audio.
+                      </audio>
 
-                  <div className={styles.audioMarkerTopBar}>
-                    {/* <span className={styles.audioTimeText}>
-                      {formatAudioTime(audioCurrentTime)} / {formatAudioTime(audioDuration)}
-                    </span> */}
+                      <div className={styles.audioMarkerTopBar}>
+                        {/* <span className={styles.audioTimeText}>
+                          {formatAudioTime(audioCurrentTime)} / {formatAudioTime(audioDuration)}
+                        </span> */}
 
-                    <button
-                      type="button"
-                      className={styles.audioMarkerButton}
-                      onClick={handleAddAudioMarker}
-                      disabled={!audioDuration}
-                    >
-                      Đánh dấu
-                    </button>
-                  </div>
+                        <button
+                          type="button"
+                          className={styles.audioMarkerButton}
+                          onClick={handleAddAudioMarker}
+                          disabled={!audioDuration}
+                        >
+                          Đánh dấu
+                        </button>
+                      </div>
 
-                  <div className={styles.audioMarkerPanelWrap}>
-                    <button
-                      type="button"
-                      className={styles.audioMarkerPanelToggle}
-                      onClick={() => setIsAudioMarkerPanelOpen((prev) => !prev)}
-                      aria-expanded={isAudioMarkerPanelOpen}
-                    >
-                      <span>Đã đánh dấu {audioMarkers.length}</span>
-                      <strong>
-                        {isAudioMarkerPanelOpen ? 'Thu gọn' : 'Mở rộng'}
-                      </strong>
-                    </button>
+                      <div className={styles.audioMarkerPanelWrap}>
+                        <button
+                          type="button"
+                          className={styles.audioMarkerPanelToggle}
+                          onClick={() => setIsAudioMarkerPanelOpen((prev) => !prev)}
+                          aria-expanded={isAudioMarkerPanelOpen}
+                        >
+                          <span>Đã đánh dấu {audioMarkers.length}</span>
+                          <strong>
+                            {isAudioMarkerPanelOpen ? 'Thu gọn' : 'Mở rộng'}
+                          </strong>
+                        </button>
 
-                    {markerStorageWarning && (
-                      <p className={styles.audioStorageWarning}>{markerStorageWarning}</p>
-                    )}
+                        {markerStorageWarning && (
+                          <p className={styles.audioStorageWarning}>{markerStorageWarning}</p>
+                        )}
 
-                    {isAudioMarkerPanelOpen && (
-                      <div className={styles.audioMarkerPanel}>
-                        <div className={styles.audioMarkerPanelHeader}>
-                          <span>Danh sách mốc thời gian</span>
-                          {audioMarkers.length > 0 && (
-                            <button
-                              type="button"
-                              className={styles.audioMarkerPanelClear}
-                              onClick={clearAudioMarkers}
-                            >
-                              Xóa tất cả
-                            </button>
-                          )}
-                        </div>
-
-                        {audioMarkers.length > 0 ? (
-                          <div className={styles.audioMarkerGrid}>
-                            {audioMarkers.map((marker, index) => (
-                              <div key={marker.id} className={styles.audioMarkerRow}>
+                        {isAudioMarkerPanelOpen && (
+                          <div className={styles.audioMarkerPanel}>
+                            <div className={styles.audioMarkerPanelHeader}>
+                              <span>Danh sách mốc thời gian</span>
+                              {audioMarkers.length > 0 && (
                                 <button
                                   type="button"
-                                  className={styles.audioMarkerJump}
-                                  onClick={() => handleJumpToMarker(marker.time)}
-                                  title="Bấm để chuyển đến mốc"
+                                  className={styles.audioMarkerPanelClear}
+                                  onClick={clearAudioMarkers}
                                 >
-                                  {index + 1}. {formatAudioTime(marker.time)}
+                                  Xóa tất cả
                                 </button>
+                              )}
+                            </div>
 
-                                <button
-                                  type="button"
-                                  className={styles.audioMarkerDelete}
-                                  onClick={() => handleRemoveAudioMarker(marker.id)}
-                                  aria-label={`Xóa mốc ${index + 1}`}
-                                >
-                                  ×
-                                </button>
+                            {audioMarkers.length > 0 ? (
+                              <div className={styles.audioMarkerGrid}>
+                                {audioMarkers.map((marker, index) => (
+                                  <div key={marker.id} className={styles.audioMarkerRow}>
+                                    <button
+                                      type="button"
+                                      className={styles.audioMarkerJump}
+                                      onClick={() => handleJumpToMarker(marker.time)}
+                                      title="Bấm để chuyển đến mốc"
+                                    >
+                                      {index + 1}. {formatAudioTime(marker.time)}
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      className={styles.audioMarkerDelete}
+                                      onClick={() => handleRemoveAudioMarker(marker.id)}
+                                      aria-label={`Xóa mốc ${index + 1}`}
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
+                            ) : (
+                              <p className={styles.audioMarkersEmpty}>Chưa có đánh dấu nào.</p>
+                            )}
                           </div>
-                        ) : (
-                          <p className={styles.audioMarkersEmpty}>Chưa có đánh dấu nào.</p>
                         )}
                       </div>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <p>Chưa có audio cho đề này.</p>
-              )}
-            </div>
-          </div>
+                    </>
+                  ) : (
+                    <p>Chưa có audio cho đề này.</p>
+                  )}
+                </div>
+              </div>
+            )}
             
 
             <button
