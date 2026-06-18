@@ -5,9 +5,11 @@ import styles from './ToeicResult.module.css';
 
 const normalizeText = (value) => (value || '').replace(/\r\n/g, '\n').trim();
 const AUDIO_MARKER_STORAGE_PREFIX = 'toeic-practice-audio-markers';
+const ELAPSED_TIME_STORAGE_PREFIX = 'toeic-practice-elapsed-time';
 const MARKER_STORAGE_NAMES = ['sessionStorage', 'localStorage'];
 
 const getAudioMarkerStorageKey = (examId) => `${AUDIO_MARKER_STORAGE_PREFIX}:${examId}`;
+const getElapsedTimeStorageKey = (attemptId) => `${ELAPSED_TIME_STORAGE_PREFIX}:${attemptId}`;
 
 const formatAudioTime = (seconds) => {
   if (!Number.isFinite(seconds) || seconds < 0) {
@@ -19,6 +21,44 @@ const formatAudioTime = (seconds) => {
   const remainderSeconds = totalSeconds % 60;
 
   return `${minutes}:${String(remainderSeconds).padStart(2, '0')}`;
+};
+
+const formatPracticeElapsedTime = (seconds) => {
+  const totalSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
+  const minutes = Math.floor(totalSeconds / 60);
+  const remainderSeconds = totalSeconds % 60;
+
+  return `${String(minutes).padStart(2, '0')}:${String(remainderSeconds).padStart(2, '0')}`;
+};
+
+const readStoredElapsedSeconds = (attemptId) => {
+  if (!attemptId || typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const storedValue = window.sessionStorage.getItem(getElapsedTimeStorageKey(attemptId));
+    const seconds = Number(storedValue);
+
+    return Number.isFinite(seconds) && seconds >= 0 ? seconds : null;
+  } catch {
+    return null;
+  }
+};
+
+const getResultElapsedSeconds = (result, navigationElapsedSeconds, attemptId) => {
+  const candidates = [
+    navigationElapsedSeconds,
+    result?.elapsedSeconds,
+    result?.timeSpentSeconds,
+    result?.durationSeconds,
+    result?.submittedDurationSeconds,
+    readStoredElapsedSeconds(attemptId),
+  ];
+
+  const seconds = candidates.find((value) => Number.isFinite(Number(value)) && Number(value) >= 0);
+
+  return seconds == null ? null : Number(seconds);
 };
 
 const clampTime = (value, max) => Math.max(0, Math.min(value, max || 0));
@@ -35,7 +75,7 @@ const getMarkerStorage = () => {
       storage.setItem(probeKey, '1');
       storage.removeItem(probeKey);
       return storage;
-    } catch (error) {
+    } catch {
       // Try the next storage option.
     }
   }
@@ -77,26 +117,6 @@ const readAudioMarkers = (examId) => {
   } catch (error) {
     console.error('Failed to read audio markers:', error);
     return [];
-  }
-};
-
-const writeAudioMarkers = (examId, markers) => {
-  if (!examId) {
-    return false;
-  }
-
-  try {
-    const storage = getMarkerStorage();
-
-    if (!storage) {
-      return false;
-    }
-
-    storage.setItem(getAudioMarkerStorageKey(examId), JSON.stringify(markers));
-    return true;
-  } catch (error) {
-    console.error('Failed to save audio markers:', error);
-    return false;
   }
 };
 
@@ -295,7 +315,7 @@ const ToeicResult = () => {
   const [showAllSolutions, setShowAllSolutions] = useState(false);
   const [expandedQuestions, setExpandedQuestions] = useState(() => new Set());
   const [audioMarkers, setAudioMarkers] = useState(initialAudioMarkers);
-  const [isAudioMarkerPanelOpen, setIsAudioMarkerPanelOpen] = useState(true);
+  const [isAudioMarkerPanelOpen, setIsAudioMarkerPanelOpen] = useState(false);
   const [audioDuration, setAudioDuration] = useState(0);
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const [markerStorageWarning, setMarkerStorageWarning] = useState('');
@@ -391,7 +411,7 @@ const ToeicResult = () => {
     } else {
       setAudioMarkers(readAudioMarkers(result.examId));
     }
-    setIsAudioMarkerPanelOpen(true);
+    setIsAudioMarkerPanelOpen(false);
     setMarkerStorageWarning(
       getMarkerStorage()
         ? ''
@@ -408,6 +428,18 @@ const ToeicResult = () => {
       removeAudioMarkersFromStorage(result.examId);
     };
   }, [result?.examId]);
+
+  useEffect(() => {
+    if (!result || loading || typeof window === 'undefined') {
+      return;
+    }
+
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'auto',
+    });
+  }, [attemptId, result, loading]);
 
   const detailedQuestions = useMemo(() => {
     if (!result?.questionResults) return [];
@@ -428,6 +460,8 @@ const ToeicResult = () => {
   );
 
   const wrongQuestions = useMemo(() => allQuestions.filter((q) => !q.isCorrect), [allQuestions]);
+  const elapsedSeconds = getResultElapsedSeconds(result, location.state?.elapsedSeconds, attemptId);
+  const elapsedTimeText = elapsedSeconds == null ? '--:--' : formatPracticeElapsedTime(elapsedSeconds);
 
   const handleScrollToQuestion = (questionId) => {
     const element = document.getElementById(`question-${questionId}`);
@@ -488,6 +522,14 @@ const ToeicResult = () => {
     const nextTime = clampTime(markerTime, audioDuration);
     audioRef.current.currentTime = nextTime;
     setAudioCurrentTime(nextTime);
+  };
+
+  const handleScrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'smooth',
+    });
   };
 
   const renderTranscriptPlain = (transcript) => {
@@ -588,12 +630,26 @@ const ToeicResult = () => {
   return (
     <main className={styles.resultPage}>
       <section className={styles.heroResult}>
-        <div>
+        <div className={styles.heroResultContent}>
           <span className={styles.eyebrow}>Kết quả TOEIC</span>
           <h1>{result.examName}</h1>
           <p>
             Bạn đã hoàn thành bài thi. 
           </p>
+
+          <div className={styles.actions}>
+            <button type="button" onClick={handleBackToExamList}>
+              Quay lại kho đề
+            </button>
+
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={handleRedoExam}
+            >
+              Làm lại đề này
+            </button>
+          </div>
         </div>
 
         <div className={styles.totalScoreCard}>
@@ -626,6 +682,12 @@ const ToeicResult = () => {
           <span>Sai câu</span>
           <strong>{wrongQuestions.length}</strong>
           <p>Các câu cần xem lại</p>
+        </article>
+
+        <article className={styles.scoreCard}>
+          <span>Thời gian làm bài</span>
+          <strong>{elapsedTimeText}</strong>
+          <p>Đếm từ 00:00</p>
         </article>
       </section>
 
@@ -700,8 +762,11 @@ const ToeicResult = () => {
       <section className={styles.contentLayout}>
         <aside className={styles.questionNavigator}>
           <div className={styles.navigatorHeader}>
-            <h3>Đi nhanh</h3>
-            <p>Chạm vào số câu để nhảy đến phần lời giải tương ứng.</p>
+            <h3>Bảng câu hỏi</h3>
+            <div className={styles.navigatorTimer} aria-label={`Thời gian làm bài ${elapsedTimeText}`}>
+              <span className={styles.navigatorTimerLabel}>Thời gian</span>
+              <span className={styles.navigatorTimerValue}>{elapsedTimeText}</span>
+            </div>
           </div>
 
           {groupedParts.map((part) => (
@@ -835,19 +900,15 @@ const ToeicResult = () => {
         </section>
       </section>
 
-      <div className={styles.actions}>
-        <button type="button" onClick={handleBackToExamList}>
-          Quay lại kho đề
-        </button>
-
-        <button
-          type="button"
-          className={styles.secondaryButton}
-          onClick={handleRedoExam}
-        >
-          Làm lại đề này
-        </button>
-      </div>
+      <button
+        type="button"
+        className={styles.scrollTopButton}
+        onClick={handleScrollToTop}
+        aria-label="Lên đầu trang"
+        title="Lên đầu trang"
+      >
+        ↑
+      </button>
     </main>
   );
 };

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { getStoredToken } from '../services/authService';
 import { toeicAPI } from '../services/toeicService';
 import styles from './ToeicPractice.module.css';
 
@@ -21,22 +22,9 @@ const getMaterialQuestionNo = (material) => {
 
   return match ? Number(match[1]) : null;
 };
-const getStoredAuthToken = () => {
-  try {
-    const rawUser = window.localStorage.getItem('user');
-
-    if (rawUser) {
-      const user = JSON.parse(rawUser);
-      if (user?.token) return user.token;
-    }
-
-    return window.localStorage.getItem('token');
-  } catch {
-    return window.localStorage.getItem('token');
-  }
-};
 const AUDIO_MARKER_STORAGE_PREFIX = 'toeic-practice-audio-markers';
 const HIGHLIGHT_STORAGE_PREFIX = 'toeic-practice-highlights';
+const ELAPSED_TIME_STORAGE_PREFIX = 'toeic-practice-elapsed-time';
 const HIGHLIGHT_PALETTE = [
   { key: 'cyan', color: '#a5f3fc' },
   { key: 'pink', color: '#fbcfe8' },
@@ -47,6 +35,7 @@ const MARKER_STORAGE_NAMES = ['sessionStorage', 'localStorage'];
 
 const getAudioMarkerStorageKey = (examId) => `${AUDIO_MARKER_STORAGE_PREFIX}:${examId}`;
 const getHighlightStorageKey = (examId) => `${HIGHLIGHT_STORAGE_PREFIX}:${examId}`;
+const getElapsedTimeStorageKey = (attemptId) => `${ELAPSED_TIME_STORAGE_PREFIX}:${attemptId}`;
 const getHighlightColor = (colorKey) =>
   HIGHLIGHT_PALETTE.find((item) => item.key === colorKey)?.color || '#fef08a';
 const isPlainObject = (value) => !!value && typeof value === 'object' && !Array.isArray(value);
@@ -61,6 +50,14 @@ const formatAudioTime = (seconds) => {
   const remainderSeconds = totalSeconds % 60;
 
   return `${minutes}:${String(remainderSeconds).padStart(2, '0')}`;
+};
+
+const formatPracticeElapsedTime = (seconds) => {
+  const totalSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
+  const minutes = Math.floor(totalSeconds / 60);
+  const remainderSeconds = totalSeconds % 60;
+
+  return `${String(minutes).padStart(2, '0')}:${String(remainderSeconds).padStart(2, '0')}`;
 };
 
 const clampTime = (value, max) => Math.max(0, Math.min(value, max || 0));
@@ -208,7 +205,7 @@ const getMarkerStorage = () => {
       storage.setItem(probeKey, '1');
       storage.removeItem(probeKey);
       return storage;
-    } catch (error) {
+    } catch {
       // Try next storage option.
     }
   }
@@ -307,6 +304,7 @@ const ToeicPractice = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [submitNotice, setSubmitNotice] = useState(null);
   const [isAudioMarkerPanelOpen, setIsAudioMarkerPanelOpen] = useState(false);
   const [isHighlightModeEnabled, setIsHighlightModeEnabled] = useState(false);
   const [highlightToolbar, setHighlightToolbar] = useState(null);
@@ -324,6 +322,8 @@ const ToeicPractice = () => {
   const [audioMarkers, setAudioMarkers] = useState([]);
   const [highlights, setHighlights] = useState({});
   const [activeHighlightColor, setActiveHighlightColor] = useState('yellow');
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [reviewQuestionIds, setReviewQuestionIds] = useState(() => new Set());
 
   const fetchPracticeExam = async () => {
     try {
@@ -349,6 +349,23 @@ const ToeicPractice = () => {
   useEffect(() => {
     fetchPracticeExam();
   }, [testId]);
+
+  useEffect(() => {
+    setElapsedSeconds(0);
+    setReviewQuestionIds(new Set());
+  }, [testId]);
+
+  useEffect(() => {
+    if (!examData || loading) {
+      return undefined;
+    }
+
+    const timerId = window.setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+
+    return () => window.clearInterval(timerId);
+  }, [examData, loading]);
 
   useEffect(() => {
     setAudioMarkers(readAudioMarkers(testId));
@@ -444,14 +461,31 @@ const ToeicPractice = () => {
 
   const answeredCount = Object.keys(answers).length;
   const totalQuestions = examData?.totalQuestions || questions.length || 200;
-  const progressPercent =
-    totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
+  const practiceElapsedTime = formatPracticeElapsedTime(elapsedSeconds);
 
   const handleChooseAnswer = (questionId, optionLabel) => {
+    if (submitNotice) {
+      setSubmitNotice(null);
+    }
+
     setAnswers((prev) => ({
       ...prev,
       [questionId]: optionLabel,
     }));
+  };
+
+  const toggleReviewQuestion = (questionId) => {
+    setReviewQuestionIds((prev) => {
+      const next = new Set(prev);
+
+      if (next.has(questionId)) {
+        next.delete(questionId);
+      } else {
+        next.add(questionId);
+      }
+
+      return next;
+    });
   };
 
   const handleScrollToQuestion = (questionNo, partNo) => {
@@ -484,19 +518,6 @@ const ToeicPractice = () => {
 
   const handleAudioTimeUpdate = (event) => {
     setAudioCurrentTime(event.currentTarget.currentTime || 0);
-  };
-
-  const handleAudioTimelineClick = (event) => {
-    if (!audioDuration || !audioRef.current) {
-      return;
-    }
-
-    const rect = event.currentTarget.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min((event.clientX - rect.left) / rect.width, 1));
-    const targetTime = ratio * audioDuration;
-
-    audioRef.current.currentTime = targetTime;
-    setAudioCurrentTime(targetTime);
   };
 
   const handleAddAudioMarker = () => {
@@ -678,11 +699,17 @@ const ToeicPractice = () => {
 
   // Nộp bài thi và chuyển đến trang kết quả
   const handleSubmitExam = async () => {
-    const token = typeof window !== 'undefined' ? getStoredAuthToken() : null;
+    setSubmitNotice(null);
+
+    const token = typeof window !== 'undefined' ? getStoredToken() : null;
 
     if (!token) {
-      alert('Bạn cần đăng nhập để nộp bài và lưu kết quả.');
-      navigate('/login');
+      setSubmitNotice({
+        type: 'warning',
+        title: 'Bạn cần đăng nhập để nộp bài',
+        message: 'Đăng nhập giúp hệ thống lưu kết quả TOEIC và lịch sử làm bài của bạn.',
+        action: 'login',
+      });
       return;
     }
 
@@ -705,25 +732,54 @@ const ToeicPractice = () => {
       const response = await toeicAPI.submitToeicExam(testId, answerPayload);
 
       if (response.success) {
+        const resultWithElapsedTime = {
+          ...response.data,
+          elapsedSeconds,
+        };
+
+        try {
+          window.sessionStorage.setItem(
+            getElapsedTimeStorageKey(response.data.attemptId),
+            String(elapsedSeconds)
+          );
+        } catch {
+          // Result page still receives elapsedSeconds through navigation state.
+        }
+
         navigate(`/practice/toeic/result/${response.data.attemptId}`, {
           state: {
-            result: response.data,
+            result: resultWithElapsedTime,
+            elapsedSeconds,
             audioMarkers,
           },
         });
       } else {
-        alert(response.message || 'Nộp bài thất bại');
+        setSubmitNotice({
+          type: 'error',
+          title: 'Nộp bài chưa thành công',
+          message: response.message || 'Hệ thống chưa thể ghi nhận bài làm. Vui lòng thử lại.',
+        });
       }
     } catch (err) {
       if (err.status === 401 || err.status === 403) {
         window.localStorage.removeItem('token');
         window.localStorage.removeItem('user');
-        alert(err.message || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-        navigate('/login');
+        setSubmitNotice({
+          type: 'warning',
+          title: 'Phiên đăng nhập đã hết hạn',
+          message: err.message || 'Vui lòng đăng nhập lại rồi nộp bài để lưu kết quả.',
+          action: 'login',
+        });
         return;
       }
 
-      alert(err.message || 'Có lỗi xảy ra khi nộp bài');
+      setSubmitNotice({
+        type: 'error',
+        title: 'Không thể nộp bài TOEIC',
+        message:
+          err.message ||
+          'Có lỗi xảy ra khi gửi bài làm lên hệ thống. Kiểm tra kết nối và thử lại.',
+      });
       console.error('Submit TOEIC exam error:', err);
     } finally {
       setSubmitting(false);
@@ -929,11 +985,42 @@ const ToeicPractice = () => {
         </div>
       </section>
 
+      {submitNotice && (
+        <div
+          className={`${styles.submitNotice} ${
+            submitNotice.type === 'warning' ? styles.submitNoticeWarning : styles.submitNoticeError
+          }`}
+          role="alert"
+          aria-live="assertive"
+        >
+          <div className={styles.submitNoticeIcon} aria-hidden="true">
+            !
+          </div>
+          <div className={styles.submitNoticeContent}>
+            <strong>{submitNotice.title}</strong>
+            <p>{submitNotice.message}</p>
+          </div>
+          <div className={styles.submitNoticeActions}>
+            {submitNotice.action === 'login' && (
+              <button type="button" onClick={() => navigate('/login')}>
+                Đăng nhập
+              </button>
+            )}
+            <button type="button" onClick={() => setSubmitNotice(null)} aria-label="Đóng thông báo">
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
+
       <section className={styles.bodyLayout}>
         <aside className={styles.questionNavigator}>
           <div className={styles.navigatorHeader}>
             <h3>Bảng câu hỏi</h3>
-            <p>Click vào số câu để di chuyển nhanh.</p>
+            <div className={styles.navigatorTimer} aria-label={`Thời gian làm bài ${practiceElapsedTime}`}>
+              <span className={styles.navigatorTimerLabel}>Thời gian</span>
+              <span className={styles.navigatorTimerValue}>{practiceElapsedTime}</span>
+            </div>
           </div>
 
           <div className={styles.highlightTool}>
@@ -961,6 +1048,21 @@ const ToeicPractice = () => {
             </button>
           </div>
 
+          <div className={styles.navigatorLegend} aria-label="Chú thích trạng thái câu hỏi">
+            <div className={styles.legendItem}>
+              <span className={`${styles.legendDot} ${styles.legendAnswered}`} />
+              <span>Câu đã làm</span>
+            </div>
+            <div className={styles.legendItem}>
+              <span className={`${styles.legendDot} ${styles.legendUnanswered}`} />
+              <span>Câu chưa làm</span>
+            </div>
+            <div className={styles.legendItem}>
+              <span className={`${styles.legendDot} ${styles.legendReview}`} />
+              <span>Câu cần kiểm tra lại</span>
+            </div>
+          </div>
+
           {Object.entries(questionsByPart).map(([partNo, partQuestions]) => (
             <div key={partNo} className={styles.partNavBlock}>
               <button
@@ -980,6 +1082,8 @@ const ToeicPractice = () => {
                     type="button"
                     className={`${styles.numberButton} ${
                       answers[question.questionId] ? styles.answeredNumber : ''
+                    } ${
+                      reviewQuestionIds.has(question.questionId) ? styles.reviewNumber : ''
                     }`}
                     onClick={() =>
                       handleScrollToQuestion(question.questionNo, Number(partNo))
@@ -1159,9 +1263,19 @@ const ToeicPractice = () => {
                             >
                               <div className={styles.questionTop}>
                                 <div className={styles.questionTitleRow}>
-                                  <span className={styles.questionIndex}>
-                                  Câu {question.questionNo}
-                                  </span>
+                                  <button
+                                    type="button"
+                                    className={`${styles.questionIndex} ${
+                                      reviewQuestionIds.has(question.questionId)
+                                        ? styles.questionIndexMarked
+                                        : ''
+                                    }`}
+                                    onClick={() => toggleReviewQuestion(question.questionId)}
+                                    aria-pressed={reviewQuestionIds.has(question.questionId)}
+                                    title="Đánh dấu câu cần kiểm tra lại"
+                                  >
+                                    Câu {question.questionNo}
+                                  </button>
 
                                   {questionTextBlock}
                                 </div>
