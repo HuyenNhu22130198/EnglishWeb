@@ -16,6 +16,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ToeicPractice from './pages/ToeicPractice';
 import ToeicResult from './pages/ToeicResult';
 import ToeicExamDetail from './pages/ToeicExamDetail';
+import Forum from './pages/Forum';
 
 import AdminRoute from './admin/AdminRoute';
 import AdminLayout from './admin/AdminLayout';
@@ -155,6 +156,8 @@ function App() {
           <Route path="/practice/toeic/result/:attemptId" element={<ToeicResult />} />
 
           <Route path="/exams/ielts" element={<IeltsExams />} />
+
+          <Route path="/forum" element={<Forum />} />
 
           <Route
             path="/infor"

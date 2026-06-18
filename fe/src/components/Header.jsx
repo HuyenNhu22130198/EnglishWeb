@@ -6,12 +6,10 @@ import styles from './Header.module.css';
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
   const { isAuthenticated, user, logout } = useAuth();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isExamDropdownOpen, setIsExamDropdownOpen] = useState(false);
-  const [searchKeyword, setSearchKeyword] = useState('');
 
   const isExamPage =
     location.pathname.startsWith('/exams') ||
@@ -21,17 +19,6 @@ const Header = () => {
     logout();
     navigate('/');
     setIsMenuOpen(false);
-  };
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-
-    const keyword = searchKeyword.trim();
-
-    if (!keyword) return;
-
-    navigate(`/dictionary?keyword=${encodeURIComponent(keyword)}`);
-    setSearchKeyword('');
   };
 
   const closeMobileMenu = () => {
@@ -88,6 +75,15 @@ const Header = () => {
             )}
           </div>
 
+          <NavLink
+            to="/forum"
+            className={({ isActive }) =>
+              `${styles.navLink} ${isActive ? styles.activeLink : ''}`
+            }
+          >
+            Diễn đàn
+          </NavLink>
+
           {isAuthenticated && (
             <NavLink
               to="/infor"
@@ -99,16 +95,6 @@ const Header = () => {
             </NavLink>
           )}
         </div>
-
-        <form className={styles.searchBox} onSubmit={handleSearch}>
-          <span className={styles.searchIcon}>⌕</span>
-          <input
-            type="text"
-            value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            placeholder="Tìm từ vựng..."
-          />
-        </form>
 
         <div className={styles.desktopActions}>
           {isAuthenticated ? (
@@ -143,7 +129,7 @@ const Header = () => {
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="Mở menu"
         >
-          {isMenuOpen ? '✕' : '☰'}
+          {isMenuOpen ? '×' : '☰'}
         </button>
       </nav>
 
@@ -165,21 +151,15 @@ const Header = () => {
             Kho đề IELTS
           </NavLink>
 
+          <NavLink to="/forum" onClick={closeMobileMenu}>
+            Diễn đàn
+          </NavLink>
+
           {isAuthenticated && (
             <NavLink to="/infor" onClick={closeMobileMenu}>
               Trang cá nhân
             </NavLink>
           )}
-
-          <form className={styles.mobileSearchBox} onSubmit={handleSearch}>
-            <span className={styles.searchIcon}>⌕</span>
-            <input
-              type="text"
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              placeholder="Tìm từ vựng..."
-            />
-          </form>
 
           <div className={styles.mobileActions}>
             {isAuthenticated ? (
