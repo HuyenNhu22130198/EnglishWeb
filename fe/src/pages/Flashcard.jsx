@@ -1,41 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { getFlashcardNextIdKey, getFlashcardStorageKey } from '../utils/flashcardStorage';
 import styles from './Flashcard.module.css';
-
-const STORAGE_KEY = 'english-web-flashcards-v1';
-const DELETED_STARTER_KEY = 'english-web-deleted-starter-flashcards-v1';
-const EDITED_STARTER_KEY = 'english-web-edited-starter-flashcards-v1';
-const NEXT_ID_KEY = 'english-web-next-flashcard-id-v1';
-
-const starterCards = [
-  {
-    id: 'toeic-001',
-    term: 'reimbursement',
-    pronunciation: '/ˌriːɪmˈbɜːsmənt/',
-    meaning: 'sự hoàn trả',
-    example: 'Please submit your receipt for reimbursement.',
-    topic: 'TOEIC',
-    level: 'Basic',
-  },
-  {
-    id: 'toeic-002',
-    term: 'deadline',
-    pronunciation: '/ˈdedlaɪn/',
-    meaning: 'hạn chót',
-    example: 'Please submit the report before the deadline.',
-    topic: 'TOEIC',
-    level: 'Basic',
-  },
-  {
-    id: 'toeic-003',
-    term: 'inventory',
-    pronunciation: '/ˈɪnvəntri/',
-    meaning: 'hàng tồn kho; danh mục kiểm kê',
-    example: 'The store checks its inventory every Friday.',
-    topic: 'TOEIC',
-    level: 'Intermediate',
-  },
-];
 
 const emptyForm = {
   term: '',
@@ -47,6 +14,10 @@ const emptyForm = {
 };
 
 const loadStoredJson = (key, fallback) => {
+  if (!key || typeof window === 'undefined') {
+    return fallback;
+  }
+
   try {
     const raw = window.localStorage.getItem(key);
     return raw ? JSON.parse(raw) : fallback;
@@ -56,7 +27,9 @@ const loadStoredJson = (key, fallback) => {
 };
 
 const speakText = (text) => {
-  if (!text || !window.speechSynthesis) return;
+  if (!text || typeof window === 'undefined' || !window.speechSynthesis) {
+    return;
+  }
 
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
@@ -64,20 +37,9 @@ const speakText = (text) => {
   window.speechSynthesis.speak(utterance);
 };
 
-const Flashcard = () => {
-  const { user } = useAuth();
-  const [customCards, setCustomCards] = useState(() =>
-    loadStoredJson(STORAGE_KEY, [])
-  );
-  const [deletedStarterIds, setDeletedStarterIds] = useState(() =>
-    loadStoredJson(DELETED_STARTER_KEY, [])
-  );
-  const [editedStarterCards, setEditedStarterCards] = useState(() =>
-    loadStoredJson(EDITED_STARTER_KEY, {})
-  );
-  const [nextCustomId, setNextCustomId] = useState(() =>
-    loadStoredJson(NEXT_ID_KEY, 1)
-  );
+const FlashcardWorkspace = ({ user, storageKey, nextIdKey }) => {
+  const [customCards, setCustomCards] = useState(() => loadStoredJson(storageKey, []));
+  const [nextCustomId, setNextCustomId] = useState(() => loadStoredJson(nextIdKey, 1));
   const [screen, setScreen] = useState('list');
   const [selectedDeck, setSelectedDeck] = useState('');
   const [practiceIndex, setPracticeIndex] = useState(0);
@@ -88,18 +50,8 @@ const Flashcard = () => {
   const [formError, setFormError] = useState('');
   const [editingCardId, setEditingCardId] = useState('');
 
-  const authorName = user?.fullName || user?.username || 'ndangthihuyen';
-
-  const cards = useMemo(() => {
-    const starterDeck = starterCards
-      .filter((card) => !deletedStarterIds.includes(card.id))
-      .map((card) => ({
-        ...card,
-        ...(editedStarterCards[card.id] || {}),
-      }));
-
-    return [...starterDeck, ...customCards];
-  }, [customCards, deletedStarterIds, editedStarterCards]);
+  const authorName = user?.fullName || user?.username || user?.email || 'Bạn';
+  const cards = customCards;
 
   const decks = useMemo(() => {
     const deckMap = new Map();
@@ -123,37 +75,28 @@ const Flashcard = () => {
   const deckNames = useMemo(() => decks.map((deck) => deck.name), [decks]);
   const totalCards = cards.length;
   const totalDecks = decks.length;
-
   const deckCards = useMemo(
     () => cards.filter((card) => card.topic === selectedDeck),
     [cards, selectedDeck]
   );
-
   const practiceCards = deckCards;
-
   const practiceCard = practiceCards[practiceIndex] || null;
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(customCards));
-  }, [customCards]);
+    if (!storageKey || typeof window === 'undefined') {
+      return;
+    }
+
+    window.localStorage.setItem(storageKey, JSON.stringify(customCards));
+  }, [customCards, storageKey]);
 
   useEffect(() => {
-    window.localStorage.setItem(
-      DELETED_STARTER_KEY,
-      JSON.stringify(deletedStarterIds)
-    );
-  }, [deletedStarterIds]);
+    if (!nextIdKey || typeof window === 'undefined') {
+      return;
+    }
 
-  useEffect(() => {
-    window.localStorage.setItem(
-      EDITED_STARTER_KEY,
-      JSON.stringify(editedStarterCards)
-    );
-  }, [editedStarterCards]);
-
-  useEffect(() => {
-    window.localStorage.setItem(NEXT_ID_KEY, JSON.stringify(nextCustomId));
-  }, [nextCustomId]);
+    window.localStorage.setItem(nextIdKey, JSON.stringify(nextCustomId));
+  }, [nextCustomId, nextIdKey]);
 
   const resetPractice = () => {
     setPracticeIndex(0);
@@ -221,29 +164,22 @@ const Flashcard = () => {
       return;
     }
 
-    if (editingCardId) {
-      const updatedCard = {
-        term,
-        pronunciation: form.pronunciation.trim(),
-        wordType: form.wordType.trim(),
-        meaning,
-        example: form.example.trim(),
-        topic: deckName,
-        level: form.level,
-      };
+    const updatedCard = {
+      term,
+      pronunciation: form.pronunciation.trim(),
+      wordType: form.wordType.trim(),
+      meaning,
+      example: form.example.trim(),
+      topic: deckName,
+      level: form.level,
+    };
 
-      if (editingCardId.startsWith('custom-')) {
-        setCustomCards((currentCards) =>
-          currentCards.map((card) =>
-            card.id === editingCardId ? { ...card, ...updatedCard } : card
-          )
-        );
-      } else {
-        setEditedStarterCards((currentCards) => ({
-          ...currentCards,
-          [editingCardId]: updatedCard,
-        }));
-      }
+    if (editingCardId) {
+      setCustomCards((currentCards) =>
+        currentCards.map((card) =>
+          card.id === editingCardId ? { ...card, ...updatedCard } : card
+        )
+      );
 
       setSelectedDeck(deckName);
       setScreen('deck');
@@ -256,13 +192,7 @@ const Flashcard = () => {
 
     const newCard = {
       id: `custom-${nextCustomId}`,
-      term,
-      pronunciation: form.pronunciation.trim(),
-      wordType: form.wordType.trim(),
-      meaning,
-      example: form.example.trim(),
-      topic: deckName,
-      level: form.level,
+      ...updatedCard,
     };
 
     setNextCustomId((currentId) => currentId + 1);
@@ -276,8 +206,7 @@ const Flashcard = () => {
   };
 
   const handleCreateCard = (event) => {
-    const deckName =
-      deckMode === 'new' ? newDeckName.trim() : selectedDeck.trim();
+    const deckName = deckMode === 'new' ? newDeckName.trim() : selectedDeck.trim();
     saveCardToDeck(event, deckName);
   };
 
@@ -292,14 +221,7 @@ const Flashcard = () => {
       setFormError('');
     }
 
-    if (cardId.startsWith('custom-')) {
-      setCustomCards((currentCards) =>
-        currentCards.filter((card) => card.id !== cardId)
-      );
-      return;
-    }
-
-    setDeletedStarterIds((currentIds) => [...currentIds, cardId]);
+    setCustomCards((currentCards) => currentCards.filter((card) => card.id !== cardId));
   };
 
   const startEditCard = (card) => {
@@ -322,7 +244,9 @@ const Flashcard = () => {
   };
 
   const goToPracticeCard = (direction) => {
-    if (!practiceCards.length) return;
+    if (!practiceCards.length) {
+      return;
+    }
 
     setPracticeIndex((currentIndex) => {
       const nextIndex =
@@ -340,7 +264,7 @@ const Flashcard = () => {
       <h2>Thêm flashcard mới</h2>
 
       {editingCardId ? (
-        <p className={styles.editingNotice}>Dang chinh sua flashcard</p>
+        <p className={styles.editingNotice}>Đang chỉnh sửa flashcard</p>
       ) : null}
 
       {showDeckPicker ? (
@@ -424,7 +348,7 @@ const Flashcard = () => {
       <button type="submit">Thêm vào bộ thẻ</button>
       {editingCardId ? (
         <button type="button" className={styles.cancelEditButton} onClick={cancelEdit}>
-          Huy chinh sua
+          Hủy chỉnh sửa
         </button>
       ) : null}
     </form>
@@ -644,6 +568,67 @@ const Flashcard = () => {
         </div>
       </section>
     </main>
+  );
+};
+
+const Flashcard = () => {
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
+  const storageKey = useMemo(() => getFlashcardStorageKey(user), [user]);
+  const nextIdKey = useMemo(() => getFlashcardNextIdKey(user), [user]);
+
+  if (loading) {
+    return (
+      <main className={styles.flashcardPage}>
+        <section className={styles.deckSection}>
+          <div className="container">
+            <div className={styles.emptyState}>
+              <h2>Đang tải dữ liệu flashcard...</h2>
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (!user || !storageKey || !nextIdKey) {
+    return (
+      <main className={styles.flashcardPage}>
+        <section className={styles.deckSection}>
+          <div className="container">
+            <div className={styles.pageHeader}>
+              <div>
+                <p className={styles.pageKicker}>Flashcards</p>
+                <h1 className={styles.deckTitle}>Flashcard của riêng bạn</h1>
+                <p className={styles.deckSubtitle}>
+                  Đăng nhập để tạo bộ thẻ, lưu từ vựng và luyện tập theo tài khoản của bạn.
+                </p>
+              </div>
+            </div>
+
+            <div className={styles.emptyState}>
+              <h2>Bạn chưa đăng nhập</h2>
+              <button
+                type="button"
+                className={styles.practiceButton}
+                onClick={() => navigate('/login')}
+              >
+                Đăng nhập
+              </button>
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <FlashcardWorkspace
+      key={storageKey}
+      user={user}
+      storageKey={storageKey}
+      nextIdKey={nextIdKey}
+    />
   );
 };
 

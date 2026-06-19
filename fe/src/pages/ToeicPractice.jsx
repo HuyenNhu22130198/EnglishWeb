@@ -1,10 +1,11 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { getStoredToken } from '../services/authService';
+import { useAuth } from '../contexts/AuthContext';
+import { authAPI, getStoredToken } from '../services/authService';
 import { toeicAPI } from '../services/toeicService';
+import { getFlashcardStorageKey } from '../utils/flashcardStorage';
 import styles from './ToeicPractice.module.css';
 
-const FLASHCARD_STORAGE_KEY = 'english-web-flashcards-v1';
 const isImageMaterial = (material) => {
   const type = material.materialType?.toLowerCase() || '';
   return type.includes('image') || type.includes('picture') || type.includes('photo');
@@ -55,13 +56,19 @@ const loadStoredJson = (key, fallback) => {
   }
 };
 
-const loadFlashcardDeckNames = () => {
+const loadFlashcardDeckNames = (user) => {
   if (typeof window === 'undefined') {
     return ['TOEIC'];
   }
 
   try {
-    const storedCards = loadStoredJson(FLASHCARD_STORAGE_KEY, []);
+    const storageKey = getFlashcardStorageKey(user);
+
+    if (!storageKey) {
+      return ['TOEIC'];
+    }
+
+    const storedCards = loadStoredJson(storageKey, []);
     const deckNames = new Set(['TOEIC']);
 
     storedCards.forEach((card) => {
@@ -342,6 +349,7 @@ const removeAudioMarkersFromStorage = (examId) => {
 };
 
 const ToeicPractice = () => {
+  const { user } = useAuth();
   const { testId } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -366,7 +374,7 @@ const ToeicPractice = () => {
       id: 1,
       role: 'assistant',
       content:
-        'Báº¡n Ä‘ang vÆ°á»›ng cÃ¢u nÃ o? HÃ£y copy nguyÃªn cÃ¢u há»i hoáº·c Ä‘oáº¡n Ä‘Ã¡p Ã¡n báº¡n muá»‘n há»i vÃ o Ä‘Ã¢y, mÃ¬nh sáº½ há»— trá»£ báº¡n phÃ¢n tÃ­ch cÃ¡ch lÃ m nhÃ©.',
+"Bạn đang vướng câu nào? Hãy copy nguyên câu hỏi hoặc đoạn đáp án bạn muốn hỏi vào đây, mình sẽ hỗ trợ bạn phân tích cách làm nhé",
     },
   ]);
   const [audioDuration, setAudioDuration] = useState(0);
@@ -379,7 +387,7 @@ const ToeicPractice = () => {
   const [flashcardModalOpen, setFlashcardModalOpen] = useState(false);
   const [flashcardError, setFlashcardError] = useState('');
   const [flashcardDeckNames, setFlashcardDeckNames] = useState(() =>
-    loadFlashcardDeckNames()
+    loadFlashcardDeckNames(authAPI.getStoredUser())
   );
   const [flashcardForm, setFlashcardForm] = useState(emptyFlashcardForm);
   const selectedParts = useMemo(() => {
@@ -404,10 +412,10 @@ const ToeicPractice = () => {
         setExamData(response.data);
         setActivePart(response.data?.groups?.[0]?.partNo || 1);
       } else {
-        setError(response.message || 'KhÃ´ng thá»ƒ táº£i ná»™i dung Ä‘á» TOEIC');
+        setError(response.message || 'Không thể tải nội dung đề TOEIC');
       }
     } catch (err) {
-      setError(err.message || 'Lá»—i káº¿t ná»‘i Ä‘áº¿n server');
+      setError(err.message || 'Lỗi kết nối đến server');
       console.error('Fetch TOEIC practice error:', err);
     } finally {
       setLoading(false);
@@ -451,7 +459,7 @@ const ToeicPractice = () => {
     setMarkerStorageWarning(
       getMarkerStorage()
         ? ''
-        : 'TrÃ¬nh duyá»‡t Ä‘ang cháº·n lÆ°u Ä‘Ã¡nh dáº¥u. HÃ£y cho phÃ©p lÆ°u dá»¯ liá»‡u trang Ä‘á»ƒ giá»¯ danh sÃ¡ch má»‘c thá»i gian.'
+        : 'Trình duyệt đang chặn lưu đánh dấu. Hãy cho phép lưu dữ liệu trang để giữ danh sách mốc thời gian.'
     );
   }, [testId]);
 
@@ -557,10 +565,24 @@ const ToeicPractice = () => {
   };
 
   const refreshFlashcardDeckNames = useCallback(() => {
-    setFlashcardDeckNames(loadFlashcardDeckNames());
-  }, []);
+    setFlashcardDeckNames(loadFlashcardDeckNames(user));
+  }, [user]);
+
+  useEffect(() => {
+    refreshFlashcardDeckNames();
+  }, [refreshFlashcardDeckNames]);
 
   const openFlashcardModal = () => {
+    if (!user) {
+      setSubmitNotice({
+        type: 'warning',
+        title: 'Bạn cần đăng nhập để lưu flashcard',
+        message: 'Đăng nhập để tạo bộ thẻ và lưu từ vựng riêng của bạn.',
+        action: 'login',
+      });
+      return;
+    }
+
     const selectedTerm = (highlightToolbar?.text || '').trim();
 
     setFlashcardError('');
@@ -598,6 +620,11 @@ const ToeicPractice = () => {
   const saveFlashcardFromPractice = (event) => {
     event.preventDefault();
 
+    if (!user) {
+      setFlashcardError('Vui lòng đăng nhập để lưu flashcard của bạn.');
+      return;
+    }
+
     const term = flashcardForm.term.trim();
     const meaning = flashcardForm.meaning.trim();
     const deckName =
@@ -606,12 +633,19 @@ const ToeicPractice = () => {
         : flashcardForm.deckName.trim();
 
     if (!term || !meaning) {
-      setFlashcardError('Vui lÃ²ng nháº­p Ä‘áº§y Ä‘á»§ Tá»« vá»±ng vÃ  NghÄ©a tiáº¿ng Viá»‡t.');
+      setFlashcardError('Vui lòng nhập đầy đủ Từ vựng và Nghĩa tiếng Việt.');
       return;
     }
 
     if (!deckName) {
-      setFlashcardError('Vui lÃ²ng chá»n hoáº·c nháº­p tÃªn bá»™ tháº».');
+      setFlashcardError('Vui lòng chọn hoặc nhập tên bộ thẻ.');
+      return;
+    }
+
+    const storageKey = getFlashcardStorageKey(user);
+
+    if (!storageKey) {
+      setFlashcardError('Không xác định được tài khoản để lưu flashcard.');
       return;
     }
 
@@ -626,14 +660,14 @@ const ToeicPractice = () => {
       level: flashcardForm.level,
     };
 
-    const storedCards = loadStoredJson(FLASHCARD_STORAGE_KEY, []);
+    const storedCards = loadStoredJson(storageKey, []);
     const nextCards = [newCard, ...storedCards];
 
     try {
-      window.localStorage.setItem(FLASHCARD_STORAGE_KEY, JSON.stringify(nextCards));
+      window.localStorage.setItem(storageKey, JSON.stringify(nextCards));
     } catch (storageError) {
       console.error('Failed to save flashcard from practice:', storageError);
-      setFlashcardError('KhÃ´ng thá»ƒ lÆ°u flashcard lÃºc nÃ y. Vui lÃ²ng thá»­ láº¡i.');
+      setFlashcardError('Không thể lưu flashcard lúc này. Vui lòng thử lại.');
       return;
     }
 
@@ -854,7 +888,7 @@ const ToeicPractice = () => {
     strike: styles.strikeHighlight,
   };
 
-  // Ná»™p bÃ i thi vÃ  chuyá»ƒn Ä‘áº¿n trang káº¿t quáº£
+  // Nộp bài thi và chuyển đến trang kết quả
   const handleSubmitExam = async () => {
     setSubmitNotice(null);
 
@@ -863,15 +897,15 @@ const ToeicPractice = () => {
     if (!token) {
       setSubmitNotice({
         type: 'warning',
-        title: 'Báº¡n cáº§n Ä‘Äƒng nháº­p Ä‘á»ƒ ná»™p bÃ i',
-        message: 'ÄÄƒng nháº­p giÃºp há»‡ thá»‘ng lÆ°u káº¿t quáº£ TOEIC vÃ  lá»‹ch sá»­ lÃ m bÃ i cá»§a báº¡n.',
+        title: 'Bạn cần đăng nhập để nộp bài',
+        message: 'Đăng nhập giúp hệ thống lưu kết quả TOEIC và lịch sử làm bài của bạn.',
         action: 'login',
       });
       return;
     }
 
     const confirmSubmit = window.confirm(
-      `Báº¡n Ä‘Ã£ chá»n ${answeredCount}/${totalQuestions} cÃ¢u. Báº¡n cÃ³ cháº¯c cháº¯n muá»‘n ná»™p bÃ i khÃ´ng?`
+        `Bạn đã chọn ${answeredCount}/${totalQuestions} câu. Bạn có chắc chắn muốn nộp bài không?`
     );
 
     if (!confirmSubmit) {
@@ -913,8 +947,8 @@ const ToeicPractice = () => {
       } else {
         setSubmitNotice({
           type: 'error',
-          title: 'Ná»™p bÃ i chÆ°a thÃ nh cÃ´ng',
-          message: response.message || 'Há»‡ thá»‘ng chÆ°a thá»ƒ ghi nháº­n bÃ i lÃ m. Vui lÃ²ng thá»­ láº¡i.',
+          title: 'Nộp bài chưa thành công',
+          message: response.message || 'Hệ thống chưa thể ghi nhận bài làm. Vui lòng thử lại.',
         });
       }
     } catch (err) {
@@ -923,8 +957,8 @@ const ToeicPractice = () => {
         window.localStorage.removeItem('user');
         setSubmitNotice({
           type: 'warning',
-          title: 'PhiÃªn Ä‘Äƒng nháº­p Ä‘Ã£ háº¿t háº¡n',
-          message: err.message || 'Vui lÃ²ng Ä‘Äƒng nháº­p láº¡i rá»“i ná»™p bÃ i Ä‘á»ƒ lÆ°u káº¿t quáº£.',
+          title: 'Phiên đăng nhập đã hết hạn',
+          message: err.message || 'Vui lòng đăng nhập lại rồi nộp bài để lưu kết quả.',
           action: 'login',
         });
         return;
@@ -932,10 +966,10 @@ const ToeicPractice = () => {
 
       setSubmitNotice({
         type: 'error',
-        title: 'KhÃ´ng thá»ƒ ná»™p bÃ i TOEIC',
+        title: 'Không thể nộp bài TOEIC',
         message:
           err.message ||
-          'CÃ³ lá»—i xáº£y ra khi gá»­i bÃ i lÃ m lÃªn há»‡ thá»‘ng. Kiá»ƒm tra káº¿t ná»‘i vÃ  thá»­ láº¡i.',
+          'Có lỗi xảy ra khi gửi bài làm lên hệ thống. Kiểm tra kết nối và thử lại.',
       });
       console.error('Submit TOEIC exam error:', err);
     } finally {
@@ -943,7 +977,7 @@ const ToeicPractice = () => {
     }
   };
 
-  // Xá»­ lÃ½ gá»­i tin nháº¯n chat
+  // Xử lý gửi tin nhắn chat
   const handleSendChatMessage = (e) => {
     e.preventDefault();
 
@@ -963,7 +997,7 @@ const ToeicPractice = () => {
       {
         id: Date.now() + 1,
         role: 'assistant',
-        content: 'MÃ¬nh Ä‘Ã£ nháº­n cÃ¢u há»i cá»§a báº¡n.',
+        content: 'Mình đã nhận câu hỏi của bạn.',
       },
     ]);
 
@@ -974,8 +1008,8 @@ const ToeicPractice = () => {
     return (
       <main className={styles.practicePage}>
         <div className={styles.emptyState}>
-          <h2>Äang táº£i Ä‘á» thi...</h2>
-          <p>Vui lÃ²ng chá» trong giÃ¢y lÃ¡t.</p>
+          <h2>Không thể tải đề thi...</h2>
+          <p>Vui lòng chờ trong giây lát.</p>
         </div>
       </main>
     );
@@ -985,11 +1019,11 @@ const ToeicPractice = () => {
     return (
       <main className={styles.practicePage}>
         <div className={styles.emptyState}>
-          <h2>KhÃ´ng thá»ƒ táº£i Ä‘á» thi</h2>
+          <h2>Không thể tải đề thi</h2>
           <p>{error}</p>
 
           <button type="button" onClick={fetchPracticeExam}>
-            Thá»­ láº¡i
+            Thử lại
           </button>
         </div>
       </main>
@@ -1000,8 +1034,8 @@ const ToeicPractice = () => {
     return (
       <main className={styles.practicePage}>
         <div className={styles.emptyState}>
-          <h2>KhÃ´ng cÃ³ dá»¯ liá»‡u Ä‘á» thi</h2>
-          <p>Vui lÃ²ng kiá»ƒm tra láº¡i database hoáº·c API backend.</p>
+          <h2>Không có dữ liệu đề thi</h2>
+          <p>Vui lòng kiểm tra lại database hoặc API backend.</p>
         </div>
       </main>
     );
@@ -1041,7 +1075,7 @@ const ToeicPractice = () => {
                         onLoadedMetadata={handleAudioLoadedMetadata}
                         onTimeUpdate={handleAudioTimeUpdate}
                       >
-                        TrÃ¬nh duyá»‡t cá»§a báº¡n khÃ´ng há»— trá»£ audio.
+                        Trình duyệt của bạn không hỗ trợ audio.
                       </audio>
 
                       <div className={styles.audioMarkerTopBar}>
@@ -1066,9 +1100,9 @@ const ToeicPractice = () => {
                           onClick={() => setIsAudioMarkerPanelOpen((prev) => !prev)}
                           aria-expanded={isAudioMarkerPanelOpen}
                         >
-                          <span>ÄÃ£ Ä‘Ã¡nh dáº¥u {audioMarkers.length}</span>
+                          <span>Đã đánh dấu {audioMarkers.length}</span>
                           <strong>
-                            {isAudioMarkerPanelOpen ? 'Thu gá»n' : 'Má»Ÿ rá»™ng'}
+                            {isAudioMarkerPanelOpen ? 'Thu gọn' : 'Mở rộngs'}
                           </strong>
                         </button>
 
@@ -1079,14 +1113,14 @@ const ToeicPractice = () => {
                         {isAudioMarkerPanelOpen && (
                           <div className={styles.audioMarkerPanel}>
                             <div className={styles.audioMarkerPanelHeader}>
-                              <span>Danh sÃ¡ch má»‘c thá»i gian</span>
+                              <span>Danh sách mốc thời gian</span>
                               {audioMarkers.length > 0 && (
                                 <button
                                   type="button"
                                   className={styles.audioMarkerPanelClear}
                                   onClick={clearAudioMarkers}
                                 >
-                                  XÃ³a táº¥t cáº£
+                                  Xóa tất cả
                                 </button>
                               )}
                             </div>
@@ -1099,7 +1133,7 @@ const ToeicPractice = () => {
                                       type="button"
                                       className={styles.audioMarkerJump}
                                       onClick={() => handleJumpToMarker(marker.time)}
-                                      title="Báº¥m Ä‘á»ƒ chuyá»ƒn Ä‘áº¿n má»‘c"
+                                      title="Bấm để chuyển đến mốc"
                                     >
                                       {index + 1}. {formatAudioTime(marker.time)}
                                     </button>
@@ -1108,7 +1142,7 @@ const ToeicPractice = () => {
                                       type="button"
                                       className={styles.audioMarkerDelete}
                                       onClick={() => handleRemoveAudioMarker(marker.id)}
-                                      aria-label={`XÃ³a má»‘c ${index + 1}`}
+                                      aria-label={`Xóa mốc ${index + 1}`}
                                     >
                                       Ã—
                                     </button>
@@ -1116,14 +1150,14 @@ const ToeicPractice = () => {
                                 ))}
                               </div>
                             ) : (
-                              <p className={styles.audioMarkersEmpty}>ChÆ°a cÃ³ Ä‘Ã¡nh dáº¥u nÃ o.</p>
+                              <p className={styles.audioMarkersEmpty}>Chưa có đánh dấu nào.</p>
                             )}
                           </div>
                         )}
                       </div>
                     </>
                   ) : (
-                    <p>ChÆ°a cÃ³ audio cho Ä‘á» nÃ y.</p>
+                    <p>Chưa có audio cho đề này.</p>
                   )}
                 </div>
               </div>
@@ -1136,7 +1170,7 @@ const ToeicPractice = () => {
               onClick={handleSubmitExam}
               disabled={submitting}
             >
-              {submitting ? 'Äang ná»™p...' : 'Ná»™p bÃ i'}
+              {submitting ? 'Đang nộp...' : 'Nộp bài'}
             </button>
           </div>
 
@@ -1170,11 +1204,11 @@ const ToeicPractice = () => {
           <div className={styles.submitNoticeActions}>
             {submitNotice.action === 'login' && (
               <button type="button" onClick={() => navigate('/login')}>
-                ÄÄƒng nháº­p
+                Đăng nhập
               </button>
             )}
-            <button type="button" onClick={() => setSubmitNotice(null)} aria-label="ÄÃ³ng thÃ´ng bÃ¡o">
-              ÄÃ³ng
+            <button type="button" onClick={() => setSubmitNotice(null)} aria-label="Đóng thông báo">
+              Đóng
             </button>
           </div>
         </div>
@@ -1183,9 +1217,9 @@ const ToeicPractice = () => {
       <section className={styles.bodyLayout}>
         <aside className={styles.questionNavigator}>
           <div className={styles.navigatorHeader}>
-            <h3>Báº£ng cÃ¢u há»i</h3>
-            <div className={styles.navigatorTimer} aria-label={`Thá»i gian lÃ m bÃ i ${practiceElapsedTime}`}>
-              <span className={styles.navigatorTimerLabel}>Thá»i gian</span>
+            <h3>Bảng câu hỏi</h3>
+            <div className={styles.navigatorTimer} aria-label={`Thời gian làm bài ${practiceElapsedTime}`}>
+              <span className={styles.navigatorTimerLabel}>Thời gian</span>
               <span className={styles.navigatorTimerValue}>{practiceElapsedTime}</span>
             </div>
           </div>
@@ -1210,23 +1244,23 @@ const ToeicPractice = () => {
               <span className={styles.highlightSwitch}>
                 <span className={styles.highlightSwitchKnob} />
               </span>
-              <span className={styles.highlightToggleLabel}>Highlight ná»™i dung</span>
+              <span className={styles.highlightToggleLabel}>Highlight nội dung</span>
               {/* <span className={styles.highlightInfoIcon}>i</span> */}
             </button>
           </div>
 
-          <div className={styles.navigatorLegend} aria-label="ChÃº thÃ­ch tráº¡ng thÃ¡i cÃ¢u há»i">
+          <div className={styles.navigatorLegend} aria-label="Chú thích trạng thái câu hỏi">
             <div className={styles.legendItem}>
               <span className={`${styles.legendDot} ${styles.legendAnswered}`} />
-              <span>CÃ¢u Ä‘Ã£ lÃ m</span>
+              <span>Câu đã làm</span>
             </div>
             <div className={styles.legendItem}>
               <span className={`${styles.legendDot} ${styles.legendUnanswered}`} />
-              <span>CÃ¢u chÆ°a lÃ m</span>
+              <span>Câu chưa làm</span>
             </div>
             <div className={styles.legendItem}>
               <span className={`${styles.legendDot} ${styles.legendReview}`} />
-              <span>CÃ¢u cáº§n kiá»ƒm tra láº¡i</span>
+              <span>Câu cần kiểm tra lại</span>
             </div>
           </div>
 
@@ -1281,7 +1315,7 @@ const ToeicPractice = () => {
                     activeHighlightColor === item.key ? styles.highlightColorButtonActive : ''
                   }`}
                   style={{ backgroundColor: item.color }}
-                  aria-label={`Highlight mÃ u ${item.key}`}
+                  aria-label={`Highlight màu${item.key}`}
                   onClick={() => {
                     setActiveHighlightColor(item.key);
                     applyHighlightAnnotation('highlight', item.key);
@@ -1293,7 +1327,7 @@ const ToeicPractice = () => {
                 type="button"
                 className={styles.highlightStyleButton}
                 onClick={() => applyHighlightAnnotation('underline')}
-                aria-label="Gáº¡ch dÆ°á»›i"
+                aria-label="Gạch dưới"
               >
                 U
               </button>
@@ -1302,7 +1336,7 @@ const ToeicPractice = () => {
                 type="button"
                 className={styles.highlightStyleButton}
                 onClick={() => applyHighlightAnnotation('strike')}
-                aria-label="Gáº¡ch ngang"
+                aria-label="Gạch ngang"
               >
                 abc
               </button>
@@ -1311,9 +1345,9 @@ const ToeicPractice = () => {
                 type="button"
                 className={styles.highlightRemoveButton}
                 onClick={() => applyHighlightAnnotation('remove')}
-                aria-label="Bá» highlight"
+                aria-label="Bỏ highlight"
               >
-                Ã—
+                X
               </button>
 
               <button
@@ -1321,8 +1355,8 @@ const ToeicPractice = () => {
                 className={styles.highlightFlashcardButton}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={openFlashcardModal}
-                aria-label="ThÃªm vÃ o flashcard"
-                title="ThÃªm vÃ o flashcard"
+                aria-label="Thêm vào flashcard"
+                title="Thêm vào flashcard"
               >
                 +
               </button>
@@ -1450,16 +1484,16 @@ const ToeicPractice = () => {
                                     }`}
                                     onClick={() => toggleReviewQuestion(question.questionId)}
                                     aria-pressed={reviewQuestionIds.has(question.questionId)}
-                                    title="ÄÃ¡nh dáº¥u cÃ¢u cáº§n kiá»ƒm tra láº¡i"
+                                    title="Đánh dấu câu cần kiểm tra lại"
                                   >
-                                    CÃ¢u {question.questionNo}
+                                    Câu {question.questionNo}
                                   </button>
 
                                   {questionTextBlock}
                                 </div>
 
                                 {answers[question.questionId] && (
-                                  <strong>ÄÃ£ chá»n {answers[question.questionId]}</strong>
+                                  <strong>Đã chọn {answers[question.questionId]}</strong>
                                 )}
                               </div>
 
@@ -1571,13 +1605,13 @@ const ToeicPractice = () => {
                                                   handleHighlightTextMouseUp(
                                                     `option-${question.questionId}-${option.optionLabel}`,
                                                     option.optionText ||
-                                                      `ÄÃ¡p Ã¡n ${option.optionLabel}`,
+                                                      `Đáp án ${option.optionLabel}`,
                                                     event
                                                   )
                                                 }
                                               >
                                                 {renderHighlightedText(
-                                                  option.optionText || `ÄÃ¡p Ã¡n ${option.optionLabel}`,
+                                                  option.optionText || `Đáp án ${option.optionLabel}`,
                                                   highlights[
                                                     `option-${question.questionId}-${option.optionLabel}`
                                                   ] || [],
@@ -1636,13 +1670,13 @@ const ToeicPractice = () => {
                                             onMouseUp={(event) =>
                                               handleHighlightTextMouseUp(
                                                 `option-${question.questionId}-${option.optionLabel}`,
-                                                option.optionText || `ÄÃ¡p Ã¡n ${option.optionLabel}`,
+                                                option.optionText || `Đáp án ${option.optionLabel}`,
                                                 event
                                               )
                                             }
                                           >
                                             {renderHighlightedText(
-                                              option.optionText || `ÄÃ¡p Ã¡n ${option.optionLabel}`,
+                                              option.optionText || `Đáp án ${option.optionLabel}`,
                                               highlights[
                                                 `option-${question.questionId}-${option.optionLabel}`
                                               ] || [],
@@ -1678,12 +1712,12 @@ const ToeicPractice = () => {
               type="button"
               className={styles.flashcardModalClose}
               onClick={closeFlashcardModal}
-              aria-label="ÄÃ³ng"
+              aria-label="Đóng"
             >
-              Ã—
+              X
             </button>
 
-            <h2>ThÃªm flashcard má»›i</h2>
+            <h2>Thêm flashcard mới</h2>
 
             <form className={styles.flashcardForm} onSubmit={saveFlashcardFromPractice}>
               <div className={styles.flashcardDeckMode}>
@@ -1694,14 +1728,14 @@ const ToeicPractice = () => {
                   }
                   onClick={() => handleFlashcardDeckModeChange('existing')}
                 >
-                  Bá»™ Ä‘Ã£ cÃ³
+                  Bộ đã có
                 </button>
                 <button
                   type="button"
                   className={flashcardForm.deckMode === 'new' ? styles.activeDeckMode : ''}
                   onClick={() => handleFlashcardDeckModeChange('new')}
                 >
-                  + Táº¡o má»›i
+                  + Tạo mới
                 </button>
               </div>
 
@@ -1722,64 +1756,64 @@ const ToeicPractice = () => {
                   name="newDeckName"
                   value={flashcardForm.newDeckName}
                   onChange={handleFlashcardFormChange}
-                  placeholder="TÃªn bá»™ tháº» má»›i"
+                  placeholder="Tên bộ thẻ mới"
                 />
               )}
 
               <label>
-                Tá»« má»›i
+                Từ mới
                 <input
                   name="term"
                   value={flashcardForm.term}
                   onChange={handleFlashcardFormChange}
-                  placeholder="Tá»« vá»±ng *"
+                  placeholder="Từ vựng *"
                 />
               </label>
 
               <label>
-                PhiÃªn Ã¢m
+                Phiên âm
                 <input
                   name="pronunciation"
                   value={flashcardForm.pronunciation}
                   onChange={handleFlashcardFormChange}
-                  placeholder="PhiÃªn Ã¢m"
+                  placeholder="Phiên âm"
                 />
               </label>
 
               <label>
-                Tá»« loáº¡i
+                Từ loại
                 <input
                   name="wordType"
                   value={flashcardForm.wordType}
                   onChange={handleFlashcardFormChange}
-                  placeholder="Tá»« loáº¡i"
+                  placeholder="Từ loại"
                 />
               </label>
 
               <label>
-                Äá»‹nh nghÄ©a
+                Định nghĩa
                 <textarea
                   name="meaning"
                   value={flashcardForm.meaning}
                   onChange={handleFlashcardFormChange}
-                  placeholder="NghÄ©a tiáº¿ng Viá»‡t *"
+                  placeholder="Nghĩa tiếng Việt *"
                   rows={4}
                 />
               </label>
 
               <label>
-                VÃ­ dá»¥
+                Ví dụ
                 <textarea
                   name="example"
                   value={flashcardForm.example}
                   onChange={handleFlashcardFormChange}
-                  placeholder="CÃ¢u vÃ­ dá»¥"
+                  placeholder="Câu ví dụ"
                   rows={3}
                 />
               </label>
 
               <label>
-                Äá»™ khÃ³
+                Độ khó
                 <select name="level" value={flashcardForm.level} onChange={handleFlashcardFormChange}>
                   <option>Basic</option>
                   <option>Intermediate</option>
@@ -1791,7 +1825,7 @@ const ToeicPractice = () => {
 
               <div className={styles.flashcardModalActions}>
                 <button type="submit" className={styles.flashcardSaveButton}>
-                  LÆ°u
+                  Lưu
                 </button>
               </div>
             </form>
@@ -1805,7 +1839,7 @@ const ToeicPractice = () => {
             type="button"
             className={styles.chatFloatingButton}
             onClick={() => setIsChatOpen(true)}
-            aria-label="Má»Ÿ trá»£ lÃ½ luyá»‡n Ä‘á»"
+            aria-label="Mở trợ lý luyện đề"
           >
             <strong>Chat bot</strong>
           </button>
@@ -1813,14 +1847,14 @@ const ToeicPractice = () => {
           <div className={styles.chatWindow}>
             <div className={styles.chatHeader}>
               <div>
-                <strong>Trá»£ lÃ½ luyá»‡n Ä‘á» TOEIC</strong>
-                <span>Há»— trá»£ phÃ¢n tÃ­ch cÃ¢u há»i</span>
+                <strong>Trợ lý luyện đề TOEIC</strong>
+                <span>Hỗ trợ phân tích câu hỏi</span>
               </div>
 
               <button
                 type="button"
                 onClick={() => setIsChatOpen(false)}
-                aria-label="ÄÃ³ng chatbot"
+                aria-label="Đóng chatbot"
               >
                 Ã—
               </button>
@@ -1843,7 +1877,7 @@ const ToeicPractice = () => {
               <textarea
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Copy cÃ¢u há»i báº¡n muá»‘n há»i vÃ o Ä‘Ã¢y..."
+                placeholder="Copy câu hỏi bạn muốn hỏi vào đây..."
                 rows={2}
               />
 
