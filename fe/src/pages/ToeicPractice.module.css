@@ -782,6 +782,26 @@
   font-weight: 900;
 }
 
+.highlightFlashcardButton {
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 3px;
+  background: #ffffff;
+  color: #111827;
+  cursor: pointer;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.highlightFlashcardButton:hover {
+  background: #eef4ff;
+  color: var(--primary);
+}
+
 .partNavBlock {
   padding: 14px 0;
   border-top: 1px solid #edf0f6;
@@ -1412,6 +1432,168 @@
 
 .chatForm button:hover {
   background: var(--primary-hover);
+}
+
+.flashcardModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1800;
+  background: rgba(15, 23, 42, 0.44);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.flashcardModal {
+  position: relative;
+  width: min(640px, 100%);
+  max-height: min(90vh, 920px);
+  overflow: auto;
+  padding: 22px 20px 18px;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+  border: 1px solid rgba(196, 198, 210, 0.42);
+}
+
+.flashcardModal h2 {
+  margin: 0 0 20px;
+  color: #111111;
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 900;
+}
+
+.flashcardModalClose {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: #eef2f7;
+  color: #6b7280;
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.flashcardForm {
+  display: grid;
+  gap: 12px;
+}
+
+.flashcardDeckMode {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.flashcardDeckMode button {
+  min-height: 46px;
+  border: none;
+  border-radius: 6px;
+  background: #edf3fb;
+  color: #526071;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.flashcardDeckMode .activeDeckMode {
+  background: #0e3377;
+  color: #ffffff;
+  border-color: #0e3377;
+}
+
+.flashcardForm label {
+  display: grid;
+  gap: 8px;
+  color: #222222;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.flashcardForm input,
+.flashcardForm textarea,
+.flashcardForm select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d7dbe2;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+  outline: none;
+}
+
+.flashcardForm input,
+.flashcardForm select {
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.flashcardForm textarea {
+  resize: vertical;
+  padding: 11px 12px;
+}
+
+.flashcardForm input:focus,
+.flashcardForm textarea:focus,
+.flashcardForm select:focus {
+  border-color: #0e3377;
+  box-shadow: 0 0 0 3px rgba(14, 51, 119, 0.12);
+}
+
+.flashcardExtraToggle {
+  display: none;
+}
+
+.flashcardExtraToggle span {
+  display: none;
+}
+
+.flashcardExtraFields {
+  display: grid;
+  gap: 12px;
+}
+
+.flashcardError {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff1f2;
+  color: #b42318;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.flashcardModalActions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 4px;
+}
+
+.flashcardSaveButton {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 6px;
+  background: #0e3377;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  box-shadow: 0 12px 24px rgba(14, 51, 119, 0.18);
+}
+
+.flashcardSaveButton:hover {
+  background: #17499c;
 }
 
 /* =========================

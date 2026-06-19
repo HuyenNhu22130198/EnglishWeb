@@ -500,7 +500,7 @@ const Flashcard = () => {
         <section className={styles.practiceSection}>
           <div className="container">
             <button type="button" className={styles.backButton} onClick={goBackToDeck}>
-              Quay lại bộ thẻ
+              ← Quay lại
             </button>
 
             <div className={styles.practiceCard}>
