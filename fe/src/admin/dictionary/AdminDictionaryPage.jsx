@@ -60,6 +60,7 @@ function normalizeResponse(data) {
 export default function AdminDictionaryPage() {
   const [entries, setEntries] = useState([]);
   const [keywordInput, setKeywordInput] = useState("");
+  const [generateKeyword, setGenerateKeyword] = useState("");
   const [keyword, setKeyword] = useState("");
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
@@ -70,6 +71,7 @@ export default function AdminDictionaryPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [selectedEntry, setSelectedEntry] = useState(null);
+  const [generateModalOpen, setGenerateModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
 
   const pageTitle = "Quản lý từ vựng";
@@ -100,43 +102,16 @@ export default function AdminDictionaryPage() {
     loadEntries();
   }, [loadEntries]);
 
-  const openCreateModal = async () => {
-    const word = prompt("Nhập từ tiếng Anh muốn thêm (hệ thống sẽ tự động generate dữ liệu):");
-    if (!word || !word.trim()) return;
+  const openCreateModal = () => {
+    setGenerateKeyword("");
+    setGenerateModalOpen(true);
+    setError("");
+  };
 
-    const trimmedWord = word.trim();
-    try {
-      setSaving(true);
-      setError("");
-      setSuccess("");
-
-      const generated = await adminDictionaryAPI.generateEntry(trimmedWord);
-      setSuccess(`Đã tự động tạo từ "${generated.word || trimmedWord}".`);
-
-      await loadEntries();
-
-      // Immediately open the edit modal for the newly generated entry
-      setSelectedEntry(generated);
-      setForm({
-        keywordNormalized: generated.keywordNormalized || "",
-        word: generated.word || "",
-        phonetic: generated.phonetic || "",
-        audioUrl: generated.audioUrl || "",
-        englishMeaning: generated.englishMeaning || "",
-        vietnameseMeaning: generated.vietnameseMeaning || "",
-        synonymsJson: generated.synonymsJson || "[]",
-        wordTypesJson: generated.wordTypesJson || "[]",
-        wordFormsJson: generated.wordFormsJson || "[]",
-        exampleEn: generated.exampleEn || "",
-        exampleVi: generated.exampleVi || "",
-        source: generated.source || "",
-        status: generated.status || "REVIEWED",
-      });
-    } catch (err) {
-      setError(err.message || "Tự động tạo từ vựng thất bại.");
-    } finally {
-      setSaving(false);
-    }
+  const closeGenerateModal = () => {
+    if (saving) return;
+    setGenerateKeyword("");
+    setGenerateModalOpen(false);
   };
 
   const openEditModal = (entry) => {
@@ -178,6 +153,50 @@ export default function AdminDictionaryPage() {
 
   const handleRefresh = () => {
     loadEntries();
+  };
+
+  const handleGenerateEntry = async (event) => {
+    event.preventDefault();
+
+    const trimmedWord = generateKeyword.trim();
+    if (!trimmedWord) {
+      setError("Vui lòng nhập từ tiếng Anh muốn thêm.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError("");
+      setSuccess("");
+
+      const generated = await adminDictionaryAPI.generateEntry(trimmedWord);
+      setSuccess(`Đã tự động tạo từ "${generated.word || trimmedWord}".`);
+      setGenerateModalOpen(false);
+      setGenerateKeyword("");
+
+      await loadEntries();
+
+      setSelectedEntry(generated);
+      setForm({
+        keywordNormalized: generated.keywordNormalized || "",
+        word: generated.word || "",
+        phonetic: generated.phonetic || "",
+        audioUrl: generated.audioUrl || "",
+        englishMeaning: generated.englishMeaning || "",
+        vietnameseMeaning: generated.vietnameseMeaning || "",
+        synonymsJson: generated.synonymsJson || "[]",
+        wordTypesJson: generated.wordTypesJson || "[]",
+        wordFormsJson: generated.wordFormsJson || "[]",
+        exampleEn: generated.exampleEn || "",
+        exampleVi: generated.exampleVi || "",
+        source: generated.source || "",
+        status: generated.status || "REVIEWED",
+      });
+    } catch (err) {
+      setError(err.message || "Tự động tạo từ vựng thất bại.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleUpdate = async (event) => {
@@ -400,6 +419,55 @@ export default function AdminDictionaryPage() {
           />
         </div>
       </section>
+
+      <AdminModal
+        open={generateModalOpen}
+        title="Thêm từ mới"
+        description="Nhập từ tiếng Anh, hệ thống sẽ tự động sinh dữ liệu ban đầu để bạn rà soát trước khi lưu dùng."
+        onClose={closeGenerateModal}
+        footer={
+          <>
+            <button
+              type="button"
+              className={shared.secondaryButton}
+              onClick={closeGenerateModal}
+              disabled={saving}
+            >
+              Hủy
+            </button>
+
+            <button
+              type="submit"
+              form="generate-dictionary-form"
+              className={shared.primaryButton}
+              disabled={saving}
+            >
+              {saving ? "Đang tạo..." : "Tạo dữ liệu"}
+            </button>
+          </>
+        }
+      >
+        <form
+          id="generate-dictionary-form"
+          onSubmit={handleGenerateEntry}
+          className={styles.generateForm}
+        >
+          <label className={styles.generateLabel}>
+            Từ tiếng Anh
+            <input
+              value={generateKeyword}
+              onChange={(event) => setGenerateKeyword(event.target.value)}
+              placeholder="Ví dụ: improve, environment, look after"
+              autoFocus
+            />
+          </label>
+
+          <div className={styles.generateHint}>
+            Sau khi tạo xong, hệ thống sẽ mở form chỉnh sửa để bạn kiểm tra lại nghĩa,
+            ví dụ, phiên âm và trạng thái của từ.
+          </div>
+        </form>
+      </AdminModal>
 
       <AdminModal
         open={Boolean(selectedEntry)}

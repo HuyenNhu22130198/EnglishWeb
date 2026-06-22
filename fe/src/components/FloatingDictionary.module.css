@@ -1,7 +1,7 @@
 .floatingDictionary {
   position: fixed;
   right: 0;
-  top: 50%;
+  top: 60%;
   z-index: 90;
   transform: translateY(-50%);
   font-family: inherit;
@@ -63,7 +63,7 @@
 .panel {
   position: absolute;
   right: 68px;
-  top: 50%;
+  top: 60%;
   width: min(462px, calc(100vw - 88px));
   max-height: min(86vh, 720px);
   display: flex;
