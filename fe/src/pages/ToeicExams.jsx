@@ -40,7 +40,7 @@ const ToeicExams = () => {
   }, [keyword]);
 
   const handleStartExam = (examId) => {
-    navigate(`/practice/toeic/${examId}`);
+    navigate(`/exams/toeic/${examId}`);
   };
 
   return (
@@ -137,7 +137,7 @@ const ToeicExams = () => {
                   <span>{Number(exam.attempts || 0).toLocaleString('vi-VN')} lượt luyện</span>
 
                   <button type="button" onClick={() => handleStartExam(exam.id)}>
-                    Làm bài
+                    Chi tiết
                   </button>
                 </div>
               </article>

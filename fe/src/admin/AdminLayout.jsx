@@ -50,6 +50,15 @@ const AdminLayout = () => {
             Quản lý từ vựng
           </NavLink>
 
+
+          <NavLink
+            to="/admin/banners"
+            className={({ isActive }) =>
+              isActive ? `${styles.navItem} ${styles.active}` : styles.navItem
+            }
+          >
+            Quản lý banner
+          </NavLink>
           <NavLink
             to="/admin/toeic-exams"
             className={({ isActive }) =>

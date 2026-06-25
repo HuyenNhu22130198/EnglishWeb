@@ -300,6 +300,51 @@ button:disabled {
   padding: 22px 24px;
 }
 
+.generateForm {
+  display: grid;
+  gap: 18px;
+  padding: 4px 2px 6px;
+}
+
+.generateLabel {
+  display: grid;
+  gap: 10px;
+  color: #0e3377;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.generateLabel input {
+  width: 100%;
+  min-height: 54px;
+  box-sizing: border-box;
+  border: 1px solid #d8e0ec;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(248, 250, 253, 0.96), rgba(255, 255, 255, 1)),
+    #ffffff;
+  color: #1b1c1c;
+  font: inherit;
+  font-size: 16px;
+  padding: 0 16px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.generateLabel input:focus {
+  border-color: #0e3377;
+  box-shadow: 0 0 0 4px rgba(14, 51, 119, 0.12);
+}
+
+.generateHint {
+  border: 1px solid #e7ebf3;
+  border-radius: 14px;
+  background: #f8fafd;
+  color: #4d5562;
+  line-height: 1.65;
+  padding: 14px 16px;
+}
+
 .formGrid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }

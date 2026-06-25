@@ -9,7 +9,7 @@ const api = axios.create({
   },
 });
 
-const getStoredToken = () => {
+export const getStoredToken = () => {
   try {
     const rawUser = localStorage.getItem('user');
 
@@ -21,6 +21,22 @@ const getStoredToken = () => {
     return localStorage.getItem('token') || '';
   } catch {
     return localStorage.getItem('token') || '';
+  }
+};
+
+export const storeUser = (userData) => {
+  const storedUser = authAPI.getStoredUser() || {};
+  const { password, ...safeUserData } = userData || {};
+  const token = safeUserData.token || storedUser.token || localStorage.getItem('token') || '';
+
+  localStorage.setItem('user', JSON.stringify({
+    ...storedUser,
+    ...safeUserData,
+    token,
+  }));
+
+  if (token) {
+    localStorage.setItem('token', token);
   }
 };
 
@@ -70,8 +86,7 @@ export const authAPI = {
     const loginData = apiResponse?.data;
 
     if (apiResponse?.success && loginData?.token) {
-      localStorage.setItem('token', loginData.token);
-      localStorage.setItem('user', JSON.stringify(loginData));
+      storeUser(loginData);
     }
 
     return apiResponse;
@@ -80,6 +95,50 @@ export const authAPI = {
   getCurrentUser: async () => {
     const response = await api.get('/users/me');
     return response.data;
+  },
+
+  updateCurrentUser: async (data) => {
+    const response = await api.put('/users/me', data);
+    const apiResponse = response.data;
+    const updatedUser = apiResponse?.data;
+
+    if (apiResponse?.success && updatedUser) {
+      storeUser(updatedUser);
+    }
+
+    return apiResponse;
+  },
+
+  updateAccountSettings: async (data) => {
+    const response = await api.put('/users/me/settings', data);
+    const apiResponse = response.data;
+
+    if (apiResponse?.success && apiResponse.data) {
+      storeUser(apiResponse.data);
+    }
+
+    return apiResponse;
+  },
+
+  changePassword: async (data) => {
+    const response = await api.put('/users/me/change-password', data);
+    return response.data;
+  },
+
+  deleteCurrentUser: async (data) => {
+    const response = await api.put('/users/me/delete', data);
+    return response.data;
+  },
+
+  syncCurrentUser: async () => {
+    const response = await api.get('/users/me');
+    const apiResponse = response.data;
+
+    if (apiResponse?.success && apiResponse.data) {
+      storeUser(apiResponse.data);
+    }
+
+    return apiResponse;
   },
 
   logout: () => {

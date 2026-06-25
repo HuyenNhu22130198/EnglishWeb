@@ -12,6 +12,7 @@ import com.englishweb.be.entity.toeic.ToeicUserAnswer;
 import com.englishweb.be.repository.UserRepository;
 import com.englishweb.be.repository.toeic.ToeicAttemptRepository;
 import com.englishweb.be.repository.toeic.ToeicExamRepository;
+import com.englishweb.be.repository.toeic.ToeicGroupMaterialRepository;
 import com.englishweb.be.repository.toeic.ToeicQuestionOptionRepository;
 import com.englishweb.be.repository.toeic.ToeicQuestionRepository;
 import com.englishweb.be.repository.toeic.ToeicUserAnswerRepository;
@@ -24,8 +25,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,103 +40,135 @@ public class ToeicSubmitService {
     private final ToeicExamRepository toeicExamRepository;
     private final ToeicQuestionRepository toeicQuestionRepository;
     private final ToeicQuestionOptionRepository toeicQuestionOptionRepository;
+    private final ToeicGroupMaterialRepository toeicGroupMaterialRepository;
     private final ToeicAttemptRepository toeicAttemptRepository;
     private final ToeicUserAnswerRepository toeicUserAnswerRepository;
     private final ToeicScoreService toeicScoreService;
 //     private final ObjectMapper objectMapper;
 
     @Transactional
-public ToeicResultResponse submitExam(
-        Integer examId,
-        String userEmail,
-        ToeicSubmitRequest request
-) {
-    User user = userRepository.findByEmail(userEmail)
-            .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng!"));
+    public ToeicResultResponse submitExam(
+            Integer examId,
+            String userEmail,
+            List<Integer> parts,
+            ToeicSubmitRequest request
+    ) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng!"));
 
-    ToeicExam exam = toeicExamRepository.findById(examId)
-            .orElseThrow(() -> new RuntimeException("Không tìm thấy đề TOEIC!"));
+        ToeicExam exam = toeicExamRepository.findById(examId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đề TOEIC!"));
 
-    List<ToeicQuestion> questions = toeicQuestionRepository.findByExam_IdOrderByQuestionNoAsc(examId);
+        Set<Integer> selectedParts = normalizeParts(parts);
 
-    if (questions.isEmpty()) {
-        throw new RuntimeException("Đề thi chưa có câu hỏi!");
-    }
+        List<ToeicQuestion> questions = toeicQuestionRepository.findByExam_IdOrderByQuestionNoAsc(examId)
+                .stream()
+                .filter(question -> shouldIncludeQuestion(question, selectedParts))
+                .toList();
 
-    Map<Integer, String> selectedMap = buildSelectedMap(request);
-
-    int answeredCount = 0;
-    int correctCount = 0;
-    int listeningCorrect = 0;
-
-    LocalDateTime now = LocalDateTime.now();
-
-    ToeicAttempt attempt = ToeicAttempt.builder()
-            .user(user)
-            .exam(exam)
-            .startedAt(now)
-            .submittedAt(now)
-            .totalQuestions(questions.size())
-            .correctCount(0)
-            .score(BigDecimal.ZERO)
-            .status("SUBMITTED")
-            .build();
-
-    ToeicAttempt savedAttempt = toeicAttemptRepository.save(attempt);
-
-    for (ToeicQuestion question : questions) {
-        String selectedLabel = normalizeLabel(selectedMap.get(question.getId()));
-        String correctLabel = normalizeLabel(question.getCorrectOption());
-
-        boolean isAnswered = selectedLabel != null && !selectedLabel.isBlank();
-        boolean isCorrect = isAnswered && selectedLabel.equalsIgnoreCase(correctLabel);
-
-        if (isAnswered) {
-            answeredCount++;
+        if (questions.isEmpty()) {
+            throw new RuntimeException("Đề thi chưa có câu hỏi!");
         }
 
-        if (isCorrect) {
-            correctCount++;
+        Map<Integer, String> selectedMap = buildSelectedMap(request);
 
-            if (isListeningQuestion(question)) {
-                listeningCorrect++;
+        int answeredCount = 0;
+        int correctCount = 0;
+        int listeningCorrect = 0;
+
+        LocalDateTime now = LocalDateTime.now();
+
+        ToeicAttempt attempt = ToeicAttempt.builder()
+                .user(user)
+                .exam(exam)
+                .startedAt(now)
+                .submittedAt(now)
+                .totalQuestions(questions.size())
+                .correctCount(0)
+                .score(BigDecimal.ZERO)
+                .status("SUBMITTED")
+                .build();
+
+        ToeicAttempt savedAttempt = toeicAttemptRepository.save(attempt);
+
+        for (ToeicQuestion question : questions) {
+            String selectedLabel = normalizeLabel(selectedMap.get(question.getId()));
+            String correctLabel = normalizeLabel(question.getCorrectOption());
+
+            boolean isAnswered = selectedLabel != null && !selectedLabel.isBlank();
+            boolean isCorrect = isAnswered && selectedLabel.equalsIgnoreCase(correctLabel);
+
+            if (isAnswered) {
+                answeredCount++;
+            }
+
+            if (isCorrect) {
+                correctCount++;
+
+                if (isListeningQuestion(question)) {
+                    listeningCorrect++;
+                }
+            }
+
+            ToeicQuestionOption selectedOption = null;
+
+            if (isAnswered) {
+                selectedOption = toeicQuestionOptionRepository
+                        .findByQuestion_IdAndOptionLabelIgnoreCase(question.getId(), selectedLabel)
+                        .orElse(null);
+            }
+
+            ToeicUserAnswer userAnswer = ToeicUserAnswer.builder()
+                    .attempt(savedAttempt)
+                    .question(question)
+                    .selectedOption(selectedOption)
+                    .selectedLabel(selectedLabel)
+                    .isCorrect(isCorrect)
+                    .answeredAt(isAnswered ? now : null)
+                    .build();
+
+            toeicUserAnswerRepository.save(userAnswer);
+        }
+
+        int readingCorrect = correctCount - listeningCorrect;
+
+        int listeningScore = toeicScoreService.getListeningScore(listeningCorrect);
+        int readingScore = toeicScoreService.getReadingScore(readingCorrect);
+        int totalScore = listeningScore + readingScore;
+
+        savedAttempt.setCorrectCount(correctCount);
+        savedAttempt.setScore(BigDecimal.valueOf(totalScore));
+        savedAttempt.setUpdatedAt(now);
+
+        toeicAttemptRepository.save(savedAttempt);
+
+        return buildResultResponse(savedAttempt, answeredCount);
+    }
+
+    private Set<Integer> normalizeParts(List<Integer> parts) {
+        if (parts == null || parts.isEmpty()) {
+            return Set.of();
+        }
+
+        Set<Integer> normalizedParts = new LinkedHashSet<>();
+
+        for (Integer part : parts) {
+            if (part != null && part >= 1 && part <= 7) {
+                normalizedParts.add(part);
             }
         }
 
-        ToeicQuestionOption selectedOption = null;
-
-        if (isAnswered) {
-            selectedOption = toeicQuestionOptionRepository
-                    .findByQuestion_IdAndOptionLabelIgnoreCase(question.getId(), selectedLabel)
-                    .orElse(null);
-        }
-
-        ToeicUserAnswer userAnswer = ToeicUserAnswer.builder()
-                .attempt(savedAttempt)
-                .question(question)
-                .selectedOption(selectedOption)
-                .selectedLabel(selectedLabel)
-                .isCorrect(isCorrect)
-                .answeredAt(isAnswered ? now : null)
-                .build();
-
-        toeicUserAnswerRepository.save(userAnswer);
+        return normalizedParts;
     }
 
-    int readingCorrect = correctCount - listeningCorrect;
+    private boolean shouldIncludeQuestion(ToeicQuestion question, Set<Integer> selectedParts) {
+        if (selectedParts.isEmpty()) {
+            return true;
+        }
 
-    int listeningScore = toeicScoreService.getListeningScore(listeningCorrect);
-    int readingScore = toeicScoreService.getReadingScore(readingCorrect);
-    int totalScore = listeningScore + readingScore;
-
-    savedAttempt.setCorrectCount(correctCount);
-    savedAttempt.setScore(BigDecimal.valueOf(totalScore));
-    savedAttempt.setUpdatedAt(now);
-
-    toeicAttemptRepository.save(savedAttempt);
-
-    return buildResultResponse(savedAttempt, answeredCount);
-}
+        return question.getGroup() != null
+                && selectedParts.contains(question.getGroup().getPartNo());
+    }
 
     @Transactional(readOnly = true)
     public ToeicResultResponse getResult(Integer attemptId, String userEmail) {
@@ -207,6 +243,21 @@ public ToeicResultResponse submitExam(
                         LinkedHashMap::new,
                         Collectors.toList()
                 ));
+        Map<Integer, List<String>> groupImageUrlsByGroupId = answers.stream()
+                .map(answer -> answer.getQuestion().getGroup())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                        group -> group.getId(),
+                        group -> toeicGroupMaterialRepository.findByGroup_IdOrderByDisplayOrderAsc(group.getId())
+                                .stream()
+                                .filter(this::isImageMaterial)
+                                .map(material -> material.getAssetUrl() != null ? material.getAssetUrl().trim() : null)
+                                .filter(url -> url != null && !url.isBlank())
+                                .distinct()
+                                .toList(),
+                        (left, right) -> left,
+                        LinkedHashMap::new
+                ));
 
         int listeningCorrect = (int) answers.stream()
                 .filter(answer -> Boolean.TRUE.equals(answer.getIsCorrect()))
@@ -268,6 +319,7 @@ public ToeicResultResponse submitExam(
                                 .filter(option -> option.getOptionLabel() != null
                                         && option.getOptionLabel().equalsIgnoreCase(answer.getSelectedLabel()))
                                 .map(ToeicQuestionOption::getOptionText)
+                                .filter(Objects::nonNull)
                                 .findFirst()
                                 .orElse(null);
                     }
@@ -284,9 +336,12 @@ public ToeicResultResponse submitExam(
                             .questionId(questionId)
                             .questionNo(question.getQuestionNo())
                             .partNo(partNo)
+                            .groupId(question.getGroup().getId())
                             .groupTitle(question.getGroup().getTitle())
                             .sharedText(question.getGroup().getSharedText())
+                            .groupImageUrls(groupImageUrlsByGroupId.getOrDefault(question.getGroup().getId(), List.of()))
                             .questionText(question.getQuestionText())
+                            .imageUrl(question.getImageUrl())
                             .selectedLabel(answer.getSelectedLabel())
                             .selectedText(selectedText)
                             .correctLabel(correctLabel)
@@ -323,6 +378,18 @@ public ToeicResultResponse submitExam(
         return question.getGroup() != null
                 && question.getGroup().getPartNo() != null
                 && question.getGroup().getPartNo() <= 4;
+    }
+
+    private boolean isImageMaterial(com.englishweb.be.entity.toeic.ToeicGroupMaterial material) {
+        String type = material.getMaterialType();
+        if (type == null) {
+            return false;
+        }
+
+        String normalizedType = type.trim().toLowerCase();
+        return normalizedType.contains("image")
+                || normalizedType.contains("picture")
+                || normalizedType.contains("photo");
     }
 
     private String normalizeLabel(String label) {

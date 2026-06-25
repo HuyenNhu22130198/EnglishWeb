@@ -56,9 +56,8 @@ public class AuthService {
                 .orElseGet(() -> userRepository.findByUsername(request.getEmailOrUsername())
                         .orElseThrow(() -> new RuntimeException("Email hoặc username không tồn tại!")));
 
-        // Kiểm tra trạng thái active
-        if (!"ACTIVE".equals(user.getStatus())) {
-            throw new RuntimeException("Tài khoản này đã bị khóa!");
+        if ("DELETED".equals(user.getStatus())) {
+            throw new RuntimeException("Tài khoản này đã bị xóa và không thể đăng nhập lại!");
         }
 
         // Kiểm tra mật khẩu

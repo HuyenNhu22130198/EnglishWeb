@@ -17,8 +17,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<String>> handleRuntimeException(RuntimeException e) {
+        String message = e.getMessage() != null && !e.getMessage().isBlank()
+                ? e.getMessage()
+                : "Có lỗi xảy ra khi xử lý yêu cầu.";
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(e.getMessage()));
+                .body(ApiResponse.error(message));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

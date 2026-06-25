@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI } from '../services/authService';
+import { authAPI, storeUser } from '../services/authService';
 
 const AuthContext = createContext();
 
@@ -19,6 +19,10 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData) => {
+    if (userData?.token) {
+      storeUser(userData);
+    }
+
     setUser(userData);
     setIsAuthenticated(true);
   };

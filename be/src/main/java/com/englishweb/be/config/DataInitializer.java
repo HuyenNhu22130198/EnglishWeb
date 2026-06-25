@@ -5,6 +5,7 @@ import com.englishweb.be.entity.User;
 import com.englishweb.be.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -14,10 +15,12 @@ public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
-    public void run(String... args) throws Exception {
-        // Tạo admin user mặc định nếu chưa tồn tại
+    public void run(String... args) {
+        // ensureUserColumns();
+
         if (!userRepository.existsByEmail("admin@englishweb.com")) {
             User adminUser = User.builder()
                     .email("admin@englishweb.com")
@@ -29,13 +32,12 @@ public class DataInitializer implements CommandLineRunner {
                     .emailVerified(true)
                     .build();
             userRepository.save(adminUser);
-            System.out.println("Admin user tạo thành công!");
+            System.out.println("Admin user created successfully");
             System.out.println("Email: admin@englishweb.com");
             System.out.println("Username: admin");
             System.out.println("Password: admin@123");
         }
 
-        // Tạo user mặc định để test
         if (!userRepository.existsByEmail("user@englishweb.com")) {
             User normalUser = User.builder()
                     .email("user@englishweb.com")
@@ -47,10 +49,32 @@ public class DataInitializer implements CommandLineRunner {
                     .emailVerified(false)
                     .build();
             userRepository.save(normalUser);
-            System.out.println("User mặc định tạo thành công!");
+            System.out.println("Default user created successfully");
             System.out.println("Email: user@englishweb.com");
             System.out.println("Username: user");
             System.out.println("Password: user@123");
         }
     }
+
+//     private void ensureUserColumns() {
+//         jdbcTemplate.execute("""
+//                 ALTER TABLE users
+//                 ADD COLUMN IF NOT EXISTS public_profile_visible boolean NOT NULL DEFAULT false
+//                 """);
+
+//         jdbcTemplate.execute("""
+//                 ALTER TABLE users
+//                 ADD COLUMN IF NOT EXISTS notify_forum_replies boolean NOT NULL DEFAULT true
+//                 """);
+
+//         jdbcTemplate.execute("""
+//                 ALTER TABLE users
+//                 ADD COLUMN IF NOT EXISTS notify_forum_mentions boolean NOT NULL DEFAULT true
+//                 """);
+
+//         jdbcTemplate.execute("""
+//                 ALTER TABLE users
+//                 ADD COLUMN IF NOT EXISTS notify_system_updates boolean NOT NULL DEFAULT true
+//                 """);
+//     }
 }
