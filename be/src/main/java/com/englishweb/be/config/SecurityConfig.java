@@ -55,6 +55,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/hello").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/forum/posts").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/toeic/exams/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/ielts/exams").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/ielts/exams/*/practice").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/dictionary/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/banners").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

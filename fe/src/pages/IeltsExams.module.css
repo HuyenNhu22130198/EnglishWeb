@@ -1,163 +1,320 @@
 .page {
-  background-color: #fbf9f8;
   min-height: 100vh;
+  background: #fbf9f8;
+  color: #111827;
+}
+
+.hero {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 56px 56px 28px;
+}
+
+.eyebrow {
+  display: inline-block;
+  color: #0e3377;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.hero h1 {
+  margin: 0;
+  color: #111827;
+  font-size: 42px;
+  line-height: 1.2;
+  font-weight: 850;
+  letter-spacing: -0.6px;
+}
+
+.hero p {
+  max-width: 780px;
+  margin: 18px 0 0;
+  color: #596275;
+  font-size: 17px;
+  line-height: 1.7;
 }
 
 .filters {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 56px;
+}
+
+.searchWrap {
+  width: 100%;
+  min-height: 88px;
+  background: #ffffff;
+  border: 1px solid rgba(196, 198, 210, 0.35);
+  border-radius: 18px;
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.07);
+  padding: 20px 24px;
   display: flex;
-  gap: 16px;
-  margin-bottom: 48px;
-  flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  box-sizing: border-box;
 }
 
 .searchInput {
   flex: 1;
-  min-width: 320px;
-  padding: 16px 24px;
-  border: 1px solid #e4e2e1;
-  border-radius: 9999px;
-  font-size: 16px;
-  font-family: 'Lexend', sans-serif;
-  background: white;
+  height: 48px;
+  min-width: 0;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: #fbf9f8;
+  border: 1px solid rgba(14, 51, 119, 0.14);
+  color: #111827;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.searchInput::placeholder {
+  color: #98a2b3;
 }
 
 .searchInput:focus {
-  outline: none;
-  border-color: #0e3377;
-  box-shadow: 0 0 0 3px rgba(14, 51, 119, 0.1);
+  border-color: rgba(14, 51, 119, 0.32);
+  box-shadow: 0 0 0 3px rgba(14, 51, 119, 0.08);
 }
 
-.filterGroup {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.filterSelect {
-  padding: 16px 20px;
-  border: 1px solid #e4e2e1;
-  border-radius: 9999px;
+.resultMeta {
+  color: #596275;
   font-size: 15px;
-  font-family: 'Lexend', sans-serif;
-  background: white;
-  cursor: pointer;
-  min-width: 160px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.resultMeta strong {
+  color: #0e3377;
 }
 
 .examGrid {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 34px 56px 74px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
 }
 
-.examCard {
-  background: white;
+.examCard,
+.emptyState {
+  background: #ffffff;
+  border: 1px solid rgba(196, 198, 210, 0.35);
   border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  transition: all 0.4s ease;
-  border: 1px solid #f0eded;
+  padding: 26px;
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.06);
+}
+
+.examCard {
+  transition: all 0.24s ease;
 }
 
 .examCard:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-  border-color: #0e3377;
+  transform: translateY(-5px);
+  box-shadow: 0 24px 55px rgba(15, 23, 42, 0.1);
+  border-color: rgba(14, 51, 119, 0.18);
 }
 
 .cardTop {
-  padding: 24px 28px 20px;
-  border-bottom: 1px solid #f0eded;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-}
-
-.examNumber {
-  font-weight: 700;
-  font-size: 18px;
-  color: #1b1c1c;
-}
-
-.difficulty {
-  font-size: 14px;
-  font-weight: 600;
-  color: #904d00;
-  background: #fff4e6;
-  padding: 4px 14px;
-  border-radius: 9999px;
-}
-
-.cardInfo {
-  padding: 24px 28px;
-  display: flex;
-  flex-direction: column;
   gap: 12px;
-  color: #444650;
+  margin-bottom: 18px;
+}
+
+.examCode,
+.status,
+.skillBadge {
+  height: 32px;
+  padding: 0 13px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-weight: 850;
+}
+
+.examCode {
+  color: #0e3377;
+  background: #eef4ff;
+}
+
+.status {
+  color: #067647;
+  background: #ecfdf3;
+}
+
+.examCard h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 22px;
+  line-height: 1.35;
+  font-weight: 850;
+}
+
+.description {
+  margin: 12px 0 22px;
+  min-height: 50px;
+  color: #596275;
   font-size: 15px;
+  line-height: 1.65;
 }
 
-.infoItem {
-  display: flex;
-  align-items: center;
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
-.cardFooter {
-  padding: 20px 28px 28px;
+.stats div {
+  background: #fbf9f8;
+  border: 1px solid #edf0f6;
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.stats span {
+  display: block;
+  color: #7a8496;
+  font-size: 12.5px;
+  font-weight: 750;
+  margin-bottom: 6px;
+}
+
+.stats strong {
+  color: #111827;
+  font-size: 14.5px;
+}
+
+.skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0 22px;
+}
+
+.skillBadge {
+  height: 30px;
+  color: #0e3377;
+  background: #eef4ff;
+}
+
+.actions {
   display: flex;
   gap: 12px;
 }
 
-.btnPrimary {
+.primaryButton,
+.secondaryButton {
   flex: 1;
-  padding: 16px;
-  background-color: #0e3377;
-  color: white;
+  height: 42px;
   border: none;
-  border-radius: 9999px;
-  font-weight: 600;
-  font-size: 16px;
+  border-radius: 999px;
+  padding: 0 18px;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 850;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.22s ease;
 }
 
-.btnPrimary:hover {
-  background-color: #1a4a9e;
+.primaryButton {
+  background: #0e3377;
+  color: #ffffff;
+}
+
+.secondaryButton {
+  background: #eef4ff;
+  color: #0e3377;
+}
+
+.primaryButton:hover:not(:disabled),
+.secondaryButton:hover:not(:disabled) {
   transform: translateY(-2px);
 }
 
-.btnSecondary {
-  flex: 1;
-  padding: 16px;
-  background: transparent;
-  color: #0e3377;
-  border: 2px solid #0e3377;
-  border-radius: 9999px;
-  font-weight: 600;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.3s;
+.primaryButton:hover:not(:disabled) {
+  background: #17499c;
 }
 
-.btnSecondary:hover {
-  background-color: #f0eded;
+.secondaryButton:hover:not(:disabled) {
+  background: #dce9ff;
 }
 
-.loadMore {
-  padding: 16px 48px;
-  background: white;
-  color: #0e3377;
-  border: 2px solid #0e3377;
-  border-radius: 9999px;
-  font-weight: 600;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.3s;
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.loadMore:hover {
-  background-color: #0e3377;
-  color: white;
+.emptyState {
+  text-align: center;
+  grid-column: 1 / -1;
+}
+
+.emptyState h2 {
+  margin: 0 0 10px;
+  color: #111827;
+  font-size: 24px;
+}
+
+.emptyState p {
+  margin: 0;
+  color: #596275;
+}
+
+@media (max-width: 900px) {
+  .hero {
+    padding: 42px 22px 24px;
+  }
+
+  .hero h1 {
+    font-size: 34px;
+  }
+
+  .filters {
+    padding: 0 22px;
+  }
+
+  .searchWrap {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .resultMeta {
+    white-space: normal;
+  }
+
+  .examGrid {
+    grid-template-columns: 1fr;
+    padding: 28px 22px 60px;
+  }
+}
+
+@media (max-width: 520px) {
+  .hero h1 {
+    font-size: 30px;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+  }
 }

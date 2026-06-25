@@ -1,10 +1,11 @@
-package com.englishweb.be.dto.toeic;
+package com.englishweb.be.dto.ielts;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -12,26 +13,18 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ToeicResultResponse {
+public class IeltsResultResponse {
 
     private Integer attemptId;
     private Integer examId;
     private String examCode;
     private String examName;
-
+    private String skill;
     private Integer totalQuestions;
     private Integer answeredCount;
     private Integer correctCount;
-
-    private Integer listeningCorrect;
-    private Integer readingCorrect;
-
-    private Integer listeningScore;
-    private Integer readingScore;
-    private Integer totalScore;
-
+    private BigDecimal bandScore;
     private LocalDateTime submittedAt;
-
     private List<PartSummary> partSummaries;
     private List<QuestionResult> questionResults;
 
@@ -56,19 +49,17 @@ public class ToeicResultResponse {
         private Integer partNo;
         private Integer groupId;
         private String groupTitle;
+        private Integer blockId;
+        private String blockType;
         private String sharedText;
-        private List<String> groupImageUrls;
-        private String questionText;
-        private String imageUrl;
-        private String selectedLabel;
-        private String selectedText;
-        private String correctLabel;
-        private String correctText;
+        private String promptText;
+        private String selectedOptionKey;
+        private String selectedAnswerText;
         private Boolean isCorrect;
         private Boolean isAnswered;
-        private String explanation;
-        private String transcriptText;
+        private String explanationText;
         private List<OptionResult> options;
+        private List<CorrectAnswer> correctAnswers;
     }
 
     @Data
@@ -76,7 +67,16 @@ public class ToeicResultResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class OptionResult {
-        private String optionLabel;
+        private String optionKey;
         private String optionText;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CorrectAnswer {
+        private String answerKey;
+        private String answerText;
     }
 }

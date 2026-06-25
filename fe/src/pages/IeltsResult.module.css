@@ -1,0 +1,167 @@
+.page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top right, rgba(116, 145, 96, 0.18), transparent 28%),
+    linear-gradient(180deg, #f6f4ed 0%, #fffdf8 45%, #eef3eb 100%);
+  padding: 48px 24px 72px;
+}
+
+.hero,
+.stats,
+.parts,
+.reviewList,
+.emptyState {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.hero {
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: #4c7a3b;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.85rem;
+}
+
+.hero h1,
+.emptyState h1 {
+  margin: 0 0 10px;
+  font-size: clamp(2rem, 4vw, 3rem);
+  color: #21321d;
+}
+
+.stats,
+.parts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.statCard,
+.partCard,
+.reviewCard,
+.emptyState {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 22px;
+  border: 1px solid rgba(76, 122, 59, 0.1);
+  box-shadow: 0 18px 42px rgba(33, 50, 29, 0.06);
+}
+
+.statCard,
+.partCard,
+.reviewCard,
+.emptyState {
+  padding: 22px;
+}
+
+.statCard strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 2rem;
+  color: #4c7a3b;
+}
+
+.reviewList {
+  display: grid;
+  gap: 18px;
+}
+
+.reviewCard.correct {
+  border-left: 6px solid #4c7a3b;
+}
+
+.reviewCard.incorrect {
+  border-left: 6px solid #d92d20;
+}
+
+.reviewHeader,
+.answerGrid {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.reviewHeader {
+  margin-bottom: 12px;
+}
+
+.sharedText,
+.options,
+.explanation {
+  margin-top: 14px;
+}
+
+.sharedText {
+  padding: 14px;
+  border-radius: 14px;
+  background: #f5f9f2;
+  white-space: pre-wrap;
+}
+
+.answerGrid {
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.answerGrid span,
+.explanation span {
+  display: block;
+  font-size: 0.85rem;
+  color: #667085;
+  margin-bottom: 6px;
+}
+
+.options {
+  display: grid;
+  gap: 10px;
+}
+
+.optionItem {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f8fbf6;
+}
+
+.explanation {
+  padding: 14px;
+  border-radius: 14px;
+  background: #f9fafb;
+}
+
+.emptyState {
+  text-align: center;
+  margin-top: 100px;
+}
+
+.emptyState button {
+  margin-top: 16px;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 18px;
+  background: #4c7a3b;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding: 28px 16px 56px;
+  }
+
+  .stats,
+  .parts {
+    grid-template-columns: 1fr;
+  }
+
+  .reviewHeader,
+  .answerGrid {
+    display: grid;
+  }
+}
