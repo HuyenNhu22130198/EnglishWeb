@@ -12,6 +12,7 @@ import com.englishweb.be.entity.toeic.ToeicUserAnswer;
 import com.englishweb.be.repository.UserRepository;
 import com.englishweb.be.repository.toeic.ToeicAttemptRepository;
 import com.englishweb.be.repository.toeic.ToeicExamRepository;
+import com.englishweb.be.repository.toeic.ToeicGroupMaterialRepository;
 import com.englishweb.be.repository.toeic.ToeicQuestionOptionRepository;
 import com.englishweb.be.repository.toeic.ToeicQuestionRepository;
 import com.englishweb.be.repository.toeic.ToeicUserAnswerRepository;
@@ -39,6 +40,7 @@ public class ToeicSubmitService {
     private final ToeicExamRepository toeicExamRepository;
     private final ToeicQuestionRepository toeicQuestionRepository;
     private final ToeicQuestionOptionRepository toeicQuestionOptionRepository;
+    private final ToeicGroupMaterialRepository toeicGroupMaterialRepository;
     private final ToeicAttemptRepository toeicAttemptRepository;
     private final ToeicUserAnswerRepository toeicUserAnswerRepository;
     private final ToeicScoreService toeicScoreService;
@@ -241,6 +243,21 @@ public class ToeicSubmitService {
                         LinkedHashMap::new,
                         Collectors.toList()
                 ));
+        Map<Integer, List<String>> groupImageUrlsByGroupId = answers.stream()
+                .map(answer -> answer.getQuestion().getGroup())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                        group -> group.getId(),
+                        group -> toeicGroupMaterialRepository.findByGroup_IdOrderByDisplayOrderAsc(group.getId())
+                                .stream()
+                                .filter(this::isImageMaterial)
+                                .map(material -> material.getAssetUrl() != null ? material.getAssetUrl().trim() : null)
+                                .filter(url -> url != null && !url.isBlank())
+                                .distinct()
+                                .toList(),
+                        (left, right) -> left,
+                        LinkedHashMap::new
+                ));
 
         int listeningCorrect = (int) answers.stream()
                 .filter(answer -> Boolean.TRUE.equals(answer.getIsCorrect()))
@@ -319,9 +336,12 @@ public class ToeicSubmitService {
                             .questionId(questionId)
                             .questionNo(question.getQuestionNo())
                             .partNo(partNo)
+                            .groupId(question.getGroup().getId())
                             .groupTitle(question.getGroup().getTitle())
                             .sharedText(question.getGroup().getSharedText())
+                            .groupImageUrls(groupImageUrlsByGroupId.getOrDefault(question.getGroup().getId(), List.of()))
                             .questionText(question.getQuestionText())
+                            .imageUrl(question.getImageUrl())
                             .selectedLabel(answer.getSelectedLabel())
                             .selectedText(selectedText)
                             .correctLabel(correctLabel)
@@ -358,6 +378,18 @@ public class ToeicSubmitService {
         return question.getGroup() != null
                 && question.getGroup().getPartNo() != null
                 && question.getGroup().getPartNo() <= 4;
+    }
+
+    private boolean isImageMaterial(com.englishweb.be.entity.toeic.ToeicGroupMaterial material) {
+        String type = material.getMaterialType();
+        if (type == null) {
+            return false;
+        }
+
+        String normalizedType = type.trim().toLowerCase();
+        return normalizedType.contains("image")
+                || normalizedType.contains("picture")
+                || normalizedType.contains("photo");
     }
 
     private String normalizeLabel(String label) {

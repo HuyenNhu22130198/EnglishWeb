@@ -1089,7 +1089,7 @@ const ToeicPractice = () => {
                           onClick={handleAddAudioMarker}
                           disabled={!audioDuration}
                         >
-                          ÄÃ¡nh dáº¥u
+                          Đánh dấu
                         </button>
                       </div>
 
@@ -1144,7 +1144,7 @@ const ToeicPractice = () => {
                                       onClick={() => handleRemoveAudioMarker(marker.id)}
                                       aria-label={`Xóa mốc ${index + 1}`}
                                     >
-                                      Ã—
+                                    X
                                     </button>
                                   </div>
                                 ))}

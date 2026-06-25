@@ -240,9 +240,28 @@ const renderParagraphs = (value) => {
   ));
 };
 
+const formatAnswerText = (label, text, fallback = 'Chưa chọn') => {
+  const normalizedLabel = normalizeText(label);
+  const normalizedText = normalizeText(text);
+
+  if (!normalizedLabel && !normalizedText) {
+    return fallback;
+  }
+
+  if (!normalizedText) {
+    return normalizedLabel;
+  }
+
+  if (!normalizedLabel) {
+    return normalizedText;
+  }
+
+  return `${normalizedLabel}. ${normalizedText}`;
+};
+
 const partHasSharedTranscript = (partNo) => [3, 4].includes(Number(partNo));
 const partHasSharedPassage = (partNo) => [6, 7].includes(Number(partNo));
-const partHidesQuestionText = (partNo) => [1, 2, 6].includes(Number(partNo));
+const partHidesQuestionText = (partNo) => [1, 2].includes(Number(partNo));
 
 const buildQuestionGroups = (questions) => {
   const partBuckets = new Map();
@@ -272,6 +291,7 @@ const buildQuestionGroups = (questions) => {
         partNo,
         groupTitle: question.groupTitle || `Part ${partNo}`,
         sharedText: question.sharedText || '',
+        groupImageUrls: question.groupImageUrls || [],
         transcript: parseTranscriptText(question.transcriptText),
         questions: [],
       };
@@ -280,6 +300,10 @@ const buildQuestionGroups = (questions) => {
 
     if (!group.sharedText && question.sharedText) {
       group.sharedText = question.sharedText;
+    }
+
+    if ((!group.groupImageUrls || group.groupImageUrls.length === 0) && question.groupImageUrls?.length) {
+      group.groupImageUrls = question.groupImageUrls;
     }
 
     if (!group.transcript.english && !group.transcript.vietnamese) {
@@ -295,6 +319,17 @@ const buildQuestionGroups = (questions) => {
       groups,
     }))
     .sort((a, b) => a.partNo - b.partNo);
+};
+
+const getGroupImageUrls = (group) => {
+  const urls = [
+    ...(group.groupImageUrls || []),
+    ...group.questions.map((question) => question.imageUrl),
+  ]
+    .map((url) => normalizeText(url))
+    .filter(Boolean);
+
+  return Array.from(new Set(urls));
 };
 
 const ToeicResult = () => {
@@ -319,6 +354,7 @@ const ToeicResult = () => {
   const [audioDuration, setAudioDuration] = useState(0);
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const [markerStorageWarning, setMarkerStorageWarning] = useState('');
+  const [part7ImagePopup, setPart7ImagePopup] = useState(null);
   const audioRef = useRef(null);
 
   const clearPracticeAudioMarkers = () => {
@@ -385,22 +421,7 @@ const ToeicResult = () => {
     loadAudio();
   }, [result?.examId]);
 
-  // useEffect(() => {
-  //   if (!result?.examId) {
-  //     setAudioMarkers([]);
-  //     return;
-  //   }
-
-  //   setAudioMarkers(readAudioMarkers(result.examId));
-  //   setIsAudioMarkerPanelOpen(true);
-  //   setMarkerStorageWarning(
-  //     getMarkerStorage()
-  //       ? ''
-  //       : 'Trình duyệt đang chặn lưu đánh dấu. Hãy cho phép lưu dữ liệu trang để giữ danh sách mốc thời gian.'
-  //   );
-  // }, [result?.examId]);
-
-   useEffect(() => {
+  useEffect(() => {
     if (!result?.examId) {
       setAudioMarkers([]);
       return;
@@ -440,6 +461,22 @@ const ToeicResult = () => {
       behavior: 'auto',
     });
   }, [attemptId, result, loading]);
+
+  useEffect(() => {
+    if (!part7ImagePopup) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setPart7ImagePopup(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [part7ImagePopup]);
 
   const detailedQuestions = useMemo(() => {
     if (!result?.questionResults) return [];
@@ -548,13 +585,13 @@ const ToeicResult = () => {
     );
   };
 
-  const renderOptionList = (question) => {
+  const renderOptionList = (question, compact = false) => {
     if (!question.options?.length) {
       return null;
     }
 
     return (
-      <div className={styles.optionList}>
+      <div className={`${styles.optionList} ${compact ? styles.optionListCompact : ''}`.trim()}>
         {question.options.map((option) => (
           <div key={`${question.questionId}-${option.optionLabel}`} className={styles.optionItem}>
             <span className={styles.optionLabel}>{option.optionLabel}</span>
@@ -565,23 +602,44 @@ const ToeicResult = () => {
     );
   };
 
-  const renderQuestionBody = (question, partNo) => {
+  const renderQuestionBodyContent = (question, partNo) => {
+    if ([1, 2].includes(Number(partNo))) {
+      return (
+        <div className={styles.transcriptBlock}>
+          {question.transcript?.english && (
+            <div className={styles.transcriptPlain}>
+              {renderParagraphs(question.transcript.english)}
+            </div>
+          )}
+          <div className={styles.transcriptPlain}>
+            {renderParagraphs(question.explanation || question.transcript?.vietnamese)}
+          </div>
+        </div>
+      );
+    }
+
     const hideQuestionText = partHidesQuestionText(partNo);
+    const isCompactPart3 = [3, 4, 6, 7].includes(Number(partNo));
 
     return (
       <>
-        {[1, 2].includes(Number(partNo)) && (
-          <div className={styles.transcriptBlock}>{renderTranscriptPlain(question.transcript)}</div>
-        )}
-
-        {!hideQuestionText && question.questionText && (
+        {!hideQuestionText && question.questionText && !isCompactPart3 && (
           <div className={styles.detailPanel}>
-            <span className={styles.detailPanelLabel}>Câu hỏi</span>
+            {![5, 7].includes(Number(partNo)) && <span className={styles.detailPanelLabel}>Câu hỏi</span>}
             <div className={styles.transcriptContent}>{renderParagraphs(question.questionText)}</div>
           </div>
         )}
 
-        {renderOptionList(question)}
+        {isCompactPart3 ? (
+          <div className={styles.detailPanel}>
+            {normalizeText(question.questionText) && (
+              <div className={styles.transcriptContent}>{renderParagraphs(question.questionText)}</div>
+            )}
+            {renderOptionList(question, true)}
+          </div>
+        ) : (
+          renderOptionList(question)
+        )}
 
         <div className={styles.detailPanel}>
           <span className={styles.detailPanelLabel}>Giải thích</span>
@@ -589,6 +647,44 @@ const ToeicResult = () => {
         </div>
       </>
     );
+  };
+
+  const renderQuestionImage = (question) => {
+    if (!normalizeText(question.imageUrl)) {
+      return null;
+    }
+
+    return (
+      <div className={styles.resultQuestionImageColumn}>
+        <div className={styles.resultQuestionImageBox}>
+          <img
+            src={question.imageUrl}
+            alt={`Question ${question.questionNo}`}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  const shouldRenderQuestionImage = (question, partNo) => (
+    Number(partNo) >= 1 &&
+    Number(partNo) <= 4 &&
+    normalizeText(question.imageUrl)
+  );
+
+  const renderQuestionBody = (question, partNo) => {
+    const content = renderQuestionBodyContent(question, partNo);
+
+    if (shouldRenderQuestionImage(question, partNo)) {
+      return (
+        <div className={styles.resultQuestionBodyWithImage}>
+          <div className={styles.resultQuestionContentColumn}>{content}</div>
+          {renderQuestionImage(question)}
+        </div>
+      );
+    }
+
+    return content;
   };
 
   if (loading) {
@@ -634,7 +730,7 @@ const ToeicResult = () => {
           <span className={styles.eyebrow}>Kết quả TOEIC</span>
           <h1>{result.examName}</h1>
           <p>
-            Bạn đã hoàn thành bài thi. 
+            Bạn đã hoàn thành bài thi.
           </p>
 
           <div className={styles.actions}>
@@ -767,6 +863,13 @@ const ToeicResult = () => {
               <span className={styles.navigatorTimerLabel}>Thời gian</span>
               <span className={styles.navigatorTimerValue}>{elapsedTimeText}</span>
             </div>
+            <button
+              type="button"
+              className={`${styles.showAllButton} ${styles.navigatorShowAllButton}`}
+              onClick={toggleShowAll}
+            >
+              {showAllSolutions ? 'Ẩn toàn bộ lời giải' : 'Hiển thị toàn bộ lời giải'}
+            </button>
           </div>
 
           {groupedParts.map((part) => (
@@ -803,19 +906,6 @@ const ToeicResult = () => {
         </aside>
 
         <section className={styles.contentArea}>
-          <section className={styles.sectionCard}>
-            <div className={styles.sectionHeader}>
-              <div>
-                <h2>Lời giải chi tiết</h2>
-                <p>Chọn để mở toàn bộ lời giải.</p>
-              </div>
-
-              <button type="button" className={styles.showAllButton} onClick={toggleShowAll}>
-                {showAllSolutions ? 'Ẩn toàn bộ lời giải' : 'Hiển thị toàn bộ lời giải'}
-              </button>
-            </div>
-          </section>
-
           {groupedParts.map((part) => (
             <section key={part.partNo} className={styles.partSection}>
               <div className={styles.partHeader}>
@@ -826,25 +916,59 @@ const ToeicResult = () => {
                 {part.groups.map((group) => {
                   const showSharedTranscript = partHasSharedTranscript(part.partNo);
                   const showSharedPassage = partHasSharedPassage(part.partNo);
+                  const hasPart6Transcript =
+                    Number(part.partNo) === 6 &&
+                    (normalizeText(group.transcript?.english) || normalizeText(group.transcript?.vietnamese));
+                  const groupImageUrls = Number(part.partNo) === 7 ? getGroupImageUrls(group) : [];
                   const groupStart = group.questions[0]?.questionNo;
                   const groupEnd = group.questions[group.questions.length - 1]?.questionNo;
-                  const groupLabel =
-                    group.questions.length > 1 && groupStart !== groupEnd
-                      ? `Cụm câu ${groupStart}-${groupEnd}`
-                      : `Câu ${groupStart}`;
+                  const hasQuestionRangeLabel =
+                    ![3, 4, 6, 7].includes(Number(part.partNo)) &&
+                    group.questions.length > 1 &&
+                    groupStart !== groupEnd;
+                  const groupLabel = hasQuestionRangeLabel
+                    ? `Cụm câu ${groupStart}-${groupEnd}`
+                    : '';
 
                   return (
                     <article key={group.groupKey} className={styles.groupCard}>
-                      {(showSharedTranscript || showSharedPassage) && (
+                      {(showSharedTranscript ||
+                        (showSharedPassage &&
+                          (Number(part.partNo) === 6
+                            ? hasPart6Transcript
+                            : normalizeText(group.sharedText)))) && (
                         <div className={styles.groupPassage}>
                           {showSharedTranscript && renderTranscriptPlain(group.transcript)}
-                          {showSharedPassage && renderParagraphs(group.sharedText)}
+                          {showSharedPassage &&
+                            Number(part.partNo) === 6 &&
+                            hasPart6Transcript &&
+                            renderTranscriptPlain(group.transcript)}
+                          {showSharedPassage &&
+                            Number(part.partNo) !== 6 &&
+                            normalizeText(group.sharedText) &&
+                            renderParagraphs(group.sharedText)}
                         </div>
                       )}
 
                       <div className={styles.groupMeta}>
-                        <h3>{groupLabel}</h3>
-                        <span>{group.groupTitle}</span>
+                        {groupLabel && <h3>{groupLabel}</h3>}
+                        {Number(part.partNo) === 7 && groupImageUrls.length > 0 && (
+                          <button
+                            type="button"
+                            className={styles.groupImageButton}
+                            onClick={() =>
+                              setPart7ImagePopup({
+                                title:
+                                  group.questions.length > 1 && groupStart !== groupEnd
+                                    ? `Hình ảnh cụm câu ${groupStart}-${groupEnd}`
+                                    : `Hình ảnh câu ${groupStart}`,
+                                imageUrls: groupImageUrls,
+                              })
+                            }
+                          >
+                            Xem ảnh của cụm
+                          </button>
+                        )}
                       </div>
 
                       <div className={styles.questionList}>
@@ -871,14 +995,23 @@ const ToeicResult = () => {
                               <div className={styles.questionSummaryLeft}>
                                 <span className={styles.questionIndex}>Câu {question.questionNo}</span>
                                 <div className={styles.summaryMeta}>
-                                  <span className={styles.partBadge}>Part {question.partNo}</span>
-                                  <span
-                                    className={
-                                      question.isCorrect ? styles.correctBadge : styles.wrongBadge
-                                    }
-                                  >
-                                    {question.isCorrect ? 'Đúng' : 'Sai'}
-                                  </span>
+                                  <div className={styles.answerBadgeRow}>
+                                    <span
+                                      className={
+                                        question.isCorrect
+                                          ? `${styles.answerInlineBadge} ${styles.answerInlineBadgeCorrect}`
+                                          : `${styles.answerInlineBadge} ${styles.answerInlineBadgeWrong}`
+                                      }
+                                    >
+                                      {formatAnswerText(question.selectedLabel, question.selectedText)}
+                                    </span>
+                                    {!question.isCorrect && (
+                                      <span className={`${styles.answerInlineBadge} ${styles.answerInlineBadgeCorrect}`}>
+                                        Đáp án đúng:{' '}
+                                        {formatAnswerText(question.correctLabel, question.correctText)}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
 
@@ -909,6 +1042,48 @@ const ToeicResult = () => {
       >
         ↑
       </button>
+
+      {part7ImagePopup && (
+        <div
+          className={styles.imagePopupOverlay}
+          role="presentation"
+          onClick={() => setPart7ImagePopup(null)}
+        >
+          <div
+            className={styles.imagePopupDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="part7-image-popup-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className={styles.imagePopupHeader}>
+              <div>
+                <h2 id="part7-image-popup-title">{part7ImagePopup.title}</h2>
+                <p>Nhấn ra ngoài hoặc phím Esc để đóng.</p>
+              </div>
+              <button
+                type="button"
+                className={styles.imagePopupClose}
+                onClick={() => setPart7ImagePopup(null)}
+                aria-label="Đóng popup ảnh"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className={styles.imagePopupGrid}>
+              {part7ImagePopup.imageUrls.map((imageUrl, index) => (
+                <div key={`${imageUrl}-${index}`} className={styles.imagePopupCard}>
+                  <img
+                    src={imageUrl}
+                    alt={`${part7ImagePopup.title} ${index + 1}`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
