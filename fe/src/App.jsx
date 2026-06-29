@@ -123,9 +123,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
         </Routes>
 
-        {!isAdminPage && !noLayoutPages.includes(location.pathname) && (
-          <FloatingDictionary />
-        )}
+        <FloatingDictionary />
         {!hideLayout && <Footer />}
       </div>
     </AuthProvider>

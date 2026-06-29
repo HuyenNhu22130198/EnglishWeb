@@ -29,4 +29,14 @@ public interface IeltsQuestionRepository extends JpaRepository<IeltsQuestion, In
               AND LOWER(q.block.group.skill) = LOWER(:skill)
             """)
     long countByExamIdAndSkill(@Param("examId") Integer examId, @Param("skill") String skill);
+
+    @Query("""
+            SELECT q
+            FROM IeltsQuestion q
+            JOIN FETCH q.exam
+            JOIN FETCH q.block b
+            JOIN FETCH b.group
+            ORDER BY q.exam.id ASC, q.questionNo ASC, q.questionId ASC
+            """)
+    List<IeltsQuestion> findAllForChatbot();
 }

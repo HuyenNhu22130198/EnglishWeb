@@ -51,6 +51,18 @@
   transform: rotate(-8deg);
 }
 
+.chatIcon {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 999px;
+  background: #0e3377;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 900;
+}
+
 .topButton {
   width: 34px;
   height: 28px;
@@ -111,6 +123,26 @@
   background: #f2f5f9;
   color: #1b1c1c;
   font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.panelActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.toolButton {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 6px;
+  background: #f2f5f9;
+  color: #1b1c1c;
+  font: inherit;
+  font-size: 19px;
   font-weight: 900;
   line-height: 1;
   cursor: pointer;
@@ -374,6 +406,233 @@
   font-weight: 800;
 }
 
+.chatPanel {
+  height: min(86vh, 720px);
+}
+
+.chatTabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5eaf3;
+  background: #ffffff;
+}
+
+.chatTabs button {
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 8px;
+  border: 1px solid #d7dde7;
+  border-radius: 7px;
+  background: #f7f9fc;
+  color: #647086;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.chatTabs button.activeChatTab {
+  border-color: #0e3377;
+  background: #0e3377;
+  color: #ffffff;
+}
+
+.faqList {
+  flex: 1;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  overflow-y: auto;
+  padding: 14px;
+  background: #f7f9fc;
+}
+
+.faqItem {
+  padding: 14px;
+  border: 1px solid #e5eaf3;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.faqItem h3 {
+  margin: 0 0 8px;
+  color: #0e3377;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.faqItem p {
+  margin: 0;
+  color: #444650;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.chatMessages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding: 14px;
+  background: #f7f9fc;
+}
+
+.chatMessage {
+  max-width: 92%;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.chatMessage > p,
+.questionText,
+.answerLine,
+.detailBlock p {
+  margin: 0;
+}
+
+.botMessage {
+  align-self: flex-start;
+  padding: 11px 12px;
+  border: 1px solid #e5eaf3;
+  background: #ffffff;
+  color: #1b1c1c;
+}
+
+.userMessage {
+  align-self: flex-end;
+  padding: 11px 12px;
+  background: #0e3377;
+  color: #ffffff;
+}
+
+.answerCard {
+  display: grid;
+  gap: 10px;
+  margin-top: 11px;
+  padding-top: 11px;
+  border-top: 1px solid #e5eaf3;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.metaRow span {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #0e3377;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.answerCard h3 {
+  margin: 0;
+  color: #0e3377;
+  font-size: 16px;
+}
+
+.questionText {
+  color: #1b1c1c;
+  font-weight: 700;
+}
+
+.answerLine {
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border-radius: 7px;
+  background: #ecfdf3;
+  color: #166534;
+}
+
+.optionList {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.optionList li {
+  padding: 8px 9px;
+  border-radius: 7px;
+  background: #f2f5f9;
+  color: #1b1c1c;
+}
+
+.correctOption {
+  background: #dcfce7 !important;
+  color: #166534 !important;
+}
+
+.detailBlock {
+  display: grid;
+  gap: 5px;
+}
+
+.detailBlock strong {
+  color: #0e3377;
+}
+
+.detailBlock p {
+  color: #444650;
+}
+
+.chatForm {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  padding: 12px;
+  border-top: 1px solid #d7dde7;
+  background: #ffffff;
+}
+
+.hiddenPanel {
+  display: none !important;
+}
+
+.chatForm textarea {
+  min-width: 0;
+  resize: none;
+  padding: 10px;
+  border: 1px solid #d7dde7;
+  border-radius: 7px;
+  color: #1b1c1c;
+  font: inherit;
+  line-height: 1.45;
+  outline: none;
+}
+
+.chatForm textarea:focus {
+  border-color: #0e3377;
+  box-shadow: 0 0 0 3px rgba(14, 51, 119, 0.12);
+}
+
+.chatForm button {
+  align-self: end;
+  min-width: 70px;
+  height: 42px;
+  border: none;
+  border-radius: 7px;
+  background: #0e3377;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.chatForm button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 @media (max-width: 720px) {
   .floatingDictionary {
     top: auto;
@@ -403,6 +662,14 @@
   }
 
   .searchButton {
+    width: 100%;
+  }
+
+  .chatForm {
+    grid-template-columns: 1fr;
+  }
+
+  .chatForm button {
     width: 100%;
   }
 

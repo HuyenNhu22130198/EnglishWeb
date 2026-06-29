@@ -2,6 +2,7 @@ package com.englishweb.be.repository.toeic;
 
 import com.englishweb.be.entity.toeic.ToeicQuestion;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -14,4 +15,13 @@ public interface ToeicQuestionRepository extends JpaRepository<ToeicQuestion, In
     List<ToeicQuestion> findByGroup_IdOrderByQuestionNoAsc(Integer groupId);
 
     List<ToeicQuestion> findByExam_IdOrderByQuestionNoAsc(Integer examId);
+
+    @Query("""
+            SELECT q
+            FROM ToeicQuestion q
+            JOIN FETCH q.exam
+            JOIN FETCH q.group
+            ORDER BY q.exam.id ASC, q.questionNo ASC, q.id ASC
+            """)
+    List<ToeicQuestion> findAllForChatbot();
 }

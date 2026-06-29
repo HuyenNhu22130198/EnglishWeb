@@ -361,22 +361,12 @@ const ToeicPractice = () => {
   const [activePart, setActivePart] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatInput, setChatInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitNotice, setSubmitNotice] = useState(null);
   const [isAudioMarkerPanelOpen, setIsAudioMarkerPanelOpen] = useState(false);
   const [isHighlightModeEnabled, setIsHighlightModeEnabled] = useState(false);
   const [highlightToolbar, setHighlightToolbar] = useState(null);
   const [markerStorageWarning, setMarkerStorageWarning] = useState('');
-  const [chatMessages, setChatMessages] = useState([
-    {
-      id: 1,
-      role: 'assistant',
-      content:
-"Bạn đang vướng câu nào? Hãy copy nguyên câu hỏi hoặc đoạn đáp án bạn muốn hỏi vào đây, mình sẽ hỗ trợ bạn phân tích cách làm nhé",
-    },
-  ]);
   const [audioDuration, setAudioDuration] = useState(0);
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const [audioMarkers, setAudioMarkers] = useState([]);
@@ -975,33 +965,6 @@ const ToeicPractice = () => {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  // Xử lý gửi tin nhắn chat
-  const handleSendChatMessage = (e) => {
-    e.preventDefault();
-
-    const message = chatInput.trim();
-
-    if (!message) {
-      return;
-    }
-
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        role: 'user',
-        content: message,
-      },
-      {
-        id: Date.now() + 1,
-        role: 'assistant',
-        content: 'Mình đã nhận câu hỏi của bạn.',
-      },
-    ]);
-
-    setChatInput('');
   };
 
   if (loading) {
@@ -1833,59 +1796,6 @@ const ToeicPractice = () => {
         </div>
       )}
 
-      <div className={styles.examChatbot}>
-        {!isChatOpen ? (
-          <button
-            type="button"
-            className={styles.chatFloatingButton}
-            onClick={() => setIsChatOpen(true)}
-            aria-label="Mở trợ lý luyện đề"
-          >
-            <strong>Chat bot</strong>
-          </button>
-        ) : (
-          <div className={styles.chatWindow}>
-            <div className={styles.chatHeader}>
-              <div>
-                <strong>Trợ lý luyện đề TOEIC</strong>
-                <span>Hỗ trợ phân tích câu hỏi</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsChatOpen(false)}
-                aria-label="Đóng chatbot"
-              >
-                Ã—
-              </button>
-            </div>
-
-            <div className={styles.chatBody}>
-              {chatMessages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`${styles.chatMessage} ${
-                    message.role === 'user' ? styles.userMessage : styles.assistantMessage
-                  }`}
-                >
-                  {message.content}
-                </div>
-              ))}
-            </div>
-
-            <form className={styles.chatForm} onSubmit={handleSendChatMessage}>
-              <textarea
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Copy câu hỏi bạn muốn hỏi vào đây..."
-                rows={2}
-              />
-
-              <button type="submit">Gá»­i</button>
-            </form>
-          </div>
-        )}
-      </div>
     </main>
   );
 };
