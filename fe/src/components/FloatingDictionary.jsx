@@ -42,6 +42,14 @@ const formatPercent = (value) => {
   return `${Math.round(value * 100)}%`;
 };
 
+const formatAnswerValue = (answer) => {
+  if (!answer) {
+    return '';
+  }
+
+  return [answer.key, answer.text].filter(Boolean).join(' - ');
+};
+
 const FloatingDictionary = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -486,11 +494,21 @@ const FloatingDictionary = () => {
 
                     <div className={styles.answerLine}>
                       <strong>Đáp án:</strong>
-                      <span>
-                        {[item.result.answer, item.result.answerText]
-                          .filter(Boolean)
-                          .join(' - ')}
-                      </span>
+                      {item.result.answers?.length ? (
+                        <div className={styles.answerValues}>
+                          {item.result.answers.map((answer, index) => (
+                            <span key={`${item.id}-answer-${answer.key || answer.text || index}`}>
+                              {formatAnswerValue(answer)}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span>
+                          {[item.result.answer, item.result.answerText]
+                            .filter(Boolean)
+                            .join(' - ')}
+                        </span>
+                      )}
                     </div>
 
                     {item.result.options?.length ? (

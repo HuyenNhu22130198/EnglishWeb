@@ -17,13 +17,6 @@ const isTextMaterial = (material) => {
 };
 
 const normalizeContent = (value) => (value || '').replace(/\s+/g, ' ').trim().toLowerCase();
-const getMaterialQuestionNo = (material) => {
-  const source = material.assetUrl || material.content || '';
-  const fileName = decodeURIComponent(source.split(/[?#]/)[0].split('/').pop() || '');
-  const match = fileName.match(/[_-](\d{1,3})(?:\.[a-z0-9]+)?$/i);
-
-  return match ? Number(match[1]) : null;
-};
 const AUDIO_MARKER_STORAGE_PREFIX = 'toeic-practice-audio-markers';
 const HIGHLIGHT_STORAGE_PREFIX = 'toeic-practice-highlights';
 const ELAPSED_TIME_STORAGE_PREFIX = 'toeic-practice-elapsed-time';
@@ -860,14 +853,6 @@ const ToeicPractice = () => {
       return imageMaterials[0].assetUrl;
     }
 
-    if ([3, 4].includes(Number(partNo))) {
-      const matchingMaterial = imageMaterials.find(
-        (material) => getMaterialQuestionNo(material) === Number(question.questionNo)
-      );
-
-      return matchingMaterial?.assetUrl || null;
-    }
-
     return null;
   };
 
@@ -1065,7 +1050,7 @@ const ToeicPractice = () => {
                         >
                           <span>Đã đánh dấu {audioMarkers.length}</span>
                           <strong>
-                            {isAudioMarkerPanelOpen ? 'Thu gọn' : 'Mở rộngs'}
+                            {isAudioMarkerPanelOpen ? 'Thu gọn' : 'Mở rộng'}
                           </strong>
                         </button>
 

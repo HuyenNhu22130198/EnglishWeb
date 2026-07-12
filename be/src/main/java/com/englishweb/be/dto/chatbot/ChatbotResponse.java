@@ -26,7 +26,15 @@ public class ChatbotResponse {
     private String explanation;
     private String transcriptText;
     private Double matchScore;
+    private List<AnswerResponse> answers;
     private List<OptionResponse> options;
+
+    @Data
+    @Builder
+    public static class AnswerResponse {
+        private String key;
+        private String text;
+    }
 
     @Data
     @Builder

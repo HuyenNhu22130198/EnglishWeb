@@ -552,6 +552,11 @@
   color: #166534;
 }
 
+.answerValues {
+  display: grid;
+  gap: 4px;
+}
+
 .optionList {
   display: grid;
   gap: 6px;
