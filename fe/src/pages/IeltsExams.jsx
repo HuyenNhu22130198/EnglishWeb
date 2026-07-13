@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { ieltsAPI } from '../services/ieltsService';
 import styles from './IeltsExams.module.css';
 
+const IELTS_SKILLS = ['LISTENING', 'READING', 'WRITING', 'SPEAKING'];
+
 const IeltsExams = () => {
   const navigate = useNavigate();
   const [keyword, setKeyword] = useState('');
@@ -32,18 +34,18 @@ const IeltsExams = () => {
     return () => clearTimeout(timer);
   }, [keyword]);
 
-  const handleStartSkill = (examId, skill) => {
-    navigate(`/practice/ielts/${examId}?skill=${skill}`);
+  const handleViewDetail = (examId) => {
+    navigate(`/exams/ielts/${examId}`);
   };
 
   return (
     <main className={styles.page}>
       <section className={styles.hero}>
-        <span className={styles.eyebrow}>Kho de IELTS</span>
-        <h1>Danh sach de IELTS</h1>
+        <span className={styles.eyebrow}>Kho đề IELTS</span>
+        <h1>Danh sách đề IELTS</h1>
         <p>
-          Luyen de IELTS theo du lieu that trong database. Hien tai he thong ho tro flow lam bai va
-          cham diem cho Listening, Reading.
+          Luyện đề IELTS theo dữ liệu thật trong hệ thống. Hiện tại hệ thống hỗ trợ làm bài và
+          chấm điểm cho Listening, Reading.
         </p>
       </section>
 
@@ -53,11 +55,11 @@ const IeltsExams = () => {
             type="text"
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
-            placeholder="Tim kiem theo ma de hoac ten de..."
+            placeholder="Tìm kiếm theo mã đề hoặc tên đề..."
             className={styles.searchInput}
           />
           <span className={styles.resultMeta}>
-            Tim thay <strong>{exams.length}</strong> de
+            Tìm thấy <strong>{exams.length}</strong> đề
           </span>
         </div>
       </section>
@@ -65,18 +67,18 @@ const IeltsExams = () => {
       <section className={styles.examGrid}>
         {loading ? (
           <article className={styles.emptyState}>
-            <h2>Dang tai du lieu IELTS...</h2>
-            <p>He thong dang doc danh sach de tu database.</p>
+            <h2>Đang tải dữ liệu IELTS...</h2>
+            <p>Hệ thống đang đọc danh sách đề.</p>
           </article>
         ) : error ? (
           <article className={styles.emptyState}>
-            <h2>Khong the tai du lieu</h2>
+            <h2>Không thể tải dữ liệu</h2>
             <p>{error}</p>
           </article>
         ) : exams.length === 0 ? (
           <article className={styles.emptyState}>
-            <h2>Chua co de IELTS</h2>
-            <p>Khi ban insert du lieu vao bang IELTS, danh sach de se xuat hien tai day.</p>
+            <h2>Chưa có đề IELTS</h2>
+            <p>Khi bạn thêm dữ liệu IELTS, danh sách đề sẽ xuất hiện tại đây.</p>
           </article>
         ) : (
           exams.map((exam) => (
@@ -91,7 +93,7 @@ const IeltsExams = () => {
 
               <div className={styles.stats}>
                 <div>
-                  <span>Tong cau</span>
+                  <span>Tổng câu</span>
                   <strong>{exam.totalQuestions}</strong>
                 </div>
                 <div>
@@ -103,13 +105,13 @@ const IeltsExams = () => {
                   <strong>{exam.readingQuestions}</strong>
                 </div>
                 <div>
-                  <span>Luot lam</span>
+                  <span>Lượt làm</span>
                   <strong>{Number(exam.attempts || 0).toLocaleString('vi-VN')}</strong>
                 </div>
               </div>
 
               <div className={styles.skills}>
-                {(exam.availableSkills || []).map((skill) => (
+                {IELTS_SKILLS.map((skill) => (
                   <span key={skill} className={styles.skillBadge}>
                     {skill}
                   </span>
@@ -120,19 +122,9 @@ const IeltsExams = () => {
                 <button
                   type="button"
                   className={styles.primaryButton}
-                  onClick={() => handleStartSkill(exam.id, 'LISTENING')}
-                  disabled={!exam.availableSkills?.includes('LISTENING')}
+                  onClick={() => handleViewDetail(exam.id)}
                 >
-                  Lam Listening
-                </button>
-
-                <button
-                  type="button"
-                  className={styles.secondaryButton}
-                  onClick={() => handleStartSkill(exam.id, 'READING')}
-                  disabled={!exam.availableSkills?.includes('READING')}
-                >
-                  Lam Reading
+                  Chi tiết
                 </button>
               </div>
             </article>

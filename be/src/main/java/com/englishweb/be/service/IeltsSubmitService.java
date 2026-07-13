@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -66,7 +67,7 @@ public class IeltsSubmitService {
         IeltsAttempt attempt = IeltsAttempt.builder()
                 .user(user)
                 .exam(exam)
-                .attemptType("PRACTICE")
+                .attemptType("SKILL_PRACTICE")
                 .skill(normalizedSkill)
                 .startedAt(now)
                 .submittedAt(now)
@@ -77,6 +78,7 @@ public class IeltsSubmitService {
 
         int answeredCount = 0;
         int correctCount = 0;
+        List<IeltsLrUserAnswer> savedUserAnswers = new ArrayList<>();
 
         for (IeltsQuestion question : questions) {
             IeltsSubmitRequest.AnswerRequest answerRequest = selectedMap.get(question.getQuestionId());
@@ -84,14 +86,9 @@ public class IeltsSubmitService {
             String answerText = answerRequest == null ? null : normalizeFreeText(answerRequest.getAnswerText());
 
             boolean isAnswered = selectedOptionKey != null || answerText != null;
-            boolean isCorrect = isAnswered && isCorrectAnswer(question.getQuestionId(), selectedOptionKey, answerText);
 
             if (isAnswered) {
                 answeredCount++;
-            }
-
-            if (isCorrect) {
-                correctCount++;
             }
 
             IeltsQuestionOption selectedOption = null;
@@ -101,16 +98,41 @@ public class IeltsSubmitService {
                         .orElse(null);
             }
 
-            ieltsLrUserAnswerRepository.save(IeltsLrUserAnswer.builder()
+            IeltsLrUserAnswer savedUserAnswer = ieltsLrUserAnswerRepository.save(IeltsLrUserAnswer.builder()
                     .attempt(savedAttempt)
                     .question(question)
                     .selectedOption(selectedOption)
                     .selectedOptionKey(selectedOptionKey)
                     .answerText(answerText)
-                    .isCorrect(isCorrect)
+                    .isCorrect(false)
                     .answeredAt(isAnswered ? now : null)
                     .build());
+            savedUserAnswers.add(savedUserAnswer);
         }
+
+        Map<Integer, List<IeltsQuestionAnswer>> acceptedAnswersByQuestionId = ieltsQuestionAnswerRepository
+                .findByQuestion_QuestionIdInOrderByQuestion_QuestionIdAscIdAsc(
+                        questions.stream().map(IeltsQuestion::getQuestionId).toList()
+                )
+                .stream()
+                .collect(Collectors.groupingBy(
+                        answer -> answer.getQuestion().getQuestionId(),
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        for (IeltsLrUserAnswer userAnswer : savedUserAnswers) {
+            List<IeltsQuestionAnswer> acceptedAnswers = acceptedAnswersByQuestionId
+                    .getOrDefault(userAnswer.getQuestion().getQuestionId(), List.of());
+            boolean isCorrect = isCorrectAnswer(userAnswer, acceptedAnswers);
+
+            userAnswer.setIsCorrect(isCorrect);
+            if (isCorrect) {
+                correctCount++;
+            }
+        }
+
+        ieltsLrUserAnswerRepository.saveAll(savedUserAnswers);
 
         BigDecimal bandScore = ieltsScoreService.estimateBand(normalizedSkill, correctCount);
 
@@ -261,10 +283,8 @@ public class IeltsSubmitService {
                 ));
     }
 
-    private boolean isCorrectAnswer(Integer questionId, String selectedOptionKey, String answerText) {
-        List<IeltsQuestionAnswer> acceptedAnswers = ieltsQuestionAnswerRepository.findByQuestion_QuestionIdOrderByIdAsc(questionId);
-
-        Set<String> submittedTokens = Stream.of(selectedOptionKey, answerText)
+    private boolean isCorrectAnswer(IeltsLrUserAnswer userAnswer, List<IeltsQuestionAnswer> acceptedAnswers) {
+        Set<String> submittedTokens = Stream.of(userAnswer.getSelectedOptionKey(), userAnswer.getAnswerText())
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 

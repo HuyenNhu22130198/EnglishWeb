@@ -9,7 +9,9 @@ import FloatingDictionary from './components/FloatingDictionary';
 import Home from './pages/Home';
 import ToeicExams from './pages/ToeicExams';
 import IeltsExams from './pages/IeltsExams';
+import IeltsExamDetail from './pages/IeltsExamDetail';
 import IeltsPractice from './pages/IeltsPractice';
+import IeltsWriting from './pages/IeltsWriting';
 import IeltsResult from './pages/IeltsResult';
 import Flashcard from './pages/Flashcard';
 import Infor from './pages/Infor';
@@ -88,6 +90,15 @@ function App() {
           <Route path="/practice/toeic/result/:attemptId" element={<ToeicResult />} />
 
           <Route path="/exams/ielts" element={<IeltsExams />} />
+          <Route path="/exams/ielts/:examId" element={<IeltsExamDetail />} />
+          <Route
+            path="/practice/ielts/:examId/writing"
+            element={
+              <ProtectedRoute>
+                <IeltsWriting />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/practice/ielts/:examId"
             element={

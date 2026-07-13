@@ -43,7 +43,7 @@
 
 .examBarControls {
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr) 132px 112px;
+  grid-template-columns: 92px minmax(0, 1fr) 112px;
   align-items: center;
   gap: 12px;
 }
@@ -94,30 +94,6 @@
   font-weight: 700;
 }
 
-.examProgress {
-  min-height: 52px;
-  padding: 8px 12px;
-  border: 1px solid #e5eaf3;
-  border-radius: 14px;
-  background: #ffffff;
-  display: grid;
-  align-content: center;
-  gap: 2px;
-  box-sizing: border-box;
-}
-
-.examProgress span {
-  color: var(--text-soft);
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.examProgress strong {
-  color: var(--primary);
-  font-size: 18px;
-  font-weight: 900;
-}
-
 .submitButton {
   width: 112px;
   min-width: 112px;
@@ -141,6 +117,86 @@
 .submitButton:disabled {
   opacity: 0.65;
   cursor: not-allowed;
+}
+
+.submitNotice {
+  position: fixed;
+  top: calc(var(--top-bar-height) + 14px);
+  right: 24px;
+  z-index: 1600;
+  width: min(460px, calc(100vw - 32px));
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #fde68a;
+  box-shadow: 0 20px 42px rgba(15, 23, 42, 0.16);
+}
+
+.submitNoticeWarning {
+  border-color: #fbbf24;
+}
+
+.submitNoticeError {
+  border-color: #fecaca;
+}
+
+.submitNoticeIcon {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #fff7ed;
+  color: #c2410c;
+  font-weight: 900;
+}
+
+.submitNoticeContent {
+  min-width: 0;
+}
+
+.submitNoticeContent strong {
+  display: block;
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.submitNoticeContent p {
+  margin: 4px 0 0;
+  color: var(--text-soft);
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.submitNoticeActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.submitNoticeActions button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.submitNoticeActions button:last-child {
+  background: #eef2f7;
+  color: #4b5563;
 }
 
 .bodyLayout {
@@ -189,11 +245,98 @@
   font-weight: 900;
 }
 
+.navigatorTimer {
+  margin: 10px 0 18px;
+  min-height: 42px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #e5eaf3;
+  border-radius: 12px;
+  background: #f8fbff;
+  box-sizing: border-box;
+}
+
+.navigatorTimerLabel {
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.navigatorTimerValue {
+  color: var(--primary);
+  font-size: 18px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
 .navigatorHeader p {
   margin: 8px 0 16px;
   color: var(--text-soft);
   font-size: 13px;
   font-weight: 750;
+}
+
+.highlightTool {
+  margin-bottom: 14px;
+  padding: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  border: 1px solid #edf0f6;
+  border-radius: 18px;
+}
+
+.highlightToggle {
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 850;
+  cursor: pointer;
+  text-align: left;
+}
+
+.highlightToggleLabel {
+  line-height: 1.2;
+}
+
+.highlightSwitch {
+  width: 38px;
+  height: 22px;
+  padding: 3px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  box-sizing: border-box;
+  transition: background 0.18s ease;
+}
+
+.highlightSwitchKnob {
+  width: 16px;
+  height: 16px;
+  display: block;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+  transform: translateX(0);
+  transition: transform 0.18s ease;
+}
+
+.highlightToggleActive .highlightSwitch {
+  background: var(--primary);
+}
+
+.highlightToggleActive .highlightSwitchKnob {
+  transform: translateX(16px);
 }
 
 .navigatorLegend {
@@ -286,6 +429,120 @@
   color: #ffffff;
 }
 
+.highlightTextBlock {
+  cursor: text;
+  user-select: text;
+}
+
+.textHighlight {
+  background: #fef08a;
+  color: inherit;
+  border-radius: 4px;
+  padding: 0 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.highlightSegment {
+  border-radius: 4px;
+  padding: 0 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.underlineHighlight {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+.strikeHighlight {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.highlightToolbar {
+  position: fixed;
+  z-index: 1500;
+  min-width: 270px;
+  max-width: 340px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #5a5a5a;
+  border-radius: 4px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.24);
+  color: #ffffff;
+}
+
+.highlightToolbarText {
+  display: none;
+}
+
+.highlightToolbarActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.highlightColorButton,
+.highlightStyleButton,
+.highlightRemoveButton,
+.highlightFlashcardButton {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 3px;
+  color: #111827;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.highlightColorButton {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.highlightColorButtonActive {
+  outline: 2px solid #ffffff;
+  outline-offset: 1px;
+}
+
+.highlightStyleButton {
+  width: 24px;
+  background: #ffffff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.highlightRemoveButton {
+  width: 24px;
+  background: #ffffff;
+  color: #dc2626;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.highlightFlashcardButton {
+  width: 24px;
+  height: 24px;
+  background: #ffffff;
+  color: #111827;
+  font-family: inherit;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.highlightFlashcardButton:hover {
+  background: #eef4ff;
+  color: var(--primary);
+}
+
 .examContent {
   grid-column: 2;
   min-width: 0;
@@ -298,30 +555,22 @@
 }
 
 .partHeader {
-  margin-bottom: 18px;
-  padding: 20px 26px;
+  margin-bottom: 14px;
+  padding: 12px 18px;
   background: var(--primary);
   color: #ffffff;
-  border-radius: 22px;
-  box-shadow: 0 14px 34px rgba(14, 51, 119, 0.16);
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(14, 51, 119, 0.12);
   display: flex;
   justify-content: space-between;
   gap: 24px;
-  align-items: flex-end;
-}
-
-.partHeader span {
-  display: block;
-  margin-bottom: 5px;
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 12px;
-  font-weight: 900;
-  text-transform: uppercase;
+  align-items: center;
 }
 
 .partHeader h2 {
   margin: 0;
-  font-size: 26px;
+  font-size: 20px;
+  line-height: 1.2;
   font-weight: 900;
 }
 
@@ -403,17 +652,27 @@
 }
 
 .passageBox {
-  padding: 24px;
-  background: var(--page-bg);
-  border: 1px solid #edf0f6;
-  border-radius: 20px;
+  padding: 30px 34px;
+  background: #ffffff;
+  border: 1px solid #e1e8f5;
+  border-radius: 14px;
+  box-shadow: 0 12px 28px rgba(14, 51, 119, 0.06);
+}
+
+.passageTitle {
+  margin: 0 0 24px;
+  color: #0647b6;
+  font-size: 28px;
+  line-height: 1.25;
+  font-weight: 900;
+  text-align: center;
 }
 
 .passageBox p {
-  margin: 0 0 12px;
-  color: #374151;
-  font-size: 16px;
-  line-height: 1.82;
+  margin: 0 0 26px;
+  color: #1f2937;
+  font-size: 17px;
+  line-height: 1.88;
   white-space: pre-line;
 }
 
@@ -437,9 +696,15 @@
   margin-bottom: 14px;
 }
 
+.blockHeaderTop {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
 .blockHeader span {
   display: inline-flex;
-  margin-bottom: 8px;
   padding: 6px 10px;
   border-radius: 999px;
   background: #eef4ff;
@@ -449,7 +714,8 @@
 }
 
 .blockHeader strong {
-  display: block;
+  display: inline-flex;
+  align-items: center;
   color: var(--text-main);
   font-size: 15px;
   font-weight: 900;
@@ -457,10 +723,54 @@
 
 .blockHeader p {
   margin: 8px 0 0;
-  color: #4b5563;
+  color: var(--text-main);
   font-size: 14px;
+  font-weight: 850;
   line-height: 1.58;
   white-space: pre-line;
+}
+
+.blockPromptText {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border: 1px solid #e1e8f5;
+  border-radius: 12px;
+  background: #f8fbff;
+  color: var(--text-main);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.78;
+  white-space: pre-line;
+}
+
+.blockOptionBox {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 2px solid #111827;
+  background: #ffffff;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px 18px;
+}
+
+.blockOptionItem {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.blockOptionItem strong {
+  font-weight: 900;
+}
+
+.blockOptionItem span {
+  min-width: 0;
+  font-weight: 850;
 }
 
 .questionList {
@@ -470,25 +780,18 @@
 
 .questionCard {
   min-width: 0;
-  padding: 14px 16px;
-  background: #ffffff;
-  border: 1px solid #e5eaf3;
-  border-radius: 22px;
   scroll-margin-top: calc(var(--top-bar-height) + 24px);
-  transition: all 0.2s ease;
 }
 
 .questionCard:hover {
-  border-color: rgba(14, 51, 119, 0.25);
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  box-shadow: none;
 }
 
 .questionTop {
   display: grid;
   grid-template-columns: 46px minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  align-items: start;
+  gap: 10px 12px;
 }
 
 .questionIndex {
@@ -507,6 +810,7 @@
 }
 
 .answerInput {
+  grid-column: 2;
   width: 100%;
   min-height: 42px;
   padding: 0 14px;
@@ -527,8 +831,9 @@
 }
 
 .questionText {
+  grid-column: 2;
   min-width: 0;
-  margin: 0;
+  margin: 0 0 10px;
   color: var(--text-main);
   font-size: 15.5px;
   line-height: 1.68;
@@ -610,6 +915,154 @@
   cursor: pointer;
 }
 
+.flashcardModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1800;
+  background: rgba(15, 23, 42, 0.44);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.flashcardModal {
+  position: relative;
+  width: min(640px, 100%);
+  max-height: min(90vh, 920px);
+  overflow: auto;
+  padding: 22px 20px 18px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid rgba(196, 198, 210, 0.42);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+}
+
+.flashcardModal h2 {
+  margin: 0 0 20px;
+  color: #111111;
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 900;
+}
+
+.flashcardModalClose {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: #eef2f7;
+  color: #6b7280;
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.flashcardForm {
+  display: grid;
+  gap: 12px;
+}
+
+.flashcardDeckMode {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.flashcardDeckMode button {
+  min-height: 46px;
+  border: none;
+  border-radius: 6px;
+  background: #edf3fb;
+  color: #526071;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.flashcardDeckMode .activeDeckMode {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.flashcardForm label {
+  display: grid;
+  gap: 8px;
+  color: #222222;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.flashcardForm input,
+.flashcardForm textarea,
+.flashcardForm select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d7dbe2;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+  outline: none;
+}
+
+.flashcardForm input,
+.flashcardForm select {
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.flashcardForm textarea {
+  resize: vertical;
+  padding: 11px 12px;
+}
+
+.flashcardForm input:focus,
+.flashcardForm textarea:focus,
+.flashcardForm select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(14, 51, 119, 0.12);
+}
+
+.flashcardError {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff1f2;
+  color: #b42318;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.flashcardModalActions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 4px;
+}
+
+.flashcardSaveButton {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 6px;
+  background: var(--primary);
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  box-shadow: 0 12px 24px rgba(14, 51, 119, 0.18);
+}
+
+.flashcardSaveButton:hover {
+  background: var(--primary-hover);
+}
+
 @media (max-width: 1160px) {
   .practicePage {
     --side-nav-width: 100%;
@@ -662,7 +1115,7 @@
     grid-template-columns: 92px 112px;
     grid-template-areas:
       "back submit"
-      "title progress";
+      "title title";
     justify-content: space-between;
   }
 
@@ -674,12 +1127,12 @@
     grid-area: title;
   }
 
-  .examProgress {
-    grid-area: progress;
-  }
-
   .submitButton {
     grid-area: submit;
+  }
+
+  .blockOptionBox {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .numberGrid {

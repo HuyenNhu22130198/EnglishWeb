@@ -132,7 +132,7 @@ public class IeltsPracticeService {
     private String normalizeSkill(String skill) {
         String normalized = skill == null ? "" : skill.trim().toUpperCase();
 
-        if (!"LISTENING".equals(normalized) && !"READING".equals(normalized)) {
+        if (!"LISTENING".equals(normalized) && !"READING".equals(normalized) && !"WRITING".equals(normalized)) {
             throw new RuntimeException("Kỹ năng IELTS chưa được hỗ trợ hoặc không hợp lệ!");
         }
 
