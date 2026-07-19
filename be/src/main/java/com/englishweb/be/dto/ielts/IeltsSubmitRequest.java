@@ -12,6 +12,7 @@ import java.util.List;
 public class IeltsSubmitRequest {
 
     private List<AnswerRequest> answers;
+    private List<WritingAnswerRequest> tasks;
     private Integer elapsedSeconds;
 
     public IeltsSubmitRequest(List<AnswerRequest> answers) {
@@ -24,6 +25,15 @@ public class IeltsSubmitRequest {
     public static class AnswerRequest {
         private Integer questionId;
         private String selectedOptionKey;
+        private String answerText;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WritingAnswerRequest {
+        private Integer taskId;
+        private Integer taskNo;
         private String answerText;
     }
 }

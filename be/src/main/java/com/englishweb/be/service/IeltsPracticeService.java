@@ -7,12 +7,14 @@ import com.englishweb.be.entity.ielts.IeltsQuestion;
 import com.englishweb.be.entity.ielts.IeltsQuestionBlock;
 import com.englishweb.be.entity.ielts.IeltsQuestionOption;
 import com.englishweb.be.entity.ielts.IeltsSectionGroup;
+import com.englishweb.be.entity.ielts.IeltsWritingTask;
 import com.englishweb.be.repository.ielts.IeltsExamRepository;
 import com.englishweb.be.repository.ielts.IeltsMediaAssetRepository;
 import com.englishweb.be.repository.ielts.IeltsQuestionBlockRepository;
 import com.englishweb.be.repository.ielts.IeltsQuestionOptionRepository;
 import com.englishweb.be.repository.ielts.IeltsQuestionRepository;
 import com.englishweb.be.repository.ielts.IeltsSectionGroupRepository;
+import com.englishweb.be.repository.ielts.IeltsWritingTaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,7 @@ public class IeltsPracticeService {
     private final IeltsQuestionBlockRepository ieltsQuestionBlockRepository;
     private final IeltsQuestionRepository ieltsQuestionRepository;
     private final IeltsQuestionOptionRepository ieltsQuestionOptionRepository;
+    private final IeltsWritingTaskRepository ieltsWritingTaskRepository;
 
     @Transactional(readOnly = true)
     public IeltsPracticeResponse getPracticeExam(Integer examId, String skill) {
@@ -36,6 +39,28 @@ public class IeltsPracticeService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đề IELTS!"));
 
         String normalizedSkill = normalizeSkill(skill);
+
+        List<IeltsMediaAsset> assets = ieltsMediaAssetRepository
+                .findByExam_IdAndSkillIgnoreCaseOrderByPartNoAscDisplayOrderAscIdAsc(examId, normalizedSkill);
+
+        if ("WRITING".equals(normalizedSkill)) {
+            List<IeltsPracticeResponse.WritingTaskResponse> writingTasks = ieltsWritingTaskRepository
+                    .findByExam_IdOrderByTaskNoAscDisplayOrderAscIdAsc(examId)
+                    .stream()
+                    .map(task -> toWritingTaskResponse(task, assets))
+                    .toList();
+
+            return IeltsPracticeResponse.builder()
+                    .examId(exam.getId())
+                    .examCode(exam.getExamCode())
+                    .examName(exam.getExamName())
+                    .skill(normalizedSkill)
+                    .totalQuestions(writingTasks.size())
+                    .assets(assets.stream().map(this::toAssetResponse).toList())
+                    .groups(List.of())
+                    .writingTasks(writingTasks)
+                    .build();
+        }
 
         List<IeltsPracticeResponse.GroupResponse> groups = ieltsSectionGroupRepository
                 .findByExam_IdAndSkillIgnoreCaseOrderByPartNoAscGroupNoAscDisplayOrderAscIdAsc(examId, normalizedSkill)
@@ -53,11 +78,28 @@ public class IeltsPracticeService {
                 .examName(exam.getExamName())
                 .skill(normalizedSkill)
                 .totalQuestions(totalQuestions)
-                .assets(ieltsMediaAssetRepository.findByExam_IdAndSkillIgnoreCaseOrderByPartNoAscDisplayOrderAscIdAsc(examId, normalizedSkill)
-                        .stream()
-                        .map(this::toAssetResponse)
-                        .toList())
+                .assets(assets.stream().map(this::toAssetResponse).toList())
                 .groups(groups)
+                .build();
+    }
+
+    private IeltsPracticeResponse.WritingTaskResponse toWritingTaskResponse(
+            IeltsWritingTask task,
+            List<IeltsMediaAsset> assets
+    ) {
+        IeltsMediaAsset taskAsset = assets.stream()
+                .filter(asset -> task.getTaskNo().equals(asset.getPartNo()))
+                .findFirst()
+                .orElse(null);
+
+        return IeltsPracticeResponse.WritingTaskResponse.builder()
+                .taskId(task.getId())
+                .taskNo(task.getTaskNo())
+                .taskType(task.getTaskType())
+                .instruction(task.getInstructionText())
+                .prompt(task.getPromptText())
+                .minWords(task.getMinWords())
+                .asset(toAssetResponse(taskAsset))
                 .build();
     }
 

@@ -76,6 +76,11 @@ const formatBand = (value) => {
   return Number.isFinite(band) ? band.toFixed(1) : '0.0';
 };
 
+const formatSimilarity = (value) => {
+  const percent = Number(value);
+  return Number.isFinite(percent) ? `${percent.toFixed(2)}%` : '0.00%';
+};
+
 const formatDuration = (seconds) => {
   const totalSeconds = Number(seconds);
 
@@ -98,7 +103,10 @@ const formatDuration = (seconds) => {
   return `${remainingSeconds} giây`;
 };
 
-const getSkillLabel = (skill) => (skill === 'READING' ? 'Reading' : 'Listening');
+const getSkillLabel = (skill) => {
+  if (skill === 'WRITING') return 'Writing';
+  return skill === 'READING' ? 'Reading' : 'Listening';
+};
 
 const Icon = ({ name }) => {
   const commonProps = {
@@ -159,6 +167,7 @@ const HistoryCardList = ({ groups, examType, expandedExamKey, onToggle, onOpenRe
       {groups.map((group) => {
         const isExpanded = expandedExamKey === group.examKey;
         const hasMultipleAttempts = group.attempts.length > 1;
+        const isWriting = isIelts && group.skill === 'WRITING';
 
         return (
           <article key={group.examKey} className={styles.historyCard}>
@@ -170,16 +179,33 @@ const HistoryCardList = ({ groups, examType, expandedExamKey, onToggle, onOpenRe
                   {isIelts && `${getSkillLabel(group.skill)} • `}
                   Làm {formatNumber(group.attempts.length)} lần • Gần nhất {formatDateTime(group.latestAttempt?.submittedAt)}
                 </p>
+                {isWriting && (
+                  <p>
+                    {formatNumber(group.latestAttempt?.totalWordCount)} từ · Task 1 {formatNumber(group.latestAttempt?.task1WordCount)} từ · Task 2 {formatNumber(group.latestAttempt?.task2WordCount)} từ
+                  </p>
+                )}
               </div>
 
               <div className={styles.historyMetrics}>
                 <div>
-                  <span>{isIelts ? 'Band cao nhất' : 'Điểm cao nhất'}</span>
-                  <strong>{isIelts ? formatBand(group.bestAttempt?.bandScore) : formatNumber(group.bestAttempt?.totalScore)}</strong>
+                  <span>{isWriting ? 'Task 1 gần nhất' : isIelts ? 'Band cao nhất' : 'Điểm cao nhất'}</span>
+                  <strong>
+                    {isWriting
+                      ? formatSimilarity(group.latestAttempt?.task1SimilarityPercent)
+                      : isIelts
+                        ? formatBand(group.bestAttempt?.bandScore)
+                        : formatNumber(group.bestAttempt?.totalScore)}
+                  </strong>
                 </div>
                 <div>
-                  <span>{isIelts ? 'Band gần nhất' : 'Lần gần nhất'}</span>
-                  <strong>{isIelts ? formatBand(group.latestAttempt?.bandScore) : formatNumber(group.latestAttempt?.totalScore)}</strong>
+                  <span>{isWriting ? 'Task 2 gần nhất' : isIelts ? 'Band gần nhất' : 'Lần gần nhất'}</span>
+                  <strong>
+                    {isWriting
+                      ? formatSimilarity(group.latestAttempt?.task2SimilarityPercent)
+                      : isIelts
+                        ? formatBand(group.latestAttempt?.bandScore)
+                        : formatNumber(group.latestAttempt?.totalScore)}
+                  </strong>
                 </div>
               </div>
 
@@ -216,8 +242,22 @@ const HistoryCardList = ({ groups, examType, expandedExamKey, onToggle, onOpenRe
                       </div>
 
                       <div className={styles.attemptScore}>
-                        <span>{formatNumber(attempt.correctCount)}/{formatNumber(attempt.totalQuestions)} câu đúng</span>
-                        <strong>{isIelts ? `Band ${formatBand(attempt.bandScore)}` : formatNumber(attempt.totalScore)}</strong>
+                        {isWriting ? (
+                          <>
+                            <span>
+                              Task 1: {formatNumber(attempt.task1WordCount)} từ · {formatSimilarity(attempt.task1SimilarityPercent)}
+                            </span>
+                            <strong>
+                              Task 2: {formatNumber(attempt.task2WordCount)} từ · {formatSimilarity(attempt.task2SimilarityPercent)}
+                            </strong>
+                            <span>Tổng: {formatNumber(attempt.totalWordCount)} từ</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>{formatNumber(attempt.correctCount)}/{formatNumber(attempt.totalQuestions)} câu đúng</span>
+                            <strong>{isIelts ? `Band ${formatBand(attempt.bandScore)}` : formatNumber(attempt.totalScore)}</strong>
+                          </>
+                        )}
                         {duration && <span>Thời gian: {duration}</span>}
                       </div>
 
@@ -418,9 +458,11 @@ const Infor = () => {
     return Array.from(groupMap.values())
       .map((group) => {
         const attempts = [...group.attempts].sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0));
-        const bestAttempt = attempts.reduce((best, item) => (
-          Number(item.bandScore || 0) > Number(best?.bandScore || 0) ? item : best
-        ), attempts[0]);
+        const bestAttempt = group.skill === 'WRITING'
+          ? attempts[0]
+          : attempts.reduce((best, item) => (
+              Number(item.bandScore || 0) > Number(best?.bandScore || 0) ? item : best
+            ), attempts[0]);
 
         return {
           ...group,

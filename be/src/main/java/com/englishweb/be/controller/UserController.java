@@ -11,6 +11,7 @@ import com.englishweb.be.dto.toeic.ToeicAttemptHistoryResponse;
 import com.englishweb.be.entity.User;
 import com.englishweb.be.service.AuthService;
 import com.englishweb.be.service.IeltsSubmitService;
+import com.englishweb.be.service.IeltsWritingService;
 import com.englishweb.be.service.ToeicSubmitService;
 import com.englishweb.be.service.UserService;
 import jakarta.validation.Valid;
@@ -21,6 +22,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Comparator;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/api/users")
@@ -32,6 +35,7 @@ public class UserController {
     private final UserService userService;
     private final ToeicSubmitService toeicSubmitService;
     private final IeltsSubmitService ieltsSubmitService;
+    private final IeltsWritingService ieltsWritingService;
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
@@ -101,7 +105,15 @@ public class UserController {
             Authentication authentication
     ) {
         String email = authentication.getName();
-        List<IeltsAttemptHistoryResponse> history = ieltsSubmitService.getMyAttemptHistory(email);
+        List<IeltsAttemptHistoryResponse> history = Stream.concat(
+                        ieltsSubmitService.getMyAttemptHistory(email).stream(),
+                        ieltsWritingService.getHistory(email).stream()
+                )
+                .sorted(Comparator.comparing(
+                        IeltsAttemptHistoryResponse::getSubmittedAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())
+                ))
+                .toList();
         return ResponseEntity.ok(ApiResponse.success("Lấy lịch sử IELTS thành công", history));
     }
 

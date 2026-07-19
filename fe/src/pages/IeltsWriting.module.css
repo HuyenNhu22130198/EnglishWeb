@@ -109,6 +109,29 @@
   background: #b91c1c;
 }
 
+.submitButton:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.reviewBarControls {
+  grid-template-columns: 110px minmax(0, 1fr) 150px minmax(150px, auto);
+}
+
+.retakeButton {
+  min-height: 48px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 14px;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
 .navigatorTimer {
   min-height: 48px;
   padding: 8px 12px;
@@ -197,6 +220,45 @@
   margin: 24px auto 18px;
   display: flex;
   gap: 10px;
+}
+
+.draftToolbar {
+  width: min(1600px, 80vw);
+  min-height: 36px;
+  margin: 18px auto -10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.draftStatus {
+  color: #52705a;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.draftStatusError {
+  color: #b91c1c;
+}
+
+.clearDraftButton {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid #d1d7e3;
+  border-radius: 8px;
+  background: #fff;
+  color: #526078;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.clearDraftButton:hover {
+  border-color: #ef4444;
+  color: #b91c1c;
+  background: #fff7f7;
 }
 
 .taskTab {
@@ -346,6 +408,11 @@
   border-radius: 4px;
 }
 
+.resultAssetCard {
+  width: min(100%, 720px);
+  margin: 18px auto 0;
+}
+
 .answerPane {
   padding: 16px;
   display: grid;
@@ -415,6 +482,102 @@
   font-weight: 500;
 }
 
+.reviewTaskPanel {
+  display: none;
+  gap: 20px;
+  min-width: 0;
+}
+
+.reviewTaskPanelActive {
+  display: grid;
+}
+
+.reviewComparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.reviewEssayCard,
+.similaritySummary {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+}
+
+.reviewCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.reviewCardHeader h2 {
+  margin: 0;
+  color: var(--primary);
+  font-size: 18px;
+}
+
+.reviewCardHeader span {
+  color: var(--text-soft);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.reviewEssay {
+  width: 100%;
+  min-height: 380px;
+  padding: 14px;
+  border: 1px solid #d5dce8;
+  border-radius: 7px;
+  background: #f8fafc;
+  color: var(--text-main);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.65;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.noSample {
+  min-height: 380px;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  border: 1px dashed #d1d5db;
+  border-radius: 7px;
+  background: #f9fafb;
+  color: var(--text-soft);
+  text-align: center;
+  font-weight: 800;
+  box-sizing: border-box;
+}
+
+.similaritySummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.similaritySummary strong {
+  color: var(--primary);
+  font-size: 16px;
+}
+
+.similaritySummary p {
+  flex-basis: 100%;
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
 .emptyState {
   max-width: 760px;
   margin: 72px auto;
@@ -455,6 +618,10 @@
   .taskPanel {
     grid-template-columns: 1fr;
   }
+
+  .reviewComparison {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 720px) {
@@ -466,12 +633,17 @@
     grid-template-columns: 1fr;
   }
 
+  .reviewBarControls {
+    grid-template-columns: 1fr;
+  }
+
   .topBackButton {
     justify-self: start;
   }
 
   .taskTabs,
-  .examContent {
+  .examContent,
+  .draftToolbar {
     width: calc(100% - 32px);
   }
 
@@ -480,6 +652,10 @@
   }
 
   .submitButton {
+    width: 100%;
+  }
+
+  .retakeButton {
     width: 100%;
   }
 

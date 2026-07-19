@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { loadIeltsWritingDraft, useIeltsWritingDraft } from '../hooks/useIeltsWritingDraft';
 import { ieltsAPI } from '../services/ieltsService';
 import styles from './IeltsWriting.module.css';
 
@@ -51,6 +53,8 @@ const uniqByAsset = (assets) => {
 const IeltsWriting = () => {
   const { examId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const userId = user?.id ?? user?.userId;
 
   const [practice, setPractice] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -61,12 +65,37 @@ const IeltsWriting = () => {
   const [openNotes, setOpenNotes] = useState({});
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [submitNotice, setSubmitNotice] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
+
+  const currentDraft = useMemo(() => ({
+    examId: Number(examId),
+    userId,
+    task1Answer: answers[1] || '',
+    task2Answer: answers[2] || '',
+    task1Note: notes[1] || '',
+    task2Note: notes[2] || '',
+    activeTask,
+    elapsedSeconds,
+  }), [activeTask, answers, elapsedSeconds, examId, notes, userId]);
+
+  const { saveStatus, markDirty, clearDraft } = useIeltsWritingDraft({
+    userId,
+    examId,
+    ready: draftReady,
+    draft: currentDraft,
+  });
 
   useEffect(() => {
     const fetchWriting = async () => {
       try {
         setLoading(true);
+        setDraftReady(false);
         setError('');
+
+        if (userId === null || userId === undefined) {
+          throw new Error('Không thể xác định tài khoản để khôi phục bản nháp Writing.');
+        }
 
         const response = await ieltsAPI.getIeltsPractice(examId, 'WRITING');
 
@@ -76,6 +105,22 @@ const IeltsWriting = () => {
         }
 
         setPractice(response.data);
+        const draft = loadIeltsWritingDraft(userId, examId);
+        setAnswers({
+          1: draft?.task1Answer || '',
+          2: draft?.task2Answer || '',
+        });
+        setNotes({
+          1: draft?.task1Note || '',
+          2: draft?.task2Note || '',
+        });
+        setOpenNotes({
+          1: Boolean(draft?.task1Note),
+          2: Boolean(draft?.task2Note),
+        });
+        setActiveTask(draft?.activeTask || 1);
+        setElapsedSeconds(draft?.elapsedSeconds || 0);
+        setDraftReady(true);
       } catch (err) {
         setError(err.message || 'Lỗi kết nối đến server');
       } finally {
@@ -84,7 +129,7 @@ const IeltsWriting = () => {
     };
 
     fetchWriting();
-  }, [examId]);
+  }, [examId, userId]);
 
   useEffect(() => {
     if (loading || !practice) {
@@ -101,15 +146,18 @@ const IeltsWriting = () => {
   const tasks = useMemo(() => {
     const groups = practice?.groups || [];
     const assets = practice?.assets || [];
+    const writingTasks = practice?.writingTasks || [];
 
     return TASK_NUMBERS.map((partNo) => {
+      const writingTask = writingTasks.find((task) => Number(task.taskNo) === partNo) || null;
       const taskGroups = groups.filter((group) => Number(group.partNo) === partNo);
       const groupAssets = taskGroups.flatMap((group) => (group.mainAsset ? [group.mainAsset] : []));
       const partAssets = assets.filter((asset) => Number(asset.partNo) === partNo);
-      const taskAssets = uniqByAsset([...groupAssets, ...partAssets]);
+      const taskAssets = uniqByAsset([...(writingTask?.asset ? [writingTask.asset] : []), ...groupAssets, ...partAssets]);
 
       return {
         partNo,
+        writingTask,
         groups: taskGroups,
         assets: taskAssets,
       };
@@ -117,6 +165,7 @@ const IeltsWriting = () => {
   }, [practice]);
 
   const handleAnswerChange = (partNo, value) => {
+    markDirty();
     setAnswers((current) => ({
       ...current,
       [partNo]: value,
@@ -124,10 +173,28 @@ const IeltsWriting = () => {
   };
 
   const handleNoteChange = (partNo, value) => {
+    markDirty();
     setNotes((current) => ({
       ...current,
       [partNo]: value,
     }));
+  };
+
+  const handleTaskChange = (partNo) => {
+    markDirty();
+    setActiveTask(partNo);
+  };
+
+  const handleClearDraft = () => {
+    if (!window.confirm('Bạn có chắc muốn xóa toàn bộ bài viết và ghi chú đang lưu?')) return;
+
+    clearDraft();
+    setAnswers({ 1: '', 2: '' });
+    setNotes({ 1: '', 2: '' });
+    setOpenNotes({});
+    setActiveTask(1);
+    setElapsedSeconds(0);
+    setSubmitNotice(null);
   };
 
   const toggleNote = (partNo) => {
@@ -137,23 +204,35 @@ const IeltsWriting = () => {
     }));
   };
 
-  const handleSubmit = () => {
-    const answeredTasks = TASK_NUMBERS.filter((partNo) => countWords(answers[partNo]) > 0);
-
-    if (answeredTasks.length === 0) {
-      setSubmitNotice({
-        type: 'warning',
-        title: 'Chưa có bài làm',
-        message: 'Hãy viết bài cho ít nhất một task trước khi nộp.',
-      });
+  const handleSubmit = async () => {
+    if (submitting || !window.confirm('Bạn có chắc chắn muốn nộp bài IELTS Writing?')) {
       return;
     }
 
-    setSubmitNotice({
-      type: 'success',
-      title: 'Đã ghi nhận bài Writing',
-      message: 'Bài làm đã được ghi nhận tạm thời trên trang này. Chức năng chấm điểm Writing sẽ được kết nối sau.',
-    });
+    try {
+      setSubmitting(true);
+      setSubmitNotice(null);
+      const taskAnswers = tasks.map((task) => ({
+        taskId: task.writingTask?.taskId || null,
+        taskNo: task.partNo,
+        answerText: answers[task.partNo] || '',
+      }));
+      const response = await ieltsAPI.submitIeltsExam(examId, 'WRITING', taskAnswers, elapsedSeconds);
+      const attemptId = response?.data?.attemptId;
+      if (!response?.success || !attemptId) {
+        throw new Error(response?.message || 'Không thể nộp bài IELTS Writing');
+      }
+      clearDraft();
+      navigate(`/practice/ielts/result/${attemptId}`);
+    } catch (submitError) {
+      setSubmitNotice({
+        type: 'warning',
+        title: 'Nộp bài chưa thành công',
+        message: submitError.message || 'Vui lòng kiểm tra kết nối và thử lại. Nội dung bài viết vẫn được giữ nguyên.',
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -200,8 +279,8 @@ const IeltsWriting = () => {
               <span className={styles.navigatorTimerValue}>{formatElapsedTime(elapsedSeconds)}</span>
             </div>
 
-            <button type="button" className={styles.submitButton} onClick={handleSubmit}>
-              Nộp bài
+            <button type="button" className={styles.submitButton} onClick={handleSubmit} disabled={submitting}>
+              {submitting ? 'Đang nộp...' : 'Nộp bài'}
             </button>
           </div>
         </div>
@@ -225,13 +304,27 @@ const IeltsWriting = () => {
         </div>
       ) : null}
 
+      <div className={styles.draftToolbar}>
+        <span
+          className={`${styles.draftStatus} ${saveStatus === 'error' ? styles.draftStatusError : ''}`}
+          aria-live="polite"
+        >
+          {saveStatus === 'saving' && 'Đang lưu...'}
+          {saveStatus === 'saved' && 'Đã tự động lưu'}
+          {saveStatus === 'error' && 'Không thể lưu nháp'}
+        </span>
+        <button type="button" className={styles.clearDraftButton} onClick={handleClearDraft}>
+          Xóa nháp
+        </button>
+      </div>
+
       <div className={styles.taskTabs} aria-label="Chọn task IELTS Writing">
         {tasks.map((task) => (
           <button
             key={task.partNo}
             type="button"
             className={`${styles.taskTab} ${activeTask === task.partNo ? styles.taskTabActive : ''}`}
-            onClick={() => setActiveTask(task.partNo)}
+            onClick={() => handleTaskChange(task.partNo)}
           >
             {getTaskLabel(task.partNo)}
           </button>
@@ -251,8 +344,17 @@ const IeltsWriting = () => {
                 <h1>WRITING TASK {task.partNo}</h1>
                 <p className={styles.taskHint}>{getTaskInstruction(task.partNo)}</p>
 
-                {task.groups.length === 0 ? (
-                  <p className={styles.noContent}>Chưa có câu hỏi cho task này.</p>
+                {task.writingTask ? (
+                  <article className={styles.questionGroup}>
+                    {task.writingTask.instruction ? (
+                      <p className={styles.groupInstruction}>{task.writingTask.instruction}</p>
+                    ) : null}
+                    {task.writingTask.prompt ? (
+                      <p className={styles.questionPrompt}>{task.writingTask.prompt}</p>
+                    ) : null}
+                  </article>
+                ) : task.groups.length === 0 ? (
+                  <p className={styles.noContent}>Chưa có nội dung cho task này.</p>
                 ) : (
                   task.groups.map((group) => (
                     <article key={group.groupId} className={styles.questionGroup}>

@@ -25,4 +25,9 @@ public class IeltsAttemptHistoryResponse {
     private Integer totalQuestions;
     private Integer durationSeconds;
     private LocalDateTime submittedAt;
+    private Integer totalWordCount;
+    private Integer task1WordCount;
+    private Integer task2WordCount;
+    private BigDecimal task1SimilarityPercent;
+    private BigDecimal task2SimilarityPercent;
 }

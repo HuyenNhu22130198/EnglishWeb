@@ -3,11 +3,11 @@ package com.englishweb.be.controller;
 import com.englishweb.be.dto.ApiResponse;
 import com.englishweb.be.dto.ielts.IeltsExamListResponse;
 import com.englishweb.be.dto.ielts.IeltsPracticeResponse;
-import com.englishweb.be.dto.ielts.IeltsResultResponse;
 import com.englishweb.be.dto.ielts.IeltsSubmitRequest;
 import com.englishweb.be.service.IeltsExamService;
 import com.englishweb.be.service.IeltsPracticeService;
 import com.englishweb.be.service.IeltsSubmitService;
+import com.englishweb.be.service.IeltsWritingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -31,6 +31,7 @@ public class IeltsExamController {
     private final IeltsExamService ieltsExamService;
     private final IeltsPracticeService ieltsPracticeService;
     private final IeltsSubmitService ieltsSubmitService;
+    private final IeltsWritingService ieltsWritingService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<IeltsExamListResponse>>> getIeltsExams(
@@ -52,29 +53,35 @@ public class IeltsExamController {
     }
 
     @PostMapping("/{examId}/submit")
-    public ResponseEntity<ApiResponse<IeltsResultResponse>> submitExam(
+    public ResponseEntity<ApiResponse<Object>> submitExam(
             @PathVariable Integer examId,
             @RequestParam String skill,
             @RequestBody IeltsSubmitRequest request,
             Authentication authentication
     ) {
+        Object result = "WRITING".equalsIgnoreCase(skill)
+                ? ieltsWritingService.submit(examId, authentication.getName(), request)
+                : ieltsSubmitService.submitExam(examId, authentication.getName(), skill, request);
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Nộp bài IELTS thành công",
-                        ieltsSubmitService.submitExam(examId, authentication.getName(), skill, request)
+                        result
                 )
         );
     }
 
     @GetMapping("/results/{attemptId}")
-    public ResponseEntity<ApiResponse<IeltsResultResponse>> getResult(
+    public ResponseEntity<ApiResponse<Object>> getResult(
             @PathVariable Integer attemptId,
             Authentication authentication
     ) {
+        Object result = ieltsWritingService.isWritingAttempt(attemptId, authentication.getName())
+                ? ieltsWritingService.getResult(attemptId, authentication.getName())
+                : ieltsSubmitService.getResult(attemptId, authentication.getName());
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Lấy kết quả bài thi IELTS thành công",
-                        ieltsSubmitService.getResult(attemptId, authentication.getName())
+                        result
                 )
         );
     }

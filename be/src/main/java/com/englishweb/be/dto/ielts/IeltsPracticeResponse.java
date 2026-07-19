@@ -20,6 +20,21 @@ public class IeltsPracticeResponse {
     private Integer totalQuestions;
     private List<AssetResponse> assets;
     private List<GroupResponse> groups;
+    private List<WritingTaskResponse> writingTasks;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WritingTaskResponse {
+        private Integer taskId;
+        private Integer taskNo;
+        private String taskType;
+        private String instruction;
+        private String prompt;
+        private Integer minWords;
+        private AssetResponse asset;
+    }
 
     @Data
     @Builder

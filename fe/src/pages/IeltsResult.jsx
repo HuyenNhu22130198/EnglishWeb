@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ieltsAPI } from '../services/ieltsService';
 import IeltsPractice from './IeltsPractice';
+import IeltsWritingResult from './IeltsWritingResult';
 import styles from './IeltsResult.module.css';
 
 const IeltsResult = () => {
@@ -25,6 +26,11 @@ const IeltsResult = () => {
       }
 
       const loadedResult = resultResponse.data;
+      if (String(loadedResult.skill).toUpperCase() === 'WRITING') {
+        setResult(loadedResult);
+        setPractice({ writingResult: true });
+        return;
+      }
       const practiceResponse = await ieltsAPI.getIeltsPractice(loadedResult.examId, loadedResult.skill);
       if (!practiceResponse.success || !practiceResponse.data) {
         throw new Error('INVALID_EXAM');
@@ -68,6 +74,10 @@ const IeltsResult = () => {
         </section>
       </main>
     );
+  }
+
+  if (String(result.skill).toUpperCase() === 'WRITING') {
+    return <IeltsWritingResult result={result} />;
   }
 
   return <IeltsPractice mode="review" initialPractice={practice} reviewResult={result} />;

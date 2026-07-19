@@ -9,6 +9,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.dao.DataAccessException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,6 +41,13 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Bạn không có quyền truy cập tài nguyên này!"));
     }
 
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ApiResponse<String>> handleDataAccessException(DataAccessException e) {
+        log.error("Database operation failed", e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Không thể xử lý dữ liệu lúc này. Vui lòng thử lại."));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationException(MethodArgumentNotValidException e) {
         Map<String, String> errors = new HashMap<>();
@@ -54,7 +62,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<String>> handleGlobalException(Exception e) {
+        log.error("Unhandled server error", e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Lỗi server: " + e.getMessage()));
+                .body(ApiResponse.error("Có lỗi xảy ra trên hệ thống. Vui lòng thử lại."));
     }
 }

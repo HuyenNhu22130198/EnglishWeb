@@ -81,6 +81,7 @@ export const ieltsAPI = {
   },
 
   async submitIeltsExam(examId, skill, answers, elapsedSeconds = 0) {
+    const normalizedSkill = String(skill || '').trim().toUpperCase();
     const response = await fetch(
       `${API_BASE_URL}/ielts/exams/${examId}/submit${buildSkillSearchParams(skill)}`,
       {
@@ -90,7 +91,7 @@ export const ieltsAPI = {
           ...getAuthHeaders(),
         },
         body: JSON.stringify({
-          answers,
+          ...(normalizedSkill === 'WRITING' ? { tasks: answers } : { answers }),
           elapsedSeconds,
         }),
       }

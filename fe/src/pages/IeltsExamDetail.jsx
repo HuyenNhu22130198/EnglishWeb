@@ -20,8 +20,8 @@ const IELTS_SKILLS = [
   },
   {
     key: 'WRITING',
-    title: 'Writting',
-    description: 'Luyện viết theo các dạng bài IELTS Writting Task 1 và Task 2.',
+    title: 'Writing',
+    description: 'Luyện viết theo các dạng bài IELTS Writing Task 1 và Task 2.',
     questionField: null,
     path: (examId) => `/practice/ielts/${examId}/writing`,
   },
