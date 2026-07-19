@@ -6,9 +6,11 @@ import com.englishweb.be.dto.ChangePasswordRequest;
 import com.englishweb.be.dto.UpdateAccountSettingsRequest;
 import com.englishweb.be.dto.UpdateProfileRequest;
 import com.englishweb.be.dto.UpdateRoleRequest;
+import com.englishweb.be.dto.ielts.IeltsAttemptHistoryResponse;
 import com.englishweb.be.dto.toeic.ToeicAttemptHistoryResponse;
 import com.englishweb.be.entity.User;
 import com.englishweb.be.service.AuthService;
+import com.englishweb.be.service.IeltsSubmitService;
 import com.englishweb.be.service.ToeicSubmitService;
 import com.englishweb.be.service.UserService;
 import jakarta.validation.Valid;
@@ -29,6 +31,7 @@ public class UserController {
     private final AuthService authService;
     private final UserService userService;
     private final ToeicSubmitService toeicSubmitService;
+    private final IeltsSubmitService ieltsSubmitService;
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
@@ -90,6 +93,16 @@ public class UserController {
         String email = authentication.getName();
         List<ToeicAttemptHistoryResponse> history = toeicSubmitService.getMyAttemptHistory(email);
         return ResponseEntity.ok(ApiResponse.success("Lấy lịch sử TOEIC thành công", history));
+    }
+
+    @GetMapping("/me/ielts-history")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<IeltsAttemptHistoryResponse>>> getMyIeltsHistory(
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+        List<IeltsAttemptHistoryResponse> history = ieltsSubmitService.getMyAttemptHistory(email);
+        return ResponseEntity.ok(ApiResponse.success("Lấy lịch sử IELTS thành công", history));
     }
 
     @GetMapping("/{id}")

@@ -119,4 +119,19 @@ export const ieltsAPI = {
 
     return data;
   },
+
+  async getMyIeltsHistory() {
+    const response = await fetch(`${API_BASE_URL}/users/me/ielts-history`, {
+      headers: {
+        ...getAuthHeaders(),
+      },
+    });
+    const data = await parseApiResponse(response);
+
+    if (!response.ok) {
+      throw createApiError(response, data, 'Không thể tải lịch sử thi IELTS của bạn');
+    }
+
+    return data;
+  },
 };

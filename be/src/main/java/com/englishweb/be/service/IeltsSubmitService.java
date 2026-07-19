@@ -1,5 +1,6 @@
 package com.englishweb.be.service;
 
+import com.englishweb.be.dto.ielts.IeltsAttemptHistoryResponse;
 import com.englishweb.be.dto.ielts.IeltsResultResponse;
 import com.englishweb.be.dto.ielts.IeltsSubmitRequest;
 import com.englishweb.be.entity.User;
@@ -177,6 +178,40 @@ public class IeltsSubmitService {
 
         int answeredCount = (int) ieltsLrUserAnswerRepository.countAnsweredAnswersByAttemptId(attemptId);
         return buildResultResponse(attempt, answeredCount);
+    }
+
+    @Transactional(readOnly = true)
+    public List<IeltsAttemptHistoryResponse> getMyAttemptHistory(String userEmail) {
+        return ieltsAttemptRepository.findSubmittedLrAttemptsByUserEmail(userEmail)
+                .stream()
+                .map(attempt -> {
+                    String skill = normalizeSkill(attempt.getSkill());
+                    BigDecimal bandScore = "READING".equals(skill)
+                            ? attempt.getReadingBand()
+                            : attempt.getListeningBand();
+                    Integer correctCount = "READING".equals(skill)
+                            ? attempt.getReadingCorrectCount()
+                            : attempt.getListeningCorrectCount();
+
+                    return IeltsAttemptHistoryResponse.builder()
+                            .attemptId(attempt.getId())
+                            .examId(attempt.getExam().getId())
+                            .examCode(attempt.getExam().getExamCode())
+                            .examName(attempt.getExam().getExamName())
+                            .skill(skill)
+                            .bandScore(bandScore)
+                            .correctCount(correctCount)
+                            .answeredCount(Math.toIntExact(
+                                    ieltsLrUserAnswerRepository.countAnsweredAnswersByAttemptId(attempt.getId())
+                            ))
+                            .totalQuestions(Math.toIntExact(
+                                    ieltsLrUserAnswerRepository.countByAttempt_Id(attempt.getId())
+                            ))
+                            .durationSeconds(calculateElapsedSeconds(attempt))
+                            .submittedAt(attempt.getSubmittedAt())
+                            .build();
+                })
+                .toList();
     }
 
     private IeltsResultResponse buildResultResponse(IeltsAttempt attempt, int answeredCount) {

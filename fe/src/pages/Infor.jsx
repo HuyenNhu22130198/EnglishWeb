@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/authService';
+import { ieltsAPI } from '../services/ieltsService';
 import { toeicAPI } from '../services/toeicService';
 import styles from './Infor.module.css';
 
@@ -70,6 +71,35 @@ const formatDateTime = (value) => {
 
 const formatNumber = (value) => Number(value || 0).toLocaleString('vi-VN');
 
+const formatBand = (value) => {
+  const band = Number(value);
+  return Number.isFinite(band) ? band.toFixed(1) : '0.0';
+};
+
+const formatDuration = (seconds) => {
+  const totalSeconds = Number(seconds);
+
+  if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) {
+    return '';
+  }
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const remainingSeconds = Math.floor(totalSeconds % 60);
+
+  if (hours > 0) {
+    return `${hours} giờ ${minutes} phút`;
+  }
+
+  if (minutes > 0) {
+    return `${minutes} phút ${remainingSeconds} giây`;
+  }
+
+  return `${remainingSeconds} giây`;
+};
+
+const getSkillLabel = (skill) => (skill === 'READING' ? 'Reading' : 'Listening');
+
 const Icon = ({ name }) => {
   const commonProps = {
     width: 18,
@@ -121,6 +151,95 @@ const Icon = ({ name }) => {
   );
 };
 
+const HistoryCardList = ({ groups, examType, expandedExamKey, onToggle, onOpenResult }) => {
+  const isIelts = examType === 'IELTS';
+
+  return (
+    <div className={styles.historyList}>
+      {groups.map((group) => {
+        const isExpanded = expandedExamKey === group.examKey;
+        const hasMultipleAttempts = group.attempts.length > 1;
+
+        return (
+          <article key={group.examKey} className={styles.historyCard}>
+            <div className={styles.historySummary}>
+              <div className={styles.historyMainInfo}>
+                <span>{group.examCode || examType}</span>
+                <h3>{group.examName}</h3>
+                <p>
+                  {isIelts && `${getSkillLabel(group.skill)} • `}
+                  Làm {formatNumber(group.attempts.length)} lần • Gần nhất {formatDateTime(group.latestAttempt?.submittedAt)}
+                </p>
+              </div>
+
+              <div className={styles.historyMetrics}>
+                <div>
+                  <span>{isIelts ? 'Band cao nhất' : 'Điểm cao nhất'}</span>
+                  <strong>{isIelts ? formatBand(group.bestAttempt?.bandScore) : formatNumber(group.bestAttempt?.totalScore)}</strong>
+                </div>
+                <div>
+                  <span>{isIelts ? 'Band gần nhất' : 'Lần gần nhất'}</span>
+                  <strong>{isIelts ? formatBand(group.latestAttempt?.bandScore) : formatNumber(group.latestAttempt?.totalScore)}</strong>
+                </div>
+              </div>
+
+              {hasMultipleAttempts ? (
+                <button
+                  className={styles.expandButton}
+                  type="button"
+                  onClick={() => onToggle(group.examKey)}
+                  aria-expanded={isExpanded}
+                >
+                  {isExpanded ? 'Thu gọn' : 'Xem các lần làm'}
+                </button>
+              ) : (
+                <button
+                  className={styles.primaryButton}
+                  type="button"
+                  onClick={() => onOpenResult(group.latestAttempt.attemptId)}
+                >
+                  Xem chi tiết
+                </button>
+              )}
+            </div>
+
+            {hasMultipleAttempts && isExpanded && (
+              <div className={styles.attemptWindow}>
+                {group.attempts.map((attempt, index) => {
+                  const duration = isIelts ? formatDuration(attempt.durationSeconds) : '';
+
+                  return (
+                    <div key={attempt.attemptId} className={styles.attemptRow}>
+                      <div>
+                        <strong>Lần {group.attempts.length - index}</strong>
+                        <span>{formatDateTime(attempt.submittedAt)}</span>
+                      </div>
+
+                      <div className={styles.attemptScore}>
+                        <span>{formatNumber(attempt.correctCount)}/{formatNumber(attempt.totalQuestions)} câu đúng</span>
+                        <strong>{isIelts ? `Band ${formatBand(attempt.bandScore)}` : formatNumber(attempt.totalScore)}</strong>
+                        {duration && <span>Thời gian: {duration}</span>}
+                      </div>
+
+                      <button
+                        className={styles.detailButton}
+                        type="button"
+                        onClick={() => onOpenResult(attempt.attemptId)}
+                      >
+                        Chi tiết
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </article>
+        );
+      })}
+    </div>
+  );
+};
+
 const Infor = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(() => authAPI.getStoredUser());
@@ -150,6 +269,12 @@ const Infor = () => {
   const [historyError, setHistoryError] = useState('');
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [expandedExamKey, setExpandedExamKey] = useState('');
+  const [activeHistoryTab, setActiveHistoryTab] = useState('TOEIC');
+  const [ieltsHistory, setIeltsHistory] = useState([]);
+  const [ieltsHistoryLoading, setIeltsHistoryLoading] = useState(false);
+  const [ieltsHistoryError, setIeltsHistoryError] = useState('');
+  const [ieltsHistoryLoaded, setIeltsHistoryLoaded] = useState(false);
+  const [expandedIeltsExamKey, setExpandedIeltsExamKey] = useState('');
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -202,6 +327,36 @@ const Infor = () => {
     loadHistory();
   }, [activeItem, historyLoaded, historyLoading]);
 
+  useEffect(() => {
+    if (activeItem !== 'history' || activeHistoryTab !== 'IELTS' || ieltsHistoryLoaded || ieltsHistoryLoading) {
+      return;
+    }
+
+    const loadIeltsHistory = async () => {
+      try {
+        setIeltsHistoryLoading(true);
+        setIeltsHistoryError('');
+
+        const response = await ieltsAPI.getMyIeltsHistory();
+
+        if (response?.success) {
+          setIeltsHistory(response.data || []);
+        } else {
+          setIeltsHistory([]);
+          setIeltsHistoryError(response?.message || 'Không thể tải lịch sử làm bài IELTS.');
+        }
+      } catch (err) {
+        setIeltsHistory([]);
+        setIeltsHistoryError(err.message || 'Không thể tải lịch sử làm bài IELTS.');
+      } finally {
+        setIeltsHistoryLoaded(true);
+        setIeltsHistoryLoading(false);
+      }
+    };
+
+    loadIeltsHistory();
+  }, [activeHistoryTab, activeItem, ieltsHistoryLoaded, ieltsHistoryLoading]);
+
   const groupedHistory = useMemo(() => {
     const groupMap = new Map();
 
@@ -237,6 +392,45 @@ const Infor = () => {
       })
       .sort((a, b) => new Date(b.latestAttempt?.submittedAt || 0) - new Date(a.latestAttempt?.submittedAt || 0));
   }, [history]);
+
+  const groupedIeltsHistory = useMemo(() => {
+    const groupMap = new Map();
+
+    ieltsHistory.forEach((attempt) => {
+      const skill = String(attempt.skill || '').toUpperCase();
+      const examIdentity = attempt.examId || attempt.examCode || attempt.examName || attempt.attemptId;
+      const examKey = `${examIdentity}:${skill}`;
+
+      if (!groupMap.has(examKey)) {
+        groupMap.set(examKey, {
+          examKey,
+          examId: attempt.examId,
+          examCode: attempt.examCode,
+          examName: attempt.examName || 'Bài thi IELTS',
+          skill,
+          attempts: [],
+        });
+      }
+
+      groupMap.get(examKey).attempts.push(attempt);
+    });
+
+    return Array.from(groupMap.values())
+      .map((group) => {
+        const attempts = [...group.attempts].sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0));
+        const bestAttempt = attempts.reduce((best, item) => (
+          Number(item.bandScore || 0) > Number(best?.bandScore || 0) ? item : best
+        ), attempts[0]);
+
+        return {
+          ...group,
+          attempts,
+          latestAttempt: attempts[0],
+          bestAttempt,
+        };
+      })
+      .sort((a, b) => new Date(b.latestAttempt?.submittedAt || 0) - new Date(a.latestAttempt?.submittedAt || 0));
+  }, [ieltsHistory]);
 
   const statsSummary = useMemo(() => {
     if (history.length === 0) {
@@ -321,8 +515,13 @@ const Infor = () => {
   const avatarInitial = fullName.trim().charAt(0).toUpperCase() || 'N';
 
   const reloadHistory = () => {
-    setHistoryLoaded(false);
-    setExpandedExamKey('');
+    if (activeHistoryTab === 'IELTS') {
+      setIeltsHistoryLoaded(false);
+      setExpandedIeltsExamKey('');
+    } else {
+      setHistoryLoaded(false);
+      setExpandedExamKey('');
+    }
   };
 
   const toggleHistoryGroup = (examKey) => {
@@ -331,6 +530,10 @@ const Infor = () => {
 
   const openAttemptResult = (attemptId) => {
     navigate(`/practice/toeic/result/${attemptId}`);
+  };
+
+  const openIeltsAttemptResult = (attemptId) => {
+    navigate(`/practice/ielts/result/${attemptId}`);
   };
 
   const handleChange = (event) => {
@@ -722,16 +925,64 @@ const Infor = () => {
             <section className={styles.historyPanel}>
               <div className={styles.panelHeader}>
                 <div>
-                  <span className={styles.sectionLabel}>TOEIC</span>
+                  <span className={styles.sectionLabel}>{activeHistoryTab}</span>
                   <h2>Lịch sử làm bài</h2>
                 </div>
 
-                <button className={styles.secondaryButton} type="button" onClick={reloadHistory} disabled={historyLoading}>
+                <button
+                  className={styles.secondaryButton}
+                  type="button"
+                  onClick={reloadHistory}
+                  disabled={activeHistoryTab === 'IELTS' ? ieltsHistoryLoading : historyLoading}
+                >
                   Làm mới
                 </button>
               </div>
 
-              {historyLoading ? (
+              <div className={styles.historyTabs} role="tablist" aria-label="Loại bài thi">
+                {['TOEIC', 'IELTS'].map((examType) => (
+                  <button
+                    key={examType}
+                    className={`${styles.historyTab} ${activeHistoryTab === examType ? styles.historyTabActive : ''}`}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeHistoryTab === examType}
+                    onClick={() => setActiveHistoryTab(examType)}
+                  >
+                    {examType}
+                  </button>
+                ))}
+              </div>
+
+              {activeHistoryTab === 'IELTS' ? (
+                ieltsHistoryLoading ? (
+                  <div className={styles.historyState}>
+                    <strong>Đang tải lịch sử IELTS...</strong>
+                    <span>Hệ thống đang lấy các bài Listening và Reading bạn đã nộp.</span>
+                  </div>
+                ) : ieltsHistoryError ? (
+                  <div className={styles.historyState}>
+                    <strong>Không thể tải lịch sử IELTS</strong>
+                    <span>{ieltsHistoryError}</span>
+                    <button className={styles.primaryButton} type="button" onClick={reloadHistory}>
+                      Thử lại
+                    </button>
+                  </div>
+                ) : groupedIeltsHistory.length === 0 ? (
+                  <div className={styles.historyState}>
+                    <strong>Chưa có lịch sử làm bài IELTS</strong>
+                    <span>Kết quả Listening hoặc Reading sẽ xuất hiện tại đây sau khi bạn nộp bài.</span>
+                  </div>
+                ) : (
+                  <HistoryCardList
+                    groups={groupedIeltsHistory}
+                    examType="IELTS"
+                    expandedExamKey={expandedIeltsExamKey}
+                    onToggle={(examKey) => setExpandedIeltsExamKey((current) => (current === examKey ? '' : examKey))}
+                    onOpenResult={openIeltsAttemptResult}
+                  />
+                )
+              ) : historyLoading ? (
                 <div className={styles.historyState}>
                   <strong>Đang tải lịch sử...</strong>
                   <span>Hệ thống đang lấy các bài bạn đã nộp.</span>
@@ -750,80 +1001,13 @@ const Infor = () => {
                   <span>Khi bạn nộp bài TOEIC, kết quả sẽ xuất hiện tại đây.</span>
                 </div>
               ) : (
-                <div className={styles.historyList}>
-                  {groupedHistory.map((group) => {
-                    const isExpanded = expandedExamKey === group.examKey;
-                    const hasMultipleAttempts = group.attempts.length > 1;
-
-                    return (
-                      <article key={group.examKey} className={styles.historyCard}>
-                        <div className={styles.historySummary}>
-                          <div className={styles.historyMainInfo}>
-                            <span>{group.examCode || 'TOEIC'}</span>
-                            <h3>{group.examName}</h3>
-                            <p>Làm {formatNumber(group.attempts.length)} lần • Gần nhất {formatDateTime(group.latestAttempt?.submittedAt)}</p>
-                          </div>
-
-                          <div className={styles.historyMetrics}>
-                            <div>
-                              <span>Điểm cao nhất</span>
-                              <strong>{formatNumber(group.bestAttempt?.totalScore)}</strong>
-                            </div>
-                            <div>
-                              <span>Lần gần nhất</span>
-                              <strong>{formatNumber(group.latestAttempt?.totalScore)}</strong>
-                            </div>
-                          </div>
-
-                          {hasMultipleAttempts ? (
-                            <button
-                              className={styles.expandButton}
-                              type="button"
-                              onClick={() => toggleHistoryGroup(group.examKey)}
-                              aria-expanded={isExpanded}
-                            >
-                              {isExpanded ? 'Thu gọn' : 'Xem các lần làm'}
-                            </button>
-                          ) : (
-                            <button
-                              className={styles.primaryButton}
-                              type="button"
-                              onClick={() => openAttemptResult(group.latestAttempt.attemptId)}
-                            >
-                              Xem chi tiết
-                            </button>
-                          )}
-                        </div>
-
-                        {hasMultipleAttempts && isExpanded && (
-                          <div className={styles.attemptWindow}>
-                            {group.attempts.map((attempt, index) => (
-                              <div key={attempt.attemptId} className={styles.attemptRow}>
-                                <div>
-                                  <strong>Lần {group.attempts.length - index}</strong>
-                                  <span>{formatDateTime(attempt.submittedAt)}</span>
-                                </div>
-
-                                <div className={styles.attemptScore}>
-                                  <span>{formatNumber(attempt.correctCount)}/{formatNumber(attempt.totalQuestions)} câu đúng</span>
-                                  <strong>{formatNumber(attempt.totalScore)}</strong>
-                                </div>
-
-                                <button
-                                  className={styles.detailButton}
-                                  type="button"
-                                  onClick={() => openAttemptResult(attempt.attemptId)}
-                                >
-                                  Chi tiết
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </article>
-                    );
-                  })}
-                </div>
+                <HistoryCardList
+                  groups={groupedHistory}
+                  examType="TOEIC"
+                  expandedExamKey={expandedExamKey}
+                  onToggle={toggleHistoryGroup}
+                  onOpenResult={openAttemptResult}
+                />
               )}
             </section>
           )}

@@ -9,6 +9,8 @@ import java.util.List;
 
 public interface IeltsLrUserAnswerRepository extends JpaRepository<IeltsLrUserAnswer, Integer> {
 
+    long countByAttempt_Id(Integer attemptId);
+
     @Query("""
             SELECT ua
             FROM IeltsLrUserAnswer ua

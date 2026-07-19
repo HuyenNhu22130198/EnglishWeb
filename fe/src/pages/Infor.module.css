@@ -542,6 +542,44 @@
   line-height: 1.55;
 }
 
+.historyTabs {
+  display: inline-flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  padding: 4px;
+  border: 1px solid #dfe4ee;
+  border-radius: 7px;
+  background: #f5f7fb;
+}
+
+.historyTab {
+  min-width: 94px;
+  min-height: 36px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #596171;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.historyTab:hover {
+  color: #31549f;
+}
+
+.historyTabActive {
+  background: #31549f;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(49, 84, 159, 0.2);
+}
+
+.historyTabActive:hover {
+  color: #ffffff;
+}
+
 .historyList {
   display: flex;
   flex-direction: column;
