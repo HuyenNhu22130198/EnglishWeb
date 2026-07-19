@@ -80,7 +80,7 @@ export const ieltsAPI = {
     return data;
   },
 
-  async submitIeltsExam(examId, skill, answers) {
+  async submitIeltsExam(examId, skill, answers, elapsedSeconds = 0) {
     const response = await fetch(
       `${API_BASE_URL}/ielts/exams/${examId}/submit${buildSkillSearchParams(skill)}`,
       {
@@ -91,6 +91,7 @@ export const ieltsAPI = {
         },
         body: JSON.stringify({
           answers,
+          elapsedSeconds,
         }),
       }
     );

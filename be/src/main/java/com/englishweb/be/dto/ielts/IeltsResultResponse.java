@@ -24,6 +24,7 @@ public class IeltsResultResponse {
     private Integer answeredCount;
     private Integer correctCount;
     private BigDecimal bandScore;
+    private Integer elapsedSeconds;
     private LocalDateTime submittedAt;
     private List<PartSummary> partSummaries;
     private List<QuestionResult> questionResults;

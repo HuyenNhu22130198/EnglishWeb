@@ -187,7 +187,7 @@ const IeltsWriting = () => {
         <div className={styles.examBarInner}>
           <div className={styles.examBarControls}>
             <button type="button" className={styles.topBackButton} onClick={() => navigate(`/exams/ielts/${examId}`)}>
-              Quay lại
+              ← Quay lại
             </button>
 
             <div className={styles.examBarTitle}>

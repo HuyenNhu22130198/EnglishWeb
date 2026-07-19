@@ -12,6 +12,11 @@ import java.util.List;
 public class IeltsSubmitRequest {
 
     private List<AnswerRequest> answers;
+    private Integer elapsedSeconds;
+
+    public IeltsSubmitRequest(List<AnswerRequest> answers) {
+        this.answers = answers;
+    }
 
     @Data
     @NoArgsConstructor

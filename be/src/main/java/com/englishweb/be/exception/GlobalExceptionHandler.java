@@ -1,6 +1,7 @@
 package com.englishweb.be.exception;
 
 import com.englishweb.be.dto.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -13,7 +14,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(IeltsSubmissionException.class)
+    public ResponseEntity<ApiResponse<String>> handleIeltsSubmissionException(IeltsSubmissionException e) {
+        log.error("Failed to submit IELTS exam", e);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("Không thể lưu bài làm IELTS. Vui lòng thử lại."));
+    }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<String>> handleRuntimeException(RuntimeException e) {

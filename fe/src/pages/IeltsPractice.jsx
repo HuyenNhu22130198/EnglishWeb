@@ -124,7 +124,50 @@ const formatElapsedTime = (totalSeconds) => {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 };
 
-const normalizeAnswerValue = (answer) => answer?.answerText || '';
+const formatBand = (value) => (value == null || value === '' ? '0.0' : Number(value).toFixed(1));
+
+const getCorrectAnswerText = (questionResult) =>
+  (questionResult?.correctAnswers || [])
+    .map((answer) => answer.answerText || answer.answerKey)
+    .filter(Boolean)
+    .join(', ');
+
+const getReviewStatus = (questionResult) => {
+  if (!questionResult?.isAnswered) return 'unanswered';
+  return questionResult.isCorrect ? 'correct' : 'wrong';
+};
+
+const SPEAKER_LABEL_PATTERN =
+  "(?:MAN|WOMAN|MALE|FEMALE|STUDENT|TUTOR|PRESENTER|SPEAKER|INTERVIEWER|INTERVIEWEE|LECTURER|PROFESSOR|TEACHER|CUSTOMER|RECEPTIONIST|ASSISTANT|HOST|GUEST|NARRATOR|BOY|GIRL|OFFICER|ADVISER|ADVISOR|[A-Z][A-Z0-9 '&/.-]{1,24})";
+
+const formatListeningScript = (sharedText) => {
+  const originalText = String(sharedText || '').replace(/\r\n?/g, '\n');
+  const meaningfulLines = originalText.split('\n').filter((line) => line.trim()).length;
+
+  if (meaningfulLines > 1) return originalText;
+
+  return originalText.replace(
+    new RegExp(`\\s+(?=(${SPEAKER_LABEL_PATTERN}):\\s*)`, 'g'),
+    '\n'
+  );
+};
+
+const renderListeningScript = (sharedText, stylesMap) =>
+  formatListeningScript(sharedText).split('\n').map((line, index) => {
+    const speakerMatch = line.match(new RegExp(`^(\\s*${SPEAKER_LABEL_PATTERN}:)(.*)$`));
+
+    if (!line) return <br key={`script-gap-${index}`} />;
+    if (!speakerMatch) return <p key={`script-line-${index}`}>{line}</p>;
+
+    return (
+      <p key={`script-line-${index}`}>
+        <strong className={stylesMap.scriptSpeaker}>{speakerMatch[1]}</strong>
+        {speakerMatch[2]}
+      </p>
+    );
+  });
+
+const normalizeAnswerValue = (answer) => answer?.selectedOptionKey || answer?.answerText || '';
 
 const normalizeHighlightAnnotations = (annotations = []) => {
   return annotations
@@ -482,17 +525,32 @@ const getBlockOptionList = (block, skill) => {
   return normalizeBlockOptions(parseInlineOptions(block.instructionText));
 };
 
-const IeltsPractice = () => {
+const usesSelectedOptionKey = (question, block, skill) => {
+  const questionType = normalizeOptionText(block.questionType);
+  const hasOptionMetadata = (question.options || []).some((option) =>
+    String(option?.optionKey || '').trim()
+  );
+
+  return (
+    hasOptionMetadata ||
+    getBlockOptionList(block, skill).length > 0 ||
+    /MULTIPLE CHOICE|TRUE FALSE|YES NO|MATCH|PLAN MAP LABEL/.test(questionType)
+  );
+};
+
+const IeltsPractice = ({ mode = 'practice', initialPractice = null, reviewResult = null }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { examId } = useParams();
+  const { examId: routeExamId } = useParams();
   const [searchParams] = useSearchParams();
-  const skill = String(searchParams.get('skill') || 'LISTENING').toUpperCase();
+  const isReviewMode = mode === 'review';
+  const examId = initialPractice?.examId || reviewResult?.examId || routeExamId;
+  const skill = String(reviewResult?.skill || initialPractice?.skill || searchParams.get('skill') || 'LISTENING').toUpperCase();
   const isReadingPractice = skill === 'READING';
 
-  const [practice, setPractice] = useState(null);
+  const [practice, setPractice] = useState(initialPractice);
   const [answers, setAnswers] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialPractice);
   const [submitting, setSubmitting] = useState(false);
   const [submitNotice, setSubmitNotice] = useState(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -504,15 +562,38 @@ const IeltsPractice = () => {
   const [flashcardError, setFlashcardError] = useState('');
   const [flashcardDeckNames, setFlashcardDeckNames] = useState(() => loadFlashcardDeckNames(user));
   const [flashcardForm, setFlashcardForm] = useState(emptyFlashcardForm);
-  const [error, setError] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const [submitError, setSubmitError] = useState('');
+  const [expandedExplanations, setExpandedExplanations] = useState(() => new Set());
+  const [expandedScripts, setExpandedScripts] = useState(
+    () => new Set(
+      isReviewMode && !isReadingPractice
+        ? (initialPractice?.groups || [])
+            .filter((group) => String(group.sharedText || '').trim())
+            .map((group) => group.groupId)
+        : []
+    )
+  );
+  const [activeQuestionId, setActiveQuestionId] = useState(null);
+
+  const resultByQuestionId = useMemo(
+    () => new Map((reviewResult?.questionResults || []).map((item) => [Number(item.questionId), item])),
+    [reviewResult]
+  );
 
   useEffect(() => {
     let mounted = true;
 
     const fetchPractice = async () => {
+      if (initialPractice) {
+        setPractice(initialPractice);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        setError('');
+        setLoadError('');
         const response = await ieltsAPI.getIeltsPractice(examId, skill);
 
         if (!mounted) {
@@ -521,13 +602,13 @@ const IeltsPractice = () => {
 
         if (response.success) {
           setPractice(response.data);
-          setAnswers({});
+          if (!isReviewMode) setAnswers({});
         } else {
-          setError(response.message || 'Không thể tải nội dung đề IELTS');
+          setLoadError(response.message || 'Không thể tải nội dung đề IELTS');
         }
       } catch (err) {
         if (mounted) {
-          setError(err.message || 'Lỗi kết nối đến server');
+          setLoadError(err.message || 'Lỗi kết nối đến server');
         }
       } finally {
         if (mounted) {
@@ -541,10 +622,24 @@ const IeltsPractice = () => {
     return () => {
       mounted = false;
     };
-  }, [examId, skill]);
+  }, [examId, initialPractice, isReviewMode, skill]);
 
   useEffect(() => {
-    if (loading || !practice) {
+    if (!isReviewMode || !reviewResult) return;
+
+    setAnswers(
+      Object.fromEntries(
+        (reviewResult.questionResults || []).map((item) => [
+          item.questionId,
+          { selectedOptionKey: item.selectedOptionKey || null, answerText: item.selectedAnswerText || null },
+        ])
+      )
+    );
+    setExpandedExplanations(new Set());
+  }, [isReviewMode, reviewResult]);
+
+  useEffect(() => {
+    if (isReviewMode || loading || !practice) {
       return undefined;
     }
 
@@ -553,7 +648,7 @@ const IeltsPractice = () => {
     }, 1000);
 
     return () => window.clearInterval(timerId);
-  }, [loading, practice]);
+  }, [isReviewMode, loading, practice]);
 
   useEffect(() => {
     if (isReadingPractice) {
@@ -604,31 +699,110 @@ const IeltsPractice = () => {
     [questionGroups]
   );
   const answeredCount = useMemo(
-    () => Object.values(answers).filter((answer) => String(answer?.answerText || '').trim()).length,
+    () =>
+      Object.values(answers).filter((answer) =>
+        String(answer?.selectedOptionKey || answer?.answerText || '').trim()
+      ).length,
     [answers]
   );
 
-  const handleAnswerChange = (questionId, value) => {
+  const handleAnswerChange = (question, block, value) => {
+    if (isReviewMode) return;
+    const normalizedValue = String(value || '');
+    const isOptionKeyAnswer = usesSelectedOptionKey(question, block, skill);
+
     setAnswers((current) => ({
       ...current,
-      [questionId]: {
-        selectedOptionKey: null,
-        answerText: value,
+      [question.questionId]: {
+        selectedOptionKey: isOptionKeyAnswer ? normalizedValue : null,
+        answerText: isOptionKeyAnswer ? null : normalizedValue,
       },
     }));
   };
 
   const scrollToQuestion = (questionId) => {
+    setActiveQuestionId(Number(questionId));
     document.getElementById(`ielts-question-${questionId}`)?.scrollIntoView({
       behavior: 'smooth',
       block: 'center',
     });
   };
 
+  useEffect(() => {
+    if (!practice || typeof IntersectionObserver === 'undefined') return undefined;
+
+    const questionIds = questionGroups.flatMap((group) => group.questions.map((question) => question.questionId));
+    if (questionIds.length) setActiveQuestionId(Number(questionIds[0]));
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) setActiveQuestionId(Number(visible.target.dataset.questionId));
+      },
+      { rootMargin: '-25% 0px -55% 0px', threshold: [0.1, 0.5] }
+    );
+    questionIds.forEach((questionId) => {
+      const element = document.getElementById(`ielts-question-${questionId}`);
+      if (element) observer.observe(element);
+    });
+    return () => observer.disconnect();
+  }, [practice, questionGroups]);
+
+  const toggleExplanation = (questionId) => {
+    setExpandedExplanations((current) => {
+      const next = new Set(current);
+      if (next.has(questionId)) next.delete(questionId);
+      else next.add(questionId);
+      return next;
+    });
+  };
+
+  const renderReviewFeedback = (question) => {
+    if (!isReviewMode) return null;
+    const result = resultByQuestionId.get(Number(question.questionId));
+    const status = getReviewStatus(result);
+    const correctAnswer = getCorrectAnswerText(result);
+    const isExplanationOpen = expandedExplanations.has(question.questionId);
+
+    return (
+      <div className={styles.reviewFeedback}>
+        <strong className={`${styles.reviewStatus} ${styles[`reviewStatus${status}`]}`}>
+          {status === 'correct' ? 'Chính xác' : status === 'wrong' ? 'Bạn trả lời sai' : 'Chưa trả lời'}
+        </strong>
+        {status !== 'correct' && correctAnswer ? (
+          <p className={styles.correctAnswer}>Đáp án đúng: <strong>{correctAnswer}</strong></p>
+        ) : null}
+        {isReadingPractice && result?.explanationText ? (
+          <>
+            <button type="button" className={styles.explanationToggle} onClick={() => toggleExplanation(question.questionId)}>
+              {isExplanationOpen ? 'Ẩn giải thích' : 'Xem giải thích'}
+            </button>
+            {isExplanationOpen ? (
+              <div className={styles.explanationPanel}>
+                <strong>Giải thích chi tiết</strong>
+                <p>{result.explanationText}</p>
+              </div>
+            ) : null}
+          </>
+        ) : null}
+      </div>
+    );
+  };
+
   const scrollToPart = (partNo) => {
+    const firstQuestion = questionGroups.find((group) => Number(group.partNo) === Number(partNo))?.questions[0];
+    if (firstQuestion) setActiveQuestionId(Number(firstQuestion.questionId));
     document.getElementById(`ielts-part-${partNo}`)?.scrollIntoView({
       behavior: 'smooth',
       block: 'start',
+    });
+  };
+
+  const toggleListeningScript = (groupId) => {
+    setExpandedScripts((current) => {
+      const next = new Set(current);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
+      return next;
     });
   };
 
@@ -840,6 +1014,7 @@ const IeltsPractice = () => {
 
   const handleSubmit = async () => {
     setSubmitNotice(null);
+    setSubmitError('');
 
     const token = typeof window !== 'undefined' ? getStoredToken() : null;
 
@@ -863,30 +1038,21 @@ const IeltsPractice = () => {
 
     try {
       setSubmitting(true);
-      setError('');
 
       const payload = Object.entries(answers).map(([questionId, answer]) => ({
         questionId: Number(questionId),
-        selectedOptionKey: null,
+        selectedOptionKey: answer.selectedOptionKey?.trim() || null,
         answerText: answer.answerText?.trim() || null,
       }));
 
-      const response = await ieltsAPI.submitIeltsExam(examId, skill, payload);
+      const response = await ieltsAPI.submitIeltsExam(examId, skill, payload, elapsedSeconds);
 
       if (response.success && response.data?.attemptId) {
-        navigate(`/practice/ielts/result/${response.data.attemptId}`, {
-          state: {
-            result: {
-              ...response.data,
-              elapsedSeconds,
-            },
-            elapsedSeconds,
-          },
-        });
+        navigate(`/practice/ielts/result/${response.data.attemptId}`);
         return;
       }
 
-      setError(response.message || 'Không thể nộp bài IELTS');
+      setSubmitError('Không thể lưu bài làm IELTS. Vui lòng thử lại.');
     } catch (err) {
       if (err.status === 401 || err.status === 403) {
         window.localStorage.removeItem('token');
@@ -900,7 +1066,7 @@ const IeltsPractice = () => {
         return;
       }
 
-      setError(err.message || 'Lỗi kết nối đến server');
+      setSubmitError('Không thể lưu bài làm IELTS. Vui lòng thử lại.');
     } finally {
       setSubmitting(false);
     }
@@ -943,6 +1109,29 @@ const IeltsPractice = () => {
                     ))}
                   </div>
                 )}
+
+                {isReviewMode && String(group.sharedText || '').trim() ? (
+                  <div className={styles.sectionListeningScript}>
+                    <div className={styles.scriptAccordion}>
+                      <button
+                        type="button"
+                        className={styles.scriptAccordionButton}
+                        onClick={() => toggleListeningScript(group.groupId)}
+                        aria-expanded={expandedScripts.has(group.groupId)}
+                        aria-controls={`listening-script-${group.groupId}`}
+                      >
+                        <span>Listening Script</span>
+                        <small>Section {group.partNo}</small>
+                        <i aria-hidden="true">{expandedScripts.has(group.groupId) ? '−' : '+'}</i>
+                      </button>
+                      {expandedScripts.has(group.groupId) ? (
+                        <div id={`listening-script-${group.groupId}`} className={styles.scriptAccordionContent}>
+                          {renderListeningScript(group.sharedText, styles)}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
               <div className={styles.answerPane}>
@@ -978,12 +1167,16 @@ const IeltsPractice = () => {
                         {block.questions.map((question) => {
                           const answerValue = normalizeAnswerValue(answers[question.questionId]);
                           const promptText = cleanQuestionPromptText(question, block, 'LISTENING');
+                          const reviewStatus = getReviewStatus(resultByQuestionId.get(Number(question.questionId)));
 
                           return (
                             <div
                               key={question.questionId}
                               id={`ielts-question-${question.questionId}`}
-                              className={styles.questionCard}
+                              data-question-id={question.questionId}
+                              className={`${styles.questionCard} ${isReviewMode ? styles.reviewQuestionCard : ''} ${
+                                isReviewMode ? styles[`reviewQuestion${reviewStatus}`] : ''
+                              }`}
                             >
                               <div className={styles.questionTop}>
                                 <button type="button" className={styles.questionIndex}>
@@ -993,10 +1186,11 @@ const IeltsPractice = () => {
                                 <input
                                   type="text"
                                   value={answerValue}
-                                  onChange={(event) => handleAnswerChange(question.questionId, event.target.value)}
+                                  onChange={(event) => handleAnswerChange(question, block, event.target.value)}
                                   className={styles.answerInput}
                                   placeholder="Nhập đáp án"
                                   aria-label={`Answer for question ${question.questionNo}`}
+                                  disabled={isReviewMode}
                                 />
                               </div>
 
@@ -1010,6 +1204,7 @@ const IeltsPractice = () => {
                                   ))}
                                 </div>
                               )}
+                              {renderReviewFeedback(question)}
                             </div>
                           );
                         })}
@@ -1162,12 +1357,16 @@ const IeltsPractice = () => {
                         {block.questions.map((question) => {
                           const answerValue = normalizeAnswerValue(answers[question.questionId]);
                           const promptText = cleanQuestionPromptText(question, block, 'READING');
+                          const reviewStatus = getReviewStatus(resultByQuestionId.get(Number(question.questionId)));
 
                           return (
                             <div
                               key={question.questionId}
                               id={`ielts-question-${question.questionId}`}
-                              className={styles.questionCard}
+                              data-question-id={question.questionId}
+                              className={`${styles.questionCard} ${isReviewMode ? styles.reviewQuestionCard : ''} ${
+                                isReviewMode ? styles[`reviewQuestion${reviewStatus}`] : ''
+                              }`}
                             >
                               <div className={styles.questionTop}>
                                 <button type="button" className={styles.questionIndex}>
@@ -1191,10 +1390,11 @@ const IeltsPractice = () => {
                                 <input
                                   type="text"
                                   value={answerValue}
-                                  onChange={(event) => handleAnswerChange(question.questionId, event.target.value)}
+                                  onChange={(event) => handleAnswerChange(question, block, event.target.value)}
                                   className={styles.answerInput}
                                   placeholder="Nhập đáp án"
                                   aria-label={`Answer for question ${question.questionNo}`}
+                                  disabled={isReviewMode}
                                 />
                               </div>
 
@@ -1208,6 +1408,7 @@ const IeltsPractice = () => {
                                   ))}
                                 </div>
                               )}
+                              {renderReviewFeedback(question)}
                             </div>
                           );
                         })}
@@ -1233,12 +1434,12 @@ const IeltsPractice = () => {
     );
   }
 
-  if (error || !practice) {
+  if (loadError || !practice) {
     return (
       <main className={styles.practicePage}>
         <section className={styles.emptyState}>
           <h2>Không thể tải đề IELTS</h2>
-          <p>{error || 'Dữ liệu đề thi không hợp lệ.'}</p>
+          <p>{loadError || 'Dữ liệu đề thi không hợp lệ.'}</p>
           <button type="button" onClick={() => navigate('/exams/ielts')}>
             Quay lại kho đề
           </button>
@@ -1248,11 +1449,11 @@ const IeltsPractice = () => {
   }
 
   return (
-    <main className={styles.practicePage}>
+    <main className={`${styles.practicePage} ${isReviewMode ? styles.reviewPage : ''}`}>
       <header className={styles.stickyExamBar}>
         <div className={styles.examBarInner}>
           <div className={styles.examBarControls}>
-            <button type="button" className={styles.topBackButton} onClick={() => navigate('/exams/ielts')}>
+            <button type="button" className={styles.topBackButton} onClick={() => navigate(`/exams/ielts/${examId}`)}>
               ← Quay lại
             </button>
 
@@ -1260,12 +1461,43 @@ const IeltsPractice = () => {
               <strong>{practice.examName}</strong>
             </div>
 
-            <button type="button" className={styles.submitButton} onClick={handleSubmit} disabled={submitting}>
-              {submitting ? 'Đang nộp' : 'Nộp bài'}
+            <button
+              type="button"
+              className={styles.submitButton}
+              onClick={isReviewMode ? () => navigate(`/practice/ielts/${examId}?skill=${skill}`) : handleSubmit}
+              disabled={submitting}
+            >
+              {isReviewMode ? 'Làm lại đề này' : submitting ? 'Đang nộp' : 'Nộp bài'}
+            </button>
+          </div>
+          {isReviewMode && reviewResult ? (
+            <div className={styles.reviewScoreBar} aria-label="Kết quả bài làm">
+              <span><small>Kỹ năng</small><strong>{isReadingPractice ? 'Reading' : 'Listening'}</strong></span>
+              <span><small>Band</small><strong>{formatBand(reviewResult.bandScore)}</strong></span>
+              <span><small>Chính xác</small><strong>{reviewResult.correctCount}/{reviewResult.totalQuestions}</strong></span>
+              <span><small>Đã trả lời</small><strong>{reviewResult.answeredCount}/{reviewResult.totalQuestions}</strong></span>
+              <span><small>Thời gian</small><strong>{formatElapsedTime(reviewResult.elapsedSeconds || 0)}</strong></span>
+            </div>
+          ) : null}
+        </div>
+      </header>
+
+      {submitError && (
+        <div className={`${styles.submitNotice} ${styles.submitNoticeError}`} role="alert" aria-live="assertive">
+          <div className={styles.submitNoticeIcon} aria-hidden="true">
+            !
+          </div>
+          <div className={styles.submitNoticeContent}>
+            <strong>Không thể nộp bài IELTS</strong>
+            <p>{submitError}</p>
+          </div>
+          <div className={styles.submitNoticeActions}>
+            <button type="button" onClick={() => setSubmitError('')} aria-label="Đóng thông báo lỗi">
+              Đóng
             </button>
           </div>
         </div>
-      </header>
+      )}
 
       {submitNotice && (
         <div
@@ -1299,13 +1531,13 @@ const IeltsPractice = () => {
         <aside className={styles.questionNavigator}>
           <div className={styles.navigatorHeader}>
             <h3>Bảng câu hỏi</h3>
-            <div className={styles.navigatorTimer} aria-label={`Thời gian làm bài ${formatElapsedTime(elapsedSeconds)}`}>
+            <div className={styles.navigatorTimer} aria-label={`Thời gian làm bài ${formatElapsedTime(isReviewMode ? reviewResult?.elapsedSeconds || 0 : elapsedSeconds)}`}>
               <span className={styles.navigatorTimerLabel}>Thời gian</span>
-              <span className={styles.navigatorTimerValue}>{formatElapsedTime(elapsedSeconds)}</span>
+              <span className={styles.navigatorTimerValue}>{formatElapsedTime(isReviewMode ? reviewResult?.elapsedSeconds || 0 : elapsedSeconds)}</span>
             </div>
           </div>
 
-          {isReadingPractice ? (
+          {isReadingPractice && !isReviewMode ? (
             <div className={styles.highlightTool}>
             <button
               type="button"
@@ -1332,27 +1564,38 @@ const IeltsPractice = () => {
 
           <div className={styles.navigatorLegend}>
             <span className={styles.legendItem}>
-              <i className={`${styles.legendDot} ${styles.legendAnswered}`} /> Câu đã làm
+              <i className={`${styles.legendDot} ${isReviewMode ? styles.legendCorrect : styles.legendAnswered}`} /> {isReviewMode ? 'Trả lời đúng' : 'Câu đã làm'}
             </span>
             <span className={styles.legendItem}>
-              <i className={`${styles.legendDot} ${styles.legendUnanswered}`} /> Câu chưa làm
+              <i className={`${styles.legendDot} ${isReviewMode ? styles.legendWrong : styles.legendUnanswered}`} /> {isReviewMode ? 'Trả lời sai' : 'Câu chưa làm'}
             </span>
+            {isReviewMode ? <span className={styles.legendItem}><i className={`${styles.legendDot} ${styles.legendSkipped}`} /> Chưa trả lời</span> : null}
           </div>
 
           {questionGroups.map((group) => (
             <div key={group.groupId} className={styles.partNavBlock}>
               <button type="button" className={styles.partNavTitle} onClick={() => scrollToPart(group.partNo)}>
                 {getPartLabel(group.partNo, skill)}
+                {isReviewMode ? ` · ${group.questions.filter((question) => resultByQuestionId.get(Number(question.questionId))?.isCorrect).length}/${group.questions.length}` : ''}
               </button>
               <div className={styles.numberGrid}>
                 {group.questions.map((question) => {
-                  const isAnswered = Boolean(String(answers[question.questionId]?.answerText || '').trim());
+                  const isAnswered = Boolean(
+                    String(
+                      answers[question.questionId]?.selectedOptionKey ||
+                        answers[question.questionId]?.answerText ||
+                        ''
+                    ).trim()
+                  );
+                  const reviewStatus = getReviewStatus(resultByQuestionId.get(Number(question.questionId)));
 
                   return (
                     <button
                       key={question.questionId}
                       type="button"
-                      className={`${styles.numberButton} ${isAnswered ? styles.answeredNumber : ''}`}
+                      className={`${styles.numberButton} ${isReviewMode ? styles[`reviewNumber${reviewStatus}`] : isAnswered ? styles.answeredNumber : ''} ${
+                        Number(activeQuestionId) === Number(question.questionId) ? styles.activeNumber : ''
+                      }`}
                       onClick={() => scrollToQuestion(question.questionId)}
                     >
                       {question.questionNo}
@@ -1362,6 +1605,7 @@ const IeltsPractice = () => {
               </div>
             </div>
           ))}
+
         </aside>
 
         {isReadingPractice && highlightToolbar && isHighlightModeEnabled && (
@@ -1431,8 +1675,6 @@ const IeltsPractice = () => {
         )}
 
         <section className={styles.examContent}>
-          {error ? <p className={styles.errorText}>{error}</p> : null}
-
           {isReadingPractice ? renderReadingSections() : renderListeningSections()}
 
         </section>

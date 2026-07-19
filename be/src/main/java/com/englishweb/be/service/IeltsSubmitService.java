@@ -9,6 +9,7 @@ import com.englishweb.be.entity.ielts.IeltsLrUserAnswer;
 import com.englishweb.be.entity.ielts.IeltsQuestion;
 import com.englishweb.be.entity.ielts.IeltsQuestionAnswer;
 import com.englishweb.be.entity.ielts.IeltsQuestionOption;
+import com.englishweb.be.exception.IeltsSubmissionException;
 import com.englishweb.be.repository.UserRepository;
 import com.englishweb.be.repository.ielts.IeltsAttemptRepository;
 import com.englishweb.be.repository.ielts.IeltsExamRepository;
@@ -17,11 +18,13 @@ import com.englishweb.be.repository.ielts.IeltsQuestionAnswerRepository;
 import com.englishweb.be.repository.ielts.IeltsQuestionOptionRepository;
 import com.englishweb.be.repository.ielts.IeltsQuestionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -48,6 +51,19 @@ public class IeltsSubmitService {
 
     @Transactional
     public IeltsResultResponse submitExam(Integer examId, String userEmail, String skill, IeltsSubmitRequest request) {
+        try {
+            return submitExamInternal(examId, userEmail, skill, request);
+        } catch (DataAccessException exception) {
+            throw new IeltsSubmissionException("Không thể lưu bài làm IELTS. Vui lòng thử lại.", exception);
+        }
+    }
+
+    private IeltsResultResponse submitExamInternal(
+            Integer examId,
+            String userEmail,
+            String skill,
+            IeltsSubmitRequest request
+    ) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng!"));
 
@@ -63,13 +79,16 @@ public class IeltsSubmitService {
 
         Map<Integer, IeltsSubmitRequest.AnswerRequest> selectedMap = buildSelectedMap(request);
         LocalDateTime now = LocalDateTime.now();
+        int elapsedSeconds = request == null || request.getElapsedSeconds() == null
+                ? 0
+                : Math.max(0, request.getElapsedSeconds());
 
         IeltsAttempt attempt = IeltsAttempt.builder()
                 .user(user)
                 .exam(exam)
                 .attemptType("SKILL_PRACTICE")
                 .skill(normalizedSkill)
-                .startedAt(now)
+                .startedAt(now.minusSeconds(elapsedSeconds))
                 .submittedAt(now)
                 .status("SUBMITTED")
                 .build();
@@ -132,7 +151,7 @@ public class IeltsSubmitService {
             }
         }
 
-        ieltsLrUserAnswerRepository.saveAll(savedUserAnswers);
+        ieltsLrUserAnswerRepository.saveAllAndFlush(savedUserAnswers);
 
         BigDecimal bandScore = ieltsScoreService.estimateBand(normalizedSkill, correctCount);
 
@@ -146,7 +165,7 @@ public class IeltsSubmitService {
 
         savedAttempt.setOverallBand(bandScore);
         savedAttempt.setUpdatedAt(now);
-        ieltsAttemptRepository.save(savedAttempt);
+        ieltsAttemptRepository.saveAndFlush(savedAttempt);
 
         return buildResultResponse(savedAttempt, answeredCount);
     }
@@ -258,10 +277,19 @@ public class IeltsSubmitService {
                 .answeredCount(answeredCount)
                 .correctCount(correctCount)
                 .bandScore(bandScore)
+                .elapsedSeconds(calculateElapsedSeconds(attempt))
                 .submittedAt(attempt.getSubmittedAt())
                 .partSummaries(partSummaries)
                 .questionResults(questionResults)
                 .build();
+    }
+
+    private int calculateElapsedSeconds(IeltsAttempt attempt) {
+        if (attempt.getStartedAt() == null || attempt.getSubmittedAt() == null) {
+            return 0;
+        }
+
+        return (int) Math.max(0, Duration.between(attempt.getStartedAt(), attempt.getSubmittedAt()).getSeconds());
     }
 
     private Map<Integer, IeltsSubmitRequest.AnswerRequest> buildSelectedMap(IeltsSubmitRequest request) {
