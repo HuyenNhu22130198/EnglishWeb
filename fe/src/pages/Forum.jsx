@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useConfirmDialog } from '../contexts/useConfirmDialog';
 import { forumAPI } from '../services/forumService';
 import styles from './Forum.module.css';
 
@@ -97,6 +98,7 @@ const removeCommentTree = (comments, commentId) =>
   );
 
 const Forum = () => {
+  const confirm = useConfirmDialog();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const [posts, setPosts] = useState([]);
@@ -281,7 +283,13 @@ const Forum = () => {
 
   const handleDeleteComment = async (commentId) => {
     if (!requireLogin()) return;
-    if (!window.confirm('Xóa bình luận này? Các trả lời bên dưới cũng sẽ bị xóa.')) return;
+    const confirmed = await confirm({
+      title: 'Xóa bình luận?',
+      message: 'Bình luận và tất cả câu trả lời bên dưới sẽ bị xóa. Thao tác này không thể hoàn tác.',
+      confirmLabel: 'Xóa bình luận',
+      tone: 'danger',
+    });
+    if (!confirmed) return;
 
     try {
       await forumAPI.deleteComment(commentId);

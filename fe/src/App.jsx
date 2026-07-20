@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ConfirmDialogProvider } from './contexts/ConfirmDialogContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import Header from './components/Header';
@@ -9,6 +10,11 @@ import FloatingDictionary from './components/FloatingDictionary';
 import Home from './pages/Home';
 import ToeicExams from './pages/ToeicExams';
 import IeltsExams from './pages/IeltsExams';
+import IeltsExamDetail from './pages/IeltsExamDetail';
+import IeltsPractice from './pages/IeltsPractice';
+import IeltsWriting from './pages/IeltsWriting';
+import IeltsSpeaking from './pages/IeltsSpeaking';
+import IeltsResult from './pages/IeltsResult';
 import Flashcard from './pages/Flashcard';
 import Infor from './pages/Infor';
 import Register from './pages/Register';
@@ -39,15 +45,18 @@ function App() {
   }, [location.pathname, location.search]);
 
   const noLayoutPages = ['/login', '/register', '/forgot-password'];
-  const isPracticePage = location.pathname.startsWith('/practice/toeic/');
+  const isPracticePage =
+    location.pathname.startsWith('/practice/toeic/') ||
+    location.pathname.startsWith('/practice/ielts/');
   const isAdminPage = location.pathname.startsWith('/admin');
 
   const hideLayout =
     noLayoutPages.includes(location.pathname) || isPracticePage || isAdminPage;
 
   return (
-    <AuthProvider>
-      <div>
+    <ConfirmDialogProvider>
+      <AuthProvider>
+        <div>
         {!hideLayout && <Header />}
 
         <Routes>
@@ -84,6 +93,39 @@ function App() {
           <Route path="/practice/toeic/result/:attemptId" element={<ToeicResult />} />
 
           <Route path="/exams/ielts" element={<IeltsExams />} />
+          <Route path="/exams/ielts/:examId" element={<IeltsExamDetail />} />
+          <Route
+            path="/practice/ielts/:examId/writing"
+            element={
+              <ProtectedRoute>
+                <IeltsWriting />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/practice/ielts/:examId/speaking"
+            element={
+              <ProtectedRoute>
+                <IeltsSpeaking />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/practice/ielts/:examId"
+            element={
+              <ProtectedRoute>
+                <IeltsPractice />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/practice/ielts/result/:attemptId"
+            element={
+              <ProtectedRoute>
+                <IeltsResult />
+              </ProtectedRoute>
+            }
+          />
 
           <Route path="/forum" element={<Forum />} />
 
@@ -103,12 +145,11 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
         </Routes>
 
-        {!isAdminPage && !noLayoutPages.includes(location.pathname) && (
-          <FloatingDictionary />
-        )}
+        <FloatingDictionary />
         {!hideLayout && <Footer />}
-      </div>
-    </AuthProvider>
+        </div>
+      </AuthProvider>
+    </ConfirmDialogProvider>
   );
 }
 

@@ -1,6 +1,7 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useConfirmDialog } from '../contexts/useConfirmDialog';
 import { authAPI, getStoredToken } from '../services/authService';
 import { toeicAPI } from '../services/toeicService';
 import { getFlashcardStorageKey } from '../utils/flashcardStorage';
@@ -17,13 +18,6 @@ const isTextMaterial = (material) => {
 };
 
 const normalizeContent = (value) => (value || '').replace(/\s+/g, ' ').trim().toLowerCase();
-const getMaterialQuestionNo = (material) => {
-  const source = material.assetUrl || material.content || '';
-  const fileName = decodeURIComponent(source.split(/[?#]/)[0].split('/').pop() || '');
-  const match = fileName.match(/[_-](\d{1,3})(?:\.[a-z0-9]+)?$/i);
-
-  return match ? Number(match[1]) : null;
-};
 const AUDIO_MARKER_STORAGE_PREFIX = 'toeic-practice-audio-markers';
 const HIGHLIGHT_STORAGE_PREFIX = 'toeic-practice-highlights';
 const ELAPSED_TIME_STORAGE_PREFIX = 'toeic-practice-elapsed-time';
@@ -349,6 +343,7 @@ const removeAudioMarkersFromStorage = (examId) => {
 };
 
 const ToeicPractice = () => {
+  const confirm = useConfirmDialog();
   const { user } = useAuth();
   const { testId } = useParams();
   const navigate = useNavigate();
@@ -361,22 +356,12 @@ const ToeicPractice = () => {
   const [activePart, setActivePart] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatInput, setChatInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitNotice, setSubmitNotice] = useState(null);
   const [isAudioMarkerPanelOpen, setIsAudioMarkerPanelOpen] = useState(false);
   const [isHighlightModeEnabled, setIsHighlightModeEnabled] = useState(false);
   const [highlightToolbar, setHighlightToolbar] = useState(null);
   const [markerStorageWarning, setMarkerStorageWarning] = useState('');
-  const [chatMessages, setChatMessages] = useState([
-    {
-      id: 1,
-      role: 'assistant',
-      content:
-"Bạn đang vướng câu nào? Hãy copy nguyên câu hỏi hoặc đoạn đáp án bạn muốn hỏi vào đây, mình sẽ hỗ trợ bạn phân tích cách làm nhé",
-    },
-  ]);
   const [audioDuration, setAudioDuration] = useState(0);
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const [audioMarkers, setAudioMarkers] = useState([]);
@@ -870,14 +855,6 @@ const ToeicPractice = () => {
       return imageMaterials[0].assetUrl;
     }
 
-    if ([3, 4].includes(Number(partNo))) {
-      const matchingMaterial = imageMaterials.find(
-        (material) => getMaterialQuestionNo(material) === Number(question.questionNo)
-      );
-
-      return matchingMaterial?.assetUrl || null;
-    }
-
     return null;
   };
 
@@ -904,9 +881,11 @@ const ToeicPractice = () => {
       return;
     }
 
-    const confirmSubmit = window.confirm(
-        `Bạn đã chọn ${answeredCount}/${totalQuestions} câu. Bạn có chắc chắn muốn nộp bài không?`
-    );
+    const confirmSubmit = await confirm({
+      title: 'Nộp bài TOEIC?',
+      message: `Bạn đã chọn ${answeredCount}/${totalQuestions} câu. Sau khi nộp, bạn sẽ không thể thay đổi đáp án.`,
+      confirmLabel: 'Nộp bài',
+    });
 
     if (!confirmSubmit) {
       return;
@@ -975,33 +954,6 @@ const ToeicPractice = () => {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  // Xử lý gửi tin nhắn chat
-  const handleSendChatMessage = (e) => {
-    e.preventDefault();
-
-    const message = chatInput.trim();
-
-    if (!message) {
-      return;
-    }
-
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        role: 'user',
-        content: message,
-      },
-      {
-        id: Date.now() + 1,
-        role: 'assistant',
-        content: 'Mình đã nhận câu hỏi của bạn.',
-      },
-    ]);
-
-    setChatInput('');
   };
 
   if (loading) {
@@ -1102,7 +1054,7 @@ const ToeicPractice = () => {
                         >
                           <span>Đã đánh dấu {audioMarkers.length}</span>
                           <strong>
-                            {isAudioMarkerPanelOpen ? 'Thu gọn' : 'Mở rộngs'}
+                            {isAudioMarkerPanelOpen ? 'Thu gọn' : 'Mở rộng'}
                           </strong>
                         </button>
 
@@ -1833,59 +1785,6 @@ const ToeicPractice = () => {
         </div>
       )}
 
-      <div className={styles.examChatbot}>
-        {!isChatOpen ? (
-          <button
-            type="button"
-            className={styles.chatFloatingButton}
-            onClick={() => setIsChatOpen(true)}
-            aria-label="Mở trợ lý luyện đề"
-          >
-            <strong>Chat bot</strong>
-          </button>
-        ) : (
-          <div className={styles.chatWindow}>
-            <div className={styles.chatHeader}>
-              <div>
-                <strong>Trợ lý luyện đề TOEIC</strong>
-                <span>Hỗ trợ phân tích câu hỏi</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsChatOpen(false)}
-                aria-label="Đóng chatbot"
-              >
-                Ã—
-              </button>
-            </div>
-
-            <div className={styles.chatBody}>
-              {chatMessages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`${styles.chatMessage} ${
-                    message.role === 'user' ? styles.userMessage : styles.assistantMessage
-                  }`}
-                >
-                  {message.content}
-                </div>
-              ))}
-            </div>
-
-            <form className={styles.chatForm} onSubmit={handleSendChatMessage}>
-              <textarea
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Copy câu hỏi bạn muốn hỏi vào đây..."
-                rows={2}
-              />
-
-              <button type="submit">Gá»­i</button>
-            </form>
-          </div>
-        )}
-      </div>
     </main>
   );
 };

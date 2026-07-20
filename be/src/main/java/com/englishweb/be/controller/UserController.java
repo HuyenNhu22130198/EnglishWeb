@@ -6,9 +6,13 @@ import com.englishweb.be.dto.ChangePasswordRequest;
 import com.englishweb.be.dto.UpdateAccountSettingsRequest;
 import com.englishweb.be.dto.UpdateProfileRequest;
 import com.englishweb.be.dto.UpdateRoleRequest;
+import com.englishweb.be.dto.ielts.IeltsAttemptHistoryResponse;
 import com.englishweb.be.dto.toeic.ToeicAttemptHistoryResponse;
 import com.englishweb.be.entity.User;
 import com.englishweb.be.service.AuthService;
+import com.englishweb.be.service.IeltsSubmitService;
+import com.englishweb.be.service.IeltsWritingService;
+import com.englishweb.be.service.IeltsSpeakingService;
 import com.englishweb.be.service.ToeicSubmitService;
 import com.englishweb.be.service.UserService;
 import jakarta.validation.Valid;
@@ -19,6 +23,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Comparator;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/api/users")
@@ -29,6 +35,9 @@ public class UserController {
     private final AuthService authService;
     private final UserService userService;
     private final ToeicSubmitService toeicSubmitService;
+    private final IeltsSubmitService ieltsSubmitService;
+    private final IeltsWritingService ieltsWritingService;
+    private final IeltsSpeakingService ieltsSpeakingService;
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
@@ -90,6 +99,25 @@ public class UserController {
         String email = authentication.getName();
         List<ToeicAttemptHistoryResponse> history = toeicSubmitService.getMyAttemptHistory(email);
         return ResponseEntity.ok(ApiResponse.success("Lấy lịch sử TOEIC thành công", history));
+    }
+
+    @GetMapping("/me/ielts-history")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<IeltsAttemptHistoryResponse>>> getMyIeltsHistory(
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+        List<IeltsAttemptHistoryResponse> history = Stream.of(
+                        ieltsSubmitService.getMyAttemptHistory(email),
+                        ieltsWritingService.getHistory(email),
+                        ieltsSpeakingService.getHistory(email))
+                .flatMap(List::stream)
+                .sorted(Comparator.comparing(
+                        IeltsAttemptHistoryResponse::getSubmittedAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())
+                ))
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success("Lấy lịch sử IELTS thành công", history));
     }
 
     @GetMapping("/{id}")

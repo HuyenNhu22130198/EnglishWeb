@@ -54,9 +54,12 @@ public class ToeicResultResponse {
         private Integer questionId;
         private Integer questionNo;
         private Integer partNo;
+        private Integer groupId;
         private String groupTitle;
         private String sharedText;
+        private List<String> groupImageUrls;
         private String questionText;
+        private String imageUrl;
         private String selectedLabel;
         private String selectedText;
         private String correctLabel;
