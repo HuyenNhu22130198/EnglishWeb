@@ -12,6 +12,7 @@ import com.englishweb.be.entity.User;
 import com.englishweb.be.service.AuthService;
 import com.englishweb.be.service.IeltsSubmitService;
 import com.englishweb.be.service.IeltsWritingService;
+import com.englishweb.be.service.IeltsSpeakingService;
 import com.englishweb.be.service.ToeicSubmitService;
 import com.englishweb.be.service.UserService;
 import jakarta.validation.Valid;
@@ -36,6 +37,7 @@ public class UserController {
     private final ToeicSubmitService toeicSubmitService;
     private final IeltsSubmitService ieltsSubmitService;
     private final IeltsWritingService ieltsWritingService;
+    private final IeltsSpeakingService ieltsSpeakingService;
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
@@ -105,10 +107,11 @@ public class UserController {
             Authentication authentication
     ) {
         String email = authentication.getName();
-        List<IeltsAttemptHistoryResponse> history = Stream.concat(
-                        ieltsSubmitService.getMyAttemptHistory(email).stream(),
-                        ieltsWritingService.getHistory(email).stream()
-                )
+        List<IeltsAttemptHistoryResponse> history = Stream.of(
+                        ieltsSubmitService.getMyAttemptHistory(email),
+                        ieltsWritingService.getHistory(email),
+                        ieltsSpeakingService.getHistory(email))
+                .flatMap(List::stream)
                 .sorted(Comparator.comparing(
                         IeltsAttemptHistoryResponse::getSubmittedAt,
                         Comparator.nullsLast(Comparator.reverseOrder())

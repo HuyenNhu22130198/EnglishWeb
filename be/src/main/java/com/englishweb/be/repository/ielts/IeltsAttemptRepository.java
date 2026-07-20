@@ -35,4 +35,11 @@ public interface IeltsAttemptRepository extends JpaRepository<IeltsAttempt, Inte
             ORDER BY a.submittedAt DESC, a.id DESC
             """)
     List<IeltsAttempt> findSubmittedWritingAttemptsByUserEmail(@Param("email") String email);
+
+    @Query("""
+            SELECT a FROM IeltsAttempt a JOIN FETCH a.exam
+            WHERE a.user.email = :email AND a.status = 'SUBMITTED' AND UPPER(a.skill) = 'SPEAKING'
+            ORDER BY a.submittedAt DESC, a.id DESC
+            """)
+    List<IeltsAttempt> findSubmittedSpeakingAttemptsByUserEmail(@Param("email") String email);
 }

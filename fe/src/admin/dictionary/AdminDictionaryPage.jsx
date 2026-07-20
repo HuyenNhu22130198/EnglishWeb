@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useConfirmDialog } from "../../contexts/useConfirmDialog";
 import { adminDictionaryAPI } from "./adminDictionaryService";
 import AdminPageHeader from "../components/AdminPageHeader";
 import Pagination from "../components/Pagination";
@@ -58,6 +59,7 @@ function normalizeResponse(data) {
 }
 
 export default function AdminDictionaryPage() {
+  const confirm = useConfirmDialog();
   const [entries, setEntries] = useState([]);
   const [keywordInput, setKeywordInput] = useState("");
   const [generateKeyword, setGenerateKeyword] = useState("");
@@ -222,9 +224,12 @@ export default function AdminDictionaryPage() {
   };
 
   const handleDelete = async (entry) => {
-    const confirmed = window.confirm(
-      `Bạn có chắc muốn xóa từ "${entry.word}" không?`
-    );
+    const confirmed = await confirm({
+      title: 'Xóa từ vựng?',
+      message: `Từ "${entry.word}" sẽ bị xóa khỏi từ điển. Thao tác này không thể hoàn tác.`,
+      confirmLabel: 'Xóa từ',
+      tone: 'danger',
+    });
 
     if (!confirmed) return;
 

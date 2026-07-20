@@ -5,6 +5,7 @@ import com.englishweb.be.entity.ielts.IeltsExam;
 import com.englishweb.be.repository.ielts.IeltsAttemptRepository;
 import com.englishweb.be.repository.ielts.IeltsExamRepository;
 import com.englishweb.be.repository.ielts.IeltsQuestionRepository;
+import com.englishweb.be.repository.ielts.IeltsSpeakingTaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ public class IeltsExamService {
     private final IeltsExamRepository ieltsExamRepository;
     private final IeltsQuestionRepository ieltsQuestionRepository;
     private final IeltsAttemptRepository ieltsAttemptRepository;
+    private final IeltsSpeakingTaskRepository ieltsSpeakingTaskRepository;
 
     @Transactional(readOnly = true)
     public List<IeltsExamListResponse> getIeltsExams(String keyword) {
@@ -44,6 +46,9 @@ public class IeltsExamService {
         }
         if (readingQuestions > 0) {
             availableSkills.add("READING");
+        }
+        if (!ieltsSpeakingTaskRepository.findByExam_IdOrderByPartNoAscDisplayOrderAscIdAsc(exam.getId()).isEmpty()) {
+            availableSkills.add("SPEAKING");
         }
 
         return IeltsExamListResponse.builder()

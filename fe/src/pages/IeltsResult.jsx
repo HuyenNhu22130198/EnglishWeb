@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ieltsAPI } from '../services/ieltsService';
 import IeltsPractice from './IeltsPractice';
 import IeltsWritingResult from './IeltsWritingResult';
+import IeltsSpeakingResult from './IeltsSpeakingResult';
 import styles from './IeltsResult.module.css';
 
 const IeltsResult = () => {
@@ -29,6 +30,11 @@ const IeltsResult = () => {
       if (String(loadedResult.skill).toUpperCase() === 'WRITING') {
         setResult(loadedResult);
         setPractice({ writingResult: true });
+        return;
+      }
+      if (String(loadedResult.skill).toUpperCase() === 'SPEAKING') {
+        setResult(loadedResult);
+        setPractice({ speakingResult: true });
         return;
       }
       const practiceResponse = await ieltsAPI.getIeltsPractice(loadedResult.examId, loadedResult.skill);
@@ -78,6 +84,10 @@ const IeltsResult = () => {
 
   if (String(result.skill).toUpperCase() === 'WRITING') {
     return <IeltsWritingResult result={result} />;
+  }
+
+  if (String(result.skill).toUpperCase() === 'SPEAKING') {
+    return <IeltsSpeakingResult result={result} />;
   }
 
   return <IeltsPractice mode="review" initialPractice={practice} reviewResult={result} />;

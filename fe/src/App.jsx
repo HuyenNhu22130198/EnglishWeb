@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ConfirmDialogProvider } from './contexts/ConfirmDialogContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import Header from './components/Header';
@@ -12,6 +13,7 @@ import IeltsExams from './pages/IeltsExams';
 import IeltsExamDetail from './pages/IeltsExamDetail';
 import IeltsPractice from './pages/IeltsPractice';
 import IeltsWriting from './pages/IeltsWriting';
+import IeltsSpeaking from './pages/IeltsSpeaking';
 import IeltsResult from './pages/IeltsResult';
 import Flashcard from './pages/Flashcard';
 import Infor from './pages/Infor';
@@ -52,8 +54,9 @@ function App() {
     noLayoutPages.includes(location.pathname) || isPracticePage || isAdminPage;
 
   return (
-    <AuthProvider>
-      <div>
+    <ConfirmDialogProvider>
+      <AuthProvider>
+        <div>
         {!hideLayout && <Header />}
 
         <Routes>
@@ -100,6 +103,14 @@ function App() {
             }
           />
           <Route
+            path="/practice/ielts/:examId/speaking"
+            element={
+              <ProtectedRoute>
+                <IeltsSpeaking />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/practice/ielts/:examId"
             element={
               <ProtectedRoute>
@@ -136,8 +147,9 @@ function App() {
 
         <FloatingDictionary />
         {!hideLayout && <Footer />}
-      </div>
-    </AuthProvider>
+        </div>
+      </AuthProvider>
+    </ConfirmDialogProvider>
   );
 }
 

@@ -30,7 +30,7 @@ const IELTS_SKILLS = [
     title: 'Speaking',
     description: 'Luyện nói với các chủ đề và câu hỏi mô phỏng IELTS Speaking.',
     questionField: null,
-    path: '',
+    path: (examId) => `/practice/ielts/${examId}/speaking`,
   },
 ];
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useConfirmDialog } from '../contexts/useConfirmDialog';
 import { getStoredToken } from '../services/authService';
 import { ieltsAPI } from '../services/ieltsService';
 import { getFlashcardStorageKey } from '../utils/flashcardStorage';
@@ -539,6 +540,7 @@ const usesSelectedOptionKey = (question, block, skill) => {
 };
 
 const IeltsPractice = ({ mode = 'practice', initialPractice = null, reviewResult = null }) => {
+  const confirm = useConfirmDialog();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { examId: routeExamId } = useParams();
@@ -1028,9 +1030,11 @@ const IeltsPractice = ({ mode = 'practice', initialPractice = null, reviewResult
       return;
     }
 
-    const confirmSubmit = window.confirm(
-      `Bạn đã trả lời ${answeredCount}/${totalQuestions} câu. Bạn có chắc chắn muốn nộp bài không?`
-    );
+    const confirmSubmit = await confirm({
+      title: 'Nộp bài IELTS?',
+      message: `Bạn đã trả lời ${answeredCount}/${totalQuestions} câu. Sau khi nộp, bạn sẽ không thể thay đổi đáp án.`,
+      confirmLabel: 'Nộp bài',
+    });
 
     if (!confirmSubmit) {
       return;

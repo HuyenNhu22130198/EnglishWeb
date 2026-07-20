@@ -8,6 +8,7 @@ import com.englishweb.be.entity.ielts.IeltsQuestionBlock;
 import com.englishweb.be.entity.ielts.IeltsQuestionOption;
 import com.englishweb.be.entity.ielts.IeltsSectionGroup;
 import com.englishweb.be.entity.ielts.IeltsWritingTask;
+import com.englishweb.be.entity.ielts.IeltsSpeakingTask;
 import com.englishweb.be.repository.ielts.IeltsExamRepository;
 import com.englishweb.be.repository.ielts.IeltsMediaAssetRepository;
 import com.englishweb.be.repository.ielts.IeltsQuestionBlockRepository;
@@ -15,6 +16,9 @@ import com.englishweb.be.repository.ielts.IeltsQuestionOptionRepository;
 import com.englishweb.be.repository.ielts.IeltsQuestionRepository;
 import com.englishweb.be.repository.ielts.IeltsSectionGroupRepository;
 import com.englishweb.be.repository.ielts.IeltsWritingTaskRepository;
+import com.englishweb.be.repository.ielts.IeltsSpeakingTaskRepository;
+import com.englishweb.be.repository.ielts.IeltsSpeakingItemRepository;
+import com.englishweb.be.repository.ielts.IeltsSpeakingSampleAnswerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +36,9 @@ public class IeltsPracticeService {
     private final IeltsQuestionRepository ieltsQuestionRepository;
     private final IeltsQuestionOptionRepository ieltsQuestionOptionRepository;
     private final IeltsWritingTaskRepository ieltsWritingTaskRepository;
+    private final IeltsSpeakingTaskRepository ieltsSpeakingTaskRepository;
+    private final IeltsSpeakingItemRepository ieltsSpeakingItemRepository;
+    private final IeltsSpeakingSampleAnswerRepository ieltsSpeakingSampleAnswerRepository;
 
     @Transactional(readOnly = true)
     public IeltsPracticeResponse getPracticeExam(Integer examId, String skill) {
@@ -62,6 +69,19 @@ public class IeltsPracticeService {
                     .build();
         }
 
+        if ("SPEAKING".equals(normalizedSkill)) {
+            List<IeltsPracticeResponse.SpeakingPartResponse> parts = ieltsSpeakingTaskRepository
+                    .findByExam_IdOrderByPartNoAscDisplayOrderAscIdAsc(examId).stream()
+                    .map(this::toSpeakingPartResponse)
+                    .toList();
+            int totalSamples = parts.stream().mapToInt(part -> part.getSamples().size()).sum();
+            return IeltsPracticeResponse.builder()
+                    .examId(exam.getId()).examCode(exam.getExamCode()).examName(exam.getExamName())
+                    .skill(normalizedSkill).totalQuestions(totalSamples)
+                    .assets(List.of()).groups(List.of()).writingTasks(List.of()).speakingParts(parts)
+                    .build();
+        }
+
         List<IeltsPracticeResponse.GroupResponse> groups = ieltsSectionGroupRepository
                 .findByExam_IdAndSkillIgnoreCaseOrderByPartNoAscGroupNoAscDisplayOrderAscIdAsc(examId, normalizedSkill)
                 .stream()
@@ -80,6 +100,25 @@ public class IeltsPracticeService {
                 .totalQuestions(totalQuestions)
                 .assets(assets.stream().map(this::toAssetResponse).toList())
                 .groups(groups)
+                .build();
+    }
+
+    private IeltsPracticeResponse.SpeakingPartResponse toSpeakingPartResponse(IeltsSpeakingTask task) {
+        return IeltsPracticeResponse.SpeakingPartResponse.builder()
+                .taskId(task.getId()).partNo(task.getPartNo()).topicTitle(task.getTopicTitle())
+                .instruction(task.getInstructionText())
+                .items(ieltsSpeakingItemRepository.findBySpeakingTask_IdOrderByDisplayOrderAscIdAsc(task.getId())
+                        .stream().map(item -> IeltsPracticeResponse.SpeakingItemResponse.builder()
+                                .itemId(item.getId()).content(item.getContentText()).displayOrder(item.getDisplayOrder()).build())
+                        .toList())
+                .samples(ieltsSpeakingSampleAnswerRepository.findBySpeakingTask_IdOrderByDisplayOrderAscIdAsc(task.getId())
+                        .stream().map(sample -> IeltsPracticeResponse.SpeakingSampleResponse.builder()
+                                .sampleAnswerId(sample.getId())
+                                .speakingItemId(sample.getSpeakingItem() == null ? null : sample.getSpeakingItem().getId())
+                                .segmentNo(sample.getSegmentNo()).segmentTitle(sample.getSegmentTitle())
+                                .answerText(sample.getAnswerText()).voiceLocale(sample.getVoiceLocale())
+                                .displayOrder(sample.getDisplayOrder()).build())
+                        .toList())
                 .build();
     }
 
@@ -174,7 +213,8 @@ public class IeltsPracticeService {
     private String normalizeSkill(String skill) {
         String normalized = skill == null ? "" : skill.trim().toUpperCase();
 
-        if (!"LISTENING".equals(normalized) && !"READING".equals(normalized) && !"WRITING".equals(normalized)) {
+        if (!"LISTENING".equals(normalized) && !"READING".equals(normalized)
+                && !"WRITING".equals(normalized) && !"SPEAKING".equals(normalized)) {
             throw new RuntimeException("Kỹ năng IELTS chưa được hỗ trợ hoặc không hợp lệ!");
         }
 

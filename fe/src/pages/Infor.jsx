@@ -105,6 +105,7 @@ const formatDuration = (seconds) => {
 
 const getSkillLabel = (skill) => {
   if (skill === 'WRITING') return 'Writing';
+  if (skill === 'SPEAKING') return 'Speaking';
   return skill === 'READING' ? 'Reading' : 'Listening';
 };
 
@@ -168,6 +169,7 @@ const HistoryCardList = ({ groups, examType, expandedExamKey, onToggle, onOpenRe
         const isExpanded = expandedExamKey === group.examKey;
         const hasMultipleAttempts = group.attempts.length > 1;
         const isWriting = isIelts && group.skill === 'WRITING';
+        const isSpeaking = isIelts && group.skill === 'SPEAKING';
 
         return (
           <article key={group.examKey} className={styles.historyCard}>
@@ -184,9 +186,19 @@ const HistoryCardList = ({ groups, examType, expandedExamKey, onToggle, onOpenRe
                     {formatNumber(group.latestAttempt?.totalWordCount)} từ · Task 1 {formatNumber(group.latestAttempt?.task1WordCount)} từ · Task 2 {formatNumber(group.latestAttempt?.task2WordCount)} từ
                   </p>
                 )}
+                {isSpeaking && (
+                  <p>
+                    {formatNumber(group.latestAttempt?.practicedSampleCount)}/{formatNumber(group.latestAttempt?.totalSampleCount)} mẫu đã luyện
+                  </p>
+                )}
               </div>
 
-              <div className={styles.historyMetrics}>
+              {isSpeaking ? (
+                <div className={styles.historyMetrics}>
+                  <div><span>{group.bestAttempt?.assessmentSource === 'BROWSER' ? 'Độ khớp khi đọc cao nhất' : 'Phát âm cao nhất'}</span><strong>{Number(group.bestAttempt?.assessmentSource === 'BROWSER' ? group.bestAttempt?.averageReadingMatchScore : group.bestAttempt?.averagePronunciationScore || 0).toFixed(group.bestAttempt?.assessmentSource === 'BROWSER' ? 2 : 1)}</strong></div>
+                  <div><span>{group.latestAttempt?.assessmentSource === 'BROWSER' ? 'Độ khớp khi đọc trung bình' : 'Phát âm gần nhất'}</span><strong>{Number(group.latestAttempt?.assessmentSource === 'BROWSER' ? group.latestAttempt?.averageReadingMatchScore : group.latestAttempt?.averagePronunciationScore || 0).toFixed(group.latestAttempt?.assessmentSource === 'BROWSER' ? 2 : 1)}</strong></div>
+                </div>
+              ) : <div className={styles.historyMetrics}>
                 <div>
                   <span>{isWriting ? 'Task 1 gần nhất' : isIelts ? 'Band cao nhất' : 'Điểm cao nhất'}</span>
                   <strong>
@@ -207,7 +219,7 @@ const HistoryCardList = ({ groups, examType, expandedExamKey, onToggle, onOpenRe
                         : formatNumber(group.latestAttempt?.totalScore)}
                   </strong>
                 </div>
-              </div>
+              </div>}
 
               {hasMultipleAttempts ? (
                 <button
@@ -242,7 +254,12 @@ const HistoryCardList = ({ groups, examType, expandedExamKey, onToggle, onOpenRe
                       </div>
 
                       <div className={styles.attemptScore}>
-                        {isWriting ? (
+                        {isSpeaking ? (
+                          <>
+                            <span>{formatNumber(attempt.practicedSampleCount)}/{formatNumber(attempt.totalSampleCount)} mẫu đã luyện</span>
+                            <strong>{attempt.assessmentSource === 'BROWSER' ? 'Độ khớp khi đọc trung bình' : 'Phát âm'} {Number(attempt.assessmentSource === 'BROWSER' ? attempt.averageReadingMatchScore : attempt.averagePronunciationScore || 0).toFixed(attempt.assessmentSource === 'BROWSER' ? 2 : 1)}</strong>
+                          </>
+                        ) : isWriting ? (
                           <>
                             <span>
                               Task 1: {formatNumber(attempt.task1WordCount)} từ · {formatSimilarity(attempt.task1SimilarityPercent)}
@@ -460,6 +477,12 @@ const Infor = () => {
         const attempts = [...group.attempts].sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0));
         const bestAttempt = group.skill === 'WRITING'
           ? attempts[0]
+          : group.skill === 'SPEAKING'
+            ? attempts.reduce((best, item) => {
+                const score = item.assessmentSource === 'BROWSER' ? item.averageReadingMatchScore : item.averagePronunciationScore;
+                const bestScore = best?.assessmentSource === 'BROWSER' ? best?.averageReadingMatchScore : best?.averagePronunciationScore;
+                return Number(score || 0) > Number(bestScore || 0) ? item : best;
+              }, attempts[0])
           : attempts.reduce((best, item) => (
               Number(item.bandScore || 0) > Number(best?.bandScore || 0) ? item : best
             ), attempts[0]);

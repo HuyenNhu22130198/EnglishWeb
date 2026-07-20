@@ -1,6 +1,7 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useConfirmDialog } from '../contexts/useConfirmDialog';
 import { authAPI, getStoredToken } from '../services/authService';
 import { toeicAPI } from '../services/toeicService';
 import { getFlashcardStorageKey } from '../utils/flashcardStorage';
@@ -342,6 +343,7 @@ const removeAudioMarkersFromStorage = (examId) => {
 };
 
 const ToeicPractice = () => {
+  const confirm = useConfirmDialog();
   const { user } = useAuth();
   const { testId } = useParams();
   const navigate = useNavigate();
@@ -879,9 +881,11 @@ const ToeicPractice = () => {
       return;
     }
 
-    const confirmSubmit = window.confirm(
-        `Bạn đã chọn ${answeredCount}/${totalQuestions} câu. Bạn có chắc chắn muốn nộp bài không?`
-    );
+    const confirmSubmit = await confirm({
+      title: 'Nộp bài TOEIC?',
+      message: `Bạn đã chọn ${answeredCount}/${totalQuestions} câu. Sau khi nộp, bạn sẽ không thể thay đổi đáp án.`,
+      confirmLabel: 'Nộp bài',
+    });
 
     if (!confirmSubmit) {
       return;

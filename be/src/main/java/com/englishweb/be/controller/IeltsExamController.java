@@ -8,6 +8,7 @@ import com.englishweb.be.service.IeltsExamService;
 import com.englishweb.be.service.IeltsPracticeService;
 import com.englishweb.be.service.IeltsSubmitService;
 import com.englishweb.be.service.IeltsWritingService;
+import com.englishweb.be.service.IeltsSpeakingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -32,6 +33,7 @@ public class IeltsExamController {
     private final IeltsPracticeService ieltsPracticeService;
     private final IeltsSubmitService ieltsSubmitService;
     private final IeltsWritingService ieltsWritingService;
+    private final IeltsSpeakingService ieltsSpeakingService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<IeltsExamListResponse>>> getIeltsExams(
@@ -75,9 +77,11 @@ public class IeltsExamController {
             @PathVariable Integer attemptId,
             Authentication authentication
     ) {
-        Object result = ieltsWritingService.isWritingAttempt(attemptId, authentication.getName())
-                ? ieltsWritingService.getResult(attemptId, authentication.getName())
-                : ieltsSubmitService.getResult(attemptId, authentication.getName());
+        Object result = ieltsSpeakingService.isSpeakingAttempt(attemptId, authentication.getName())
+                ? ieltsSpeakingService.getResult(attemptId, authentication.getName())
+                : ieltsWritingService.isWritingAttempt(attemptId, authentication.getName())
+                    ? ieltsWritingService.getResult(attemptId, authentication.getName())
+                    : ieltsSubmitService.getResult(attemptId, authentication.getName());
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Lấy kết quả bài thi IELTS thành công",

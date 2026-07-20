@@ -21,6 +21,35 @@ public class IeltsPracticeResponse {
     private List<AssetResponse> assets;
     private List<GroupResponse> groups;
     private List<WritingTaskResponse> writingTasks;
+    private List<SpeakingPartResponse> speakingParts;
+
+    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class SpeakingPartResponse {
+        private Integer taskId;
+        private Integer partNo;
+        private String topicTitle;
+        private String instruction;
+        private List<SpeakingItemResponse> items;
+        private List<SpeakingSampleResponse> samples;
+    }
+
+    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class SpeakingItemResponse {
+        private Integer itemId;
+        private String content;
+        private Integer displayOrder;
+    }
+
+    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class SpeakingSampleResponse {
+        private Integer sampleAnswerId;
+        private Integer speakingItemId;
+        private Integer segmentNo;
+        private String segmentTitle;
+        private String answerText;
+        private String voiceLocale;
+        private Integer displayOrder;
+    }
 
     @Data
     @Builder

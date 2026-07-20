@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useConfirmDialog } from '../contexts/useConfirmDialog';
 import { loadIeltsWritingDraft, useIeltsWritingDraft } from '../hooks/useIeltsWritingDraft';
 import { ieltsAPI } from '../services/ieltsService';
 import styles from './IeltsWriting.module.css';
@@ -51,6 +52,7 @@ const uniqByAsset = (assets) => {
 };
 
 const IeltsWriting = () => {
+  const confirm = useConfirmDialog();
   const { examId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -185,8 +187,14 @@ const IeltsWriting = () => {
     setActiveTask(partNo);
   };
 
-  const handleClearDraft = () => {
-    if (!window.confirm('Bạn có chắc muốn xóa toàn bộ bài viết và ghi chú đang lưu?')) return;
+  const handleClearDraft = async () => {
+    const confirmed = await confirm({
+      title: 'Xóa bản nháp?',
+      message: 'Toàn bộ bài viết và ghi chú đang lưu sẽ bị xóa. Thao tác này không thể hoàn tác.',
+      confirmLabel: 'Xóa bản nháp',
+      tone: 'danger',
+    });
+    if (!confirmed) return;
 
     clearDraft();
     setAnswers({ 1: '', 2: '' });
@@ -205,9 +213,16 @@ const IeltsWriting = () => {
   };
 
   const handleSubmit = async () => {
-    if (submitting || !window.confirm('Bạn có chắc chắn muốn nộp bài IELTS Writing?')) {
+    if (submitting) {
       return;
     }
+
+    const confirmed = await confirm({
+      title: 'Nộp bài IELTS Writing?',
+      message: 'Bài viết của bạn sẽ được gửi để chấm điểm và không thể chỉnh sửa sau khi nộp.',
+      confirmLabel: 'Nộp bài',
+    });
+    if (!confirmed) return;
 
     try {
       setSubmitting(true);

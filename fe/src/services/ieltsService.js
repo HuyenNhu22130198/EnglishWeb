@@ -135,4 +135,41 @@ export const ieltsAPI = {
 
     return data;
   },
+
+  async getSpeakingToken() {
+    return this.speakingRequest('/speech-token');
+  },
+
+  async startSpeakingAttempt(examId) {
+    return this.speakingRequest(`/exams/${examId}/attempts`, { method: 'POST' });
+  },
+
+  async getSpeakingAttempt(examId, attemptId) {
+    return this.speakingRequest(`/exams/${examId}/attempts/${attemptId}`);
+  },
+
+  async saveSpeakingAnswer(examId, payload) {
+    return this.speakingRequest(`/exams/${examId}/answers`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async completeSpeakingAttempt(examId, attemptId) {
+    return this.speakingRequest(`/exams/${examId}/attempts/${attemptId}/complete`, { method: 'POST' });
+  },
+
+  async speakingRequest(path, options = {}) {
+    const response = await fetch(`${API_BASE_URL}/ielts/speaking${path}`, {
+      ...options,
+      headers: {
+        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+        ...getAuthHeaders(),
+        ...(options.headers || {}),
+      },
+    });
+    const data = await parseApiResponse(response);
+    if (!response.ok) throw createApiError(response, data, 'Không thể xử lý bài luyện Speaking');
+    return data;
+  },
 };

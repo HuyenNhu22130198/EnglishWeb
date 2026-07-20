@@ -30,4 +30,11 @@ public class IeltsAttemptHistoryResponse {
     private Integer task2WordCount;
     private BigDecimal task1SimilarityPercent;
     private BigDecimal task2SimilarityPercent;
+    private BigDecimal averagePronunciationScore;
+    private BigDecimal bestPronunciationScore;
+    private BigDecimal averageReadingMatchScore;
+    private BigDecimal bestReadingMatchScore;
+    private String assessmentSource;
+    private Integer practicedSampleCount;
+    private Integer totalSampleCount;
 }

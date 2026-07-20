@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useConfirmDialog } from '../../contexts/useConfirmDialog';
 import AdminModal from '../components/AdminModal';
 import AdminPageHeader from '../components/AdminPageHeader';
 import { FileTextIcon, RefreshIcon } from '../components/AdminIcons';
@@ -15,6 +16,7 @@ const emptyForm = {
 };
 
 export default function AdminBanners() {
+  const confirm = useConfirmDialog();
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -143,7 +145,13 @@ export default function AdminBanners() {
   };
 
   const deleteBanner = async (banner) => {
-    if (!window.confirm(`Xóa banner "${banner.title || `#${banner.id}`}"?`)) return;
+    const confirmed = await confirm({
+      title: 'Xóa banner?',
+      message: `Banner "${banner.title || `#${banner.id}`}" sẽ bị xóa khỏi hệ thống.`,
+      confirmLabel: 'Xóa banner',
+      tone: 'danger',
+    });
+    if (!confirmed) return;
 
     try {
       setSaving(true);
