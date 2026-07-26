@@ -27,6 +27,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<String>> handleRuntimeException(RuntimeException e) {
+        log.warn("Request processing failed", e);
         String message = e.getMessage() != null && !e.getMessage().isBlank()
                 ? e.getMessage()
                 : "Có lỗi xảy ra khi xử lý yêu cầu.";

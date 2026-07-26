@@ -67,6 +67,9 @@ public class IeltsWritingService {
         IeltsExam exam = ieltsExamRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đề IELTS!"));
 
+        if ("hidden".equalsIgnoreCase(exam.getStatus())) {
+            throw new RuntimeException("Đề IELTS này hiện không được công khai.");
+        }
         List<IeltsWritingTask> writingTasks = writingTaskRepository.findByExam_IdOrderByTaskNoAscDisplayOrderAscIdAsc(examId);
         Map<Integer, IeltsWritingTask> tasksById = writingTasks.stream()
                 .collect(Collectors.toMap(IeltsWritingTask::getId, Function.identity(), (left, right) -> left));

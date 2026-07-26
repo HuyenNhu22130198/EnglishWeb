@@ -1,6 +1,6 @@
 .footer {
-  background-color: #1b1c1c;
-  color: rgba(255,255,255,0.8);
+  background-color: var(--surface);
+  color: var(--on-surface-variant);
   padding: 80px 0 40px;
 }
 
@@ -40,13 +40,13 @@
 }
 
 .footerTitle {
-  color: white;
+  color: var(--on-surface);
   font-size: 20px;
   font-weight: 700;
 }
 
 .footerLinks h4 {
-  color: white;
+  color: var(--on-surface);
   margin-bottom: 20px;
   font-weight: 600;
 }
@@ -63,8 +63,8 @@
 .copyright {
   margin-top: 80px;
   padding-top: 32px;
-  border-top: 1px solid rgba(255,255,255,0.1);
+  border-top: 1px solid var(--outline);
   text-align: center;
   font-size: 14px;
-  color: rgba(255,255,255,0.6);
+  color: var(--on-surface-variant);
 }

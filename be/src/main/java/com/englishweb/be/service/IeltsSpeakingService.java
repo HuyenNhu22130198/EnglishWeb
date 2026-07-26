@@ -35,6 +35,9 @@ public class IeltsSpeakingService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
         IeltsExam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đề IELTS."));
+        if ("hidden".equalsIgnoreCase(exam.getStatus())) {
+            throw new RuntimeException("Đề IELTS này hiện không được công khai.");
+        }
         if (taskRepository.findByExam_IdOrderByPartNoAscDisplayOrderAscIdAsc(examId).isEmpty()) {
             throw new RuntimeException("Đề này chưa có nội dung IELTS Speaking.");
         }

@@ -59,6 +59,9 @@ public class ToeicSubmitService {
         ToeicExam exam = toeicExamRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đề TOEIC!"));
 
+        if ("hidden".equalsIgnoreCase(exam.getStatus())) {
+            throw new RuntimeException("Đề TOEIC này hiện không được công khai.");
+        }
         Set<Integer> selectedParts = normalizeParts(parts);
 
         List<ToeicQuestion> questions = toeicQuestionRepository.findByExam_IdOrderByQuestionNoAsc(examId)

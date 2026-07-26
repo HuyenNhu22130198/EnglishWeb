@@ -71,6 +71,9 @@ public class IeltsSubmitService {
         IeltsExam exam = ieltsExamRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đề IELTS!"));
 
+        if ("hidden".equalsIgnoreCase(exam.getStatus())) {
+            throw new RuntimeException("Đề IELTS này hiện không được công khai.");
+        }
         String normalizedSkill = normalizeSkill(skill);
 
         List<IeltsQuestion> questions = ieltsQuestionRepository.findByExamIdAndSkill(examId, normalizedSkill);

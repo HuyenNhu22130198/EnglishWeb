@@ -31,6 +31,7 @@ public class IeltsExamService {
                 : ieltsExamRepository.searchByKeyword(searchValue);
 
         return exams.stream()
+                .filter(exam -> !"hidden".equalsIgnoreCase(exam.getStatus()))
                 .map(this::toExamListResponse)
                 .toList();
     }

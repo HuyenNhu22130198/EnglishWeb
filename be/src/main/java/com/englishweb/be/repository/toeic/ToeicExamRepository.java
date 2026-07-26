@@ -9,6 +9,8 @@ import java.util.List;
 
 public interface ToeicExamRepository extends JpaRepository<ToeicExam, Integer> {
 
+    boolean existsByExamCodeIgnoreCaseAndIdNot(String examCode, Integer id);
+
     List<ToeicExam> findAllByOrderByIdAsc();
 
     @Query("""

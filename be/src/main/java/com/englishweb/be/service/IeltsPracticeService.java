@@ -45,6 +45,10 @@ public class IeltsPracticeService {
         IeltsExam exam = ieltsExamRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đề IELTS!"));
 
+        if ("hidden".equalsIgnoreCase(exam.getStatus())) {
+            throw new RuntimeException("Đề IELTS này hiện không được công khai.");
+        }
+
         String normalizedSkill = normalizeSkill(skill);
 
         List<IeltsMediaAsset> assets = ieltsMediaAssetRepository
