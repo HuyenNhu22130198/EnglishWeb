@@ -9,6 +9,8 @@ import java.util.List;
 
 public interface IeltsExamRepository extends JpaRepository<IeltsExam, Integer> {
 
+    boolean existsByExamCodeIgnoreCaseAndIdNot(String examCode, Integer id);
+
     List<IeltsExam> findAllByOrderByIdAsc();
 
     @Query("""

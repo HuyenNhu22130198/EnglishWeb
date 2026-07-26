@@ -27,10 +27,11 @@ import Forum from './pages/Forum';
 
 import AdminRoute from './admin/AdminRoute';
 import AdminLayout from './admin/AdminLayout';
-import AdminEmptyPage from './admin/AdminEmptyPage';
 import AdminDictionaryPage from './admin/dictionary/AdminDictionaryPage';
 import AdminUsers from "./admin/AdminUsers";
 import AdminBanners from "./admin/banners/AdminBanners";
+import AdminExams from "./admin/exams/AdminExams";
+import AdminExamDetail from "./admin/exams/AdminExamDetail";
 
 
 function App() {
@@ -72,7 +73,8 @@ function App() {
             <Route path="users" element={<AdminUsers />} />
             <Route path="dictionary" element={<AdminDictionaryPage />} />
             <Route path="banners" element={<AdminBanners />} />
-            <Route path="toeic-exams" element={<AdminEmptyPage title="Quản lý đề thi" />} />
+            <Route path="toeic-exams" element={<AdminExams />} />
+            <Route path="exams/:type/:id" element={<AdminExamDetail />} />
           </Route>
 
           <Route path="/" element={<Home />} />

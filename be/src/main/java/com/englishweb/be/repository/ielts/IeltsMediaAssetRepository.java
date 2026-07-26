@@ -7,5 +7,7 @@ import java.util.List;
 
 public interface IeltsMediaAssetRepository extends JpaRepository<IeltsMediaAsset, Integer> {
 
+    List<IeltsMediaAsset> findByExam_IdOrderBySkillAscPartNoAscDisplayOrderAscIdAsc(Integer examId);
+
     List<IeltsMediaAsset> findByExam_IdAndSkillIgnoreCaseOrderByPartNoAscDisplayOrderAscIdAsc(Integer examId, String skill);
 }
