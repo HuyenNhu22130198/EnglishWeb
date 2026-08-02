@@ -159,6 +159,7 @@ const IeltsExamDetail = () => {
 
                 <span>{questionCount === null ? 'Đang cập nhật' : `${questionCount} câu hỏi`}</span>
 
+                <div className={styles.skillActions}>
                 <button
                   type="button"
                   onClick={() => startSkill(skill)}
@@ -166,6 +167,17 @@ const IeltsExamDetail = () => {
                 >
                   Làm {skill.title}
                 </button>
+                {skill.key === 'SPEAKING' ? (
+                  <button
+                    type="button"
+                    className={styles.freeSpeakingButton}
+                    onClick={() => navigate(`/practice/ielts/${examId}/speaking/free`)}
+                    disabled={!isAvailable}
+                  >
+                    Trả lời tự do (AI chấm)
+                  </button>
+                ) : null}
+                </div>
               </article>
             );
           })}

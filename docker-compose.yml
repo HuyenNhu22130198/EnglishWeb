@@ -1,0 +1,12 @@
+services:
+  whisper:
+    image: ghcr.io/ggml-org/whisper.cpp:main
+    container_name: englishweb-whisper
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./whisper-models:/app/models
+    entrypoint: ["bash", "-c"]
+    command:
+      - "test -f /app/models/ggml-small.en.bin || curl -L -o /app/models/ggml-small.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin; whisper-server -m /app/models/ggml-small.en.bin --host 0.0.0.0 --port 8080 --convert -l en"

@@ -4,6 +4,7 @@ import com.englishweb.be.dto.ApiResponse;
 import com.englishweb.be.dto.ielts.IeltsExamListResponse;
 import com.englishweb.be.dto.ielts.IeltsPracticeResponse;
 import com.englishweb.be.dto.ielts.IeltsSubmitRequest;
+import com.englishweb.be.dto.ielts.IeltsWritingGradeResponse;
 import com.englishweb.be.service.IeltsExamService;
 import com.englishweb.be.service.IeltsPracticeService;
 import com.englishweb.be.service.IeltsSubmitService;
@@ -68,6 +69,19 @@ public class IeltsExamController {
                 ApiResponse.success(
                         "Nộp bài IELTS thành công",
                         result
+                )
+        );
+    }
+
+    @PostMapping("/writing/answers/{userAnswerId}/grade")
+    public ResponseEntity<ApiResponse<IeltsWritingGradeResponse>> gradeWritingAnswer(
+            @PathVariable Integer userAnswerId,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Chấm bài Writing bằng AI thành công",
+                        ieltsWritingService.gradeAnswer(userAnswerId, authentication.getName())
                 )
         );
     }

@@ -1,9 +1,12 @@
 package com.englishweb.be.service;
 
+import com.englishweb.be.dto.ielts.GeminiErrorItem;
 import com.englishweb.be.dto.ielts.IeltsAttemptHistoryResponse;
 import com.englishweb.be.dto.ielts.IeltsSubmitRequest;
+import com.englishweb.be.dto.ielts.IeltsWritingGradeResponse;
 import com.englishweb.be.dto.ielts.IeltsWritingResultResponse;
 import com.englishweb.be.dto.ielts.IeltsWritingSubmitResponse;
+import com.englishweb.be.dto.ielts.IeltsWritingTaskRequirement;
 import com.englishweb.be.entity.User;
 import com.englishweb.be.entity.ielts.IeltsAttempt;
 import com.englishweb.be.entity.ielts.IeltsExam;
@@ -23,10 +26,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +57,8 @@ public class IeltsWritingService {
     private final IeltsWritingSampleAnswerRepository sampleAnswerRepository;
     private final IeltsWritingUserAnswerRepository userAnswerRepository;
     private final IeltsWritingSimilarityService similarityService;
+    private final GeminiWritingGradingService writingGradingService;
+    private final JsonMapper jsonMapper = JsonMapper.builder().build();
 
     @Transactional
     public IeltsWritingSubmitResponse submit(Integer examId, String userEmail, IeltsSubmitRequest request) {
@@ -172,6 +180,39 @@ public class IeltsWritingService {
                 .build();
     }
 
+    @Transactional
+    public IeltsWritingGradeResponse gradeAnswer(Integer userAnswerId, String userEmail) {
+        IeltsWritingUserAnswer answer = userAnswerRepository.findById(userAnswerId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bài Writing đã nộp."));
+        if (!Objects.equals(answer.getAttempt().getUser().getEmail(), userEmail)) {
+            throw new RuntimeException("Bạn không có quyền chấm bài này.");
+        }
+        if (answer.getAnswerText() == null || answer.getAnswerText().isBlank()) {
+            throw new RuntimeException("Không thể chấm bài trống bằng AI.");
+        }
+
+        GeminiWritingGradingService.GradingResult grade =
+                writingGradingService.grade(answer.getTask().getPromptText(), answer.getAnswerText());
+        answer.setGeminiStatus(grade.status());
+        answer.setGeminiError(grade.error());
+        answer.setTopicRelevance(grade.topicRelevance());
+        answer.setAnswersQuestion(grade.answersQuestion());
+        answer.setTaskResponsePercent(grade.taskResponsePercent());
+        answer.setCoherencePercent(grade.coherencePercent());
+        answer.setVocabularyPercent(grade.vocabularyPercent());
+        answer.setGrammarPercent(grade.grammarPercent());
+        answer.setOverallQualityPercent(grade.overallQualityPercent());
+        answer.setGeminiSummary(grade.summary());
+        answer.setTaskRequirementsJson(writeRequirements(grade.taskRequirements()));
+        answer.setStrengthsJson(writeStrings(grade.strengths()));
+        answer.setErrorsJson(writeErrors(grade.errors()));
+        answer.setCorrectedAnswerText(grade.correctedAnswer());
+        answer.setGeminiRawJson(grade.rawJson());
+        answer.setGradedAt(LocalDateTime.now());
+        answer = userAnswerRepository.save(answer);
+        return toGradeResponse(answer);
+    }
+
     @Transactional(readOnly = true)
     public List<IeltsAttemptHistoryResponse> getHistory(String userEmail) {
         return ieltsAttemptRepository.findSubmittedWritingAttemptsByUserEmail(userEmail).stream()
@@ -242,7 +283,121 @@ public class IeltsWritingService {
                 .similarityPercent(answer.getSimilarityPercent() == null
                         ? BigDecimal.ZERO.setScale(2)
                         : answer.getSimilarityPercent())
+                .userAnswerId(answer.getId())
+                .geminiStatus(answer.getGeminiStatus())
+                .geminiError(answer.getGeminiError())
+                .topicRelevance(answer.getTopicRelevance())
+                .answersQuestion(answer.getAnswersQuestion())
+                .taskResponsePercent(answer.getTaskResponsePercent())
+                .coherencePercent(answer.getCoherencePercent())
+                .vocabularyPercent(answer.getVocabularyPercent())
+                .grammarPercent(answer.getGrammarPercent())
+                .overallQualityPercent(answer.getOverallQualityPercent())
+                .geminiSummary(answer.getGeminiSummary())
+                .taskRequirements(readRequirements(answer.getTaskRequirementsJson()))
+                .strengths(readStrings(answer.getStrengthsJson()))
+                .errors(readErrors(answer.getErrorsJson()))
+                .correctedAnswerText(answer.getCorrectedAnswerText())
                 .build();
+    }
+
+    private IeltsWritingGradeResponse toGradeResponse(IeltsWritingUserAnswer answer) {
+        return IeltsWritingGradeResponse.builder()
+                .userAnswerId(answer.getId())
+                .geminiStatus(answer.getGeminiStatus())
+                .geminiError(answer.getGeminiError())
+                .topicRelevance(answer.getTopicRelevance())
+                .answersQuestion(answer.getAnswersQuestion())
+                .taskResponsePercent(answer.getTaskResponsePercent())
+                .coherencePercent(answer.getCoherencePercent())
+                .vocabularyPercent(answer.getVocabularyPercent())
+                .grammarPercent(answer.getGrammarPercent())
+                .overallQualityPercent(answer.getOverallQualityPercent())
+                .summary(answer.getGeminiSummary())
+                .taskRequirements(readRequirements(answer.getTaskRequirementsJson()))
+                .strengths(readStrings(answer.getStrengthsJson()))
+                .errors(readErrors(answer.getErrorsJson()))
+                .correctedAnswerText(answer.getCorrectedAnswerText())
+                .build();
+    }
+
+    private String writeErrors(List<GeminiErrorItem> errors) {
+        try {
+            return jsonMapper.writeValueAsString(errors == null ? List.of() : errors);
+        } catch (Exception exception) {
+            return "[]";
+        }
+    }
+
+    private List<GeminiErrorItem> readErrors(String json) {
+        List<GeminiErrorItem> errors = new ArrayList<>();
+        if (json == null || json.isBlank()) return errors;
+        try {
+            JsonNode root = jsonMapper.readTree(json);
+            if (!root.isArray()) return errors;
+            for (JsonNode item : root) {
+                errors.add(GeminiErrorItem.builder()
+                        .type(item.path("type").asText(""))
+                        .original(item.path("original").asText(""))
+                        .suggestion(item.path("suggestion").asText(""))
+                        .explanation(item.path("explanation").asText(""))
+                        .build());
+            }
+        } catch (Exception ignored) {
+            // Keep the API usable if stored diagnostic JSON is malformed.
+        }
+        return errors;
+    }
+
+    private String writeRequirements(List<IeltsWritingTaskRequirement> requirements) {
+        try {
+            return jsonMapper.writeValueAsString(requirements == null ? List.of() : requirements);
+        } catch (Exception exception) {
+            return "[]";
+        }
+    }
+
+    private List<IeltsWritingTaskRequirement> readRequirements(String json) {
+        List<IeltsWritingTaskRequirement> requirements = new ArrayList<>();
+        if (json == null || json.isBlank()) return requirements;
+        try {
+            JsonNode root = jsonMapper.readTree(json);
+            if (!root.isArray()) return requirements;
+            for (JsonNode item : root) {
+                requirements.add(IeltsWritingTaskRequirement.builder()
+                        .requirement(item.path("requirement").asText(""))
+                        .addressed(item.path("addressed").asBoolean(false))
+                        .candidateEvidence(item.path("candidateEvidence").asText(""))
+                        .explanation(item.path("explanation").asText(""))
+                        .build());
+            }
+        } catch (Exception ignored) {
+            // Keep the API usable if stored diagnostic JSON is malformed.
+        }
+        return requirements;
+    }
+
+    private String writeStrings(List<String> values) {
+        try {
+            return jsonMapper.writeValueAsString(values == null ? List.of() : values);
+        } catch (Exception exception) {
+            return "[]";
+        }
+    }
+
+    private List<String> readStrings(String json) {
+        List<String> values = new ArrayList<>();
+        if (json == null || json.isBlank()) return values;
+        try {
+            JsonNode root = jsonMapper.readTree(json);
+            if (!root.isArray()) return values;
+            for (JsonNode item : root) {
+                values.add(item.asText(""));
+            }
+        } catch (Exception ignored) {
+            // Keep the API usable if stored diagnostic JSON is malformed.
+        }
+        return values;
     }
 
     private int countWords(String text) {
