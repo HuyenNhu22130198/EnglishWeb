@@ -28,9 +28,9 @@ const IELTS_SKILLS = [
   {
     key: 'SPEAKING',
     title: 'Speaking',
-    description: 'Luyện nói với các chủ đề và câu hỏi mô phỏng IELTS Speaking.',
+    description: 'Luyện nói với các chủ đề và câu hỏi mô phỏng IELTS Speaking, AI chấm điểm.',
     questionField: null,
-    path: (examId) => `/practice/ielts/${examId}/speaking`,
+    path: (examId) => `/practice/ielts/${examId}/speaking/free`,
   },
 ];
 
@@ -167,16 +167,6 @@ const IeltsExamDetail = () => {
                 >
                   Làm {skill.title}
                 </button>
-                {skill.key === 'SPEAKING' ? (
-                  <button
-                    type="button"
-                    className={styles.freeSpeakingButton}
-                    onClick={() => navigate(`/practice/ielts/${examId}/speaking/free`)}
-                    disabled={!isAvailable}
-                  >
-                    Trả lời tự do (AI chấm)
-                  </button>
-                ) : null}
                 </div>
               </article>
             );

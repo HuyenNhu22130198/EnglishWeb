@@ -13,7 +13,6 @@ import IeltsExams from './pages/IeltsExams';
 import IeltsExamDetail from './pages/IeltsExamDetail';
 import IeltsPractice from './pages/IeltsPractice';
 import IeltsWriting from './pages/IeltsWriting';
-import IeltsSpeaking from './pages/IeltsSpeaking';
 import IeltsSpeakingFree from './pages/IeltsSpeakingFree';
 import IeltsResult from './pages/IeltsResult';
 import Flashcard from './pages/Flashcard';
@@ -102,14 +101,6 @@ function App() {
             element={
               <ProtectedRoute>
                 <IeltsWriting />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/practice/ielts/:examId/speaking"
-            element={
-              <ProtectedRoute>
-                <IeltsSpeaking />
               </ProtectedRoute>
             }
           />

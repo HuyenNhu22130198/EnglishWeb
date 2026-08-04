@@ -1,6 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ieltsAPI } from '../services/ieltsService';
 import styles from './IeltsSpeakingResult.module.css';
 
 const parseDetail = (json) => { try { return typeof json === 'string' ? JSON.parse(json) : (json || {}); } catch { return {}; } };
@@ -29,15 +28,14 @@ const AzureAnswer = ({ answer, detail }) => {
 };
 
 const IeltsSpeakingResult = ({ result }) => {
-  const navigate = useNavigate(); const [starting, setStarting] = useState(false);
+  const navigate = useNavigate();
   const grouped = useMemo(() => (result.answers || []).reduce((groups, answer) => { groups[answer.partNo] = [...(groups[answer.partNo] || []), answer]; return groups; }, {}), [result.answers]);
-  const retry = async () => { try { setStarting(true); const response = await ieltsAPI.startSpeakingAttempt(result.examId); const identity = JSON.parse(window.localStorage.getItem('user') || '{}');
-    window.localStorage.setItem(`ielts-speaking-attempt:${identity.id || identity.email || 'current-user'}:${result.examId}`, String(response.data.attemptId)); navigate(`/practice/ielts/${result.examId}/speaking`); } finally { setStarting(false); } };
+  const retry = () => navigate(`/practice/ielts/${result.examId}/speaking/free`);
   const browserOnly = result.assessmentSource === 'BROWSER'; const azureOnly = result.assessmentSource === 'AZURE';
   const summary = [...(!azureOnly && result.averageReadingMatchScore != null ? [['Độ khớp khi đọc trung bình', result.averageReadingMatchScore]] : []),
     ...(!browserOnly ? [['Phát âm trung bình', result.averagePronunciationScore], ['Accuracy', result.averageAccuracyScore], ['Fluency', result.averageFluencyScore], ['Completeness', result.averageCompletenessScore]].filter(([, value]) => value != null) : [])];
   return <main className={styles.page}><header className={styles.hero}><span>IELTS SPEAKING RESULT</span><h1>{result.examName}</h1><p>{result.practicedCount}/{result.totalSamples} mẫu đã luyện</p>
-    <button disabled={starting} onClick={retry}>{starting ? 'Đang tạo lượt mới...' : 'Luyện lại đề này'}</button></header>
+    <button onClick={retry}>Luyện lại đề này</button></header>
     <section className={styles.summary}>{summary.map(([label, value]) => <div key={label}><span>{label}</span><strong>{Number(value ?? 0).toFixed(label.includes('Độ khớp') ? 2 : 1)}</strong></div>)}</section>
     {Object.entries(grouped).map(([part, answers]) => <section className={styles.part} key={part}><h2>Part {part}</h2>{answers.map((answer) => { const detail = parseDetail(answer.resultJson); const browser = detail.assessmentSource === 'BROWSER';
       return <article className={styles.answer} key={answer.sampleAnswerId}><div className={styles.answerHeading}><div><h3>{answer.question}</h3>{answer.segmentTitle && Number(part) === 2 ? <h4>{answer.segmentTitle}</h4> : null}</div><b className={browser ? styles.browserBadge : styles.azureBadge}>{browser ? 'So khớp bằng trình duyệt' : 'Đánh giá Azure'}</b></div>
