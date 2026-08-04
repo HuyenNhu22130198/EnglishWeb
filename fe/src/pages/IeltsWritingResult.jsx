@@ -5,11 +5,6 @@ import { removeIeltsWritingDraft } from '../hooks/useIeltsWritingDraft';
 import { ieltsAPI } from '../services/ieltsService';
 import styles from './IeltsWriting.module.css';
 
-const formatPercent = (value) => {
-  const number = Number(value);
-  return Number.isFinite(number) ? number.toFixed(2) : '0.00';
-};
-
 const formatDuration = (totalSeconds) => {
   const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
   const minutes = Math.floor(safeSeconds / 60);
@@ -137,15 +132,6 @@ const IeltsWritingResult = ({ result }) => {
                   <div className={styles.noSample}>Chưa có bài mẫu để so sánh</div>
                 )}
               </article>
-            </div>
-
-            <div className={styles.similaritySummary}>
-              <strong>Số từ trùng: {task.matchedWordCount || 0}</strong>
-              <strong>Tỷ lệ từ trùng với bài mẫu: {formatPercent(task.similarityPercent)}%</strong>
-              <p>
-                Tỷ lệ này chỉ phản ánh mức độ trùng lặp từ vựng với bài mẫu, không phản ánh band IELTS hoặc chất lượng
-                tổng thể của bài viết.
-              </p>
             </div>
 
             <AiGradingPanel

@@ -28,8 +28,8 @@ public class IeltsAttemptHistoryResponse {
     private Integer totalWordCount;
     private Integer task1WordCount;
     private Integer task2WordCount;
-    private BigDecimal task1SimilarityPercent;
-    private BigDecimal task2SimilarityPercent;
+    private Integer task1OverallQualityPercent;
+    private Integer task2OverallQualityPercent;
     private BigDecimal averagePronunciationScore;
     private BigDecimal bestPronunciationScore;
     private BigDecimal averageReadingMatchScore;

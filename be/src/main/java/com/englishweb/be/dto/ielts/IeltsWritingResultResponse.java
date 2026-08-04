@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -39,8 +38,6 @@ public class IeltsWritingResultResponse {
         private Integer userWordCount;
         private String sampleAnswer;
         private Integer sampleAnswerId;
-        private Integer matchedWordCount;
-        private BigDecimal similarityPercent;
         private Integer userAnswerId;
         private String geminiStatus;
         private String geminiError;

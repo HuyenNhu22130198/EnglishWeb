@@ -29,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -56,7 +55,6 @@ public class IeltsWritingService {
     private final IeltsWritingTaskRepository writingTaskRepository;
     private final IeltsWritingSampleAnswerRepository sampleAnswerRepository;
     private final IeltsWritingUserAnswerRepository userAnswerRepository;
-    private final IeltsWritingSimilarityService similarityService;
     private final GeminiWritingGradingService writingGradingService;
     private final JsonMapper jsonMapper = JsonMapper.builder().build();
 
@@ -126,9 +124,9 @@ public class IeltsWritingService {
                     .findFirstByTask_IdAndDisplayOrderOrderByIdAsc(task.getId(), 1)
                     .or(() -> sampleAnswerRepository.findFirstByTask_IdOrderByDisplayOrderAscIdAsc(task.getId()))
                     .orElse(null);
-            IeltsWritingSimilarityService.SimilarityResult similarity = sample == null
-                    ? new IeltsWritingSimilarityService.SimilarityResult(0, BigDecimal.ZERO.setScale(2))
-                    : similarityService.compare(answerText, sample.getAnswerText());
+
+            GeminiWritingGradingService.GradingResult grade =
+                    writingGradingService.grade(task.getPromptText(), answerText);
 
             userAnswerRepository.save(IeltsWritingUserAnswer.builder()
                     .attempt(attempt)
@@ -136,9 +134,23 @@ public class IeltsWritingService {
                     .sampleAnswer(sample)
                     .answerText(answerText)
                     .wordCount(countWords(answerText))
-                    .matchedWordCount(similarity.matchedWordCount())
-                    .similarityPercent(similarity.similarityPercent())
                     .submittedAt(now)
+                    .geminiStatus(grade.status())
+                    .geminiError(grade.error())
+                    .topicRelevance(grade.topicRelevance())
+                    .answersQuestion(grade.answersQuestion())
+                    .taskResponsePercent(grade.taskResponsePercent())
+                    .coherencePercent(grade.coherencePercent())
+                    .vocabularyPercent(grade.vocabularyPercent())
+                    .grammarPercent(grade.grammarPercent())
+                    .overallQualityPercent(grade.overallQualityPercent())
+                    .geminiSummary(grade.summary())
+                    .taskRequirementsJson(writeRequirements(grade.taskRequirements()))
+                    .strengthsJson(writeStrings(grade.strengths()))
+                    .errorsJson(writeErrors(grade.errors()))
+                    .correctedAnswerText(grade.correctedAnswer())
+                    .geminiRawJson(grade.rawJson())
+                    .gradedAt(LocalDateTime.now())
                     .build());
         }
 
@@ -236,8 +248,8 @@ public class IeltsWritingService {
                             .totalWordCount(task1Words + task2Words)
                             .task1WordCount(task1Words)
                             .task2WordCount(task2Words)
-                            .task1SimilarityPercent(percentOrZero(task1))
-                            .task2SimilarityPercent(percentOrZero(task2))
+                            .task1OverallQualityPercent(task1 == null ? null : task1.getOverallQualityPercent())
+                            .task2OverallQualityPercent(task2 == null ? null : task2.getOverallQualityPercent())
                             .build();
                 })
                 .toList();
@@ -279,10 +291,6 @@ public class IeltsWritingService {
                 .userWordCount(valueOrZero(answer.getWordCount()))
                 .sampleAnswer(sample == null ? null : sample.getAnswerText())
                 .sampleAnswerId(sample == null ? null : sample.getId())
-                .matchedWordCount(valueOrZero(answer.getMatchedWordCount()))
-                .similarityPercent(answer.getSimilarityPercent() == null
-                        ? BigDecimal.ZERO.setScale(2)
-                        : answer.getSimilarityPercent())
                 .userAnswerId(answer.getId())
                 .geminiStatus(answer.getGeminiStatus())
                 .geminiError(answer.getGeminiError())
@@ -418,11 +426,5 @@ public class IeltsWritingService {
 
     private int valueOrZero(Integer value) {
         return value == null ? 0 : value;
-    }
-
-    private BigDecimal percentOrZero(IeltsWritingUserAnswer answer) {
-        return answer == null || answer.getSimilarityPercent() == null
-                ? BigDecimal.ZERO.setScale(2)
-                : answer.getSimilarityPercent();
     }
 }

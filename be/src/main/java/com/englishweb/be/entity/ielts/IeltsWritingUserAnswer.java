@@ -14,7 +14,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -46,12 +45,6 @@ public class IeltsWritingUserAnswer {
 
     @Column(name = "word_count", nullable = false)
     private Integer wordCount;
-
-    @Column(name = "matched_word_count", nullable = false)
-    private Integer matchedWordCount;
-
-    @Column(name = "similarity_percent", precision = 5, scale = 2, nullable = false)
-    private BigDecimal similarityPercent;
 
     @Column(name = "submitted_at")
     private LocalDateTime submittedAt;

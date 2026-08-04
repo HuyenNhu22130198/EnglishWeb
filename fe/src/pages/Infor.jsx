@@ -76,9 +76,10 @@ const formatBand = (value) => {
   return Number.isFinite(band) ? band.toFixed(1) : '0.0';
 };
 
-const formatSimilarity = (value) => {
+const formatAiScore = (value) => {
+  if (value === null || value === undefined) return 'Chưa chấm AI';
   const percent = Number(value);
-  return Number.isFinite(percent) ? `${percent.toFixed(2)}%` : '0.00%';
+  return Number.isFinite(percent) ? `${percent}% (AI)` : 'Chưa chấm AI';
 };
 
 const formatDuration = (seconds) => {
@@ -203,7 +204,7 @@ const HistoryCardList = ({ groups, examType, expandedExamKey, onToggle, onOpenRe
                   <span>{isWriting ? 'Task 1 gần nhất' : isIelts ? 'Band cao nhất' : 'Điểm cao nhất'}</span>
                   <strong>
                     {isWriting
-                      ? formatSimilarity(group.latestAttempt?.task1SimilarityPercent)
+                      ? formatAiScore(group.latestAttempt?.task1OverallQualityPercent)
                       : isIelts
                         ? formatBand(group.bestAttempt?.bandScore)
                         : formatNumber(group.bestAttempt?.totalScore)}
@@ -213,7 +214,7 @@ const HistoryCardList = ({ groups, examType, expandedExamKey, onToggle, onOpenRe
                   <span>{isWriting ? 'Task 2 gần nhất' : isIelts ? 'Band gần nhất' : 'Lần gần nhất'}</span>
                   <strong>
                     {isWriting
-                      ? formatSimilarity(group.latestAttempt?.task2SimilarityPercent)
+                      ? formatAiScore(group.latestAttempt?.task2OverallQualityPercent)
                       : isIelts
                         ? formatBand(group.latestAttempt?.bandScore)
                         : formatNumber(group.latestAttempt?.totalScore)}
@@ -262,10 +263,10 @@ const HistoryCardList = ({ groups, examType, expandedExamKey, onToggle, onOpenRe
                         ) : isWriting ? (
                           <>
                             <span>
-                              Task 1: {formatNumber(attempt.task1WordCount)} từ · {formatSimilarity(attempt.task1SimilarityPercent)}
+                              Task 1: {formatNumber(attempt.task1WordCount)} từ · {formatAiScore(attempt.task1OverallQualityPercent)}
                             </span>
                             <strong>
-                              Task 2: {formatNumber(attempt.task2WordCount)} từ · {formatSimilarity(attempt.task2SimilarityPercent)}
+                              Task 2: {formatNumber(attempt.task2WordCount)} từ · {formatAiScore(attempt.task2OverallQualityPercent)}
                             </strong>
                             <span>Tổng: {formatNumber(attempt.totalWordCount)} từ</span>
                           </>
