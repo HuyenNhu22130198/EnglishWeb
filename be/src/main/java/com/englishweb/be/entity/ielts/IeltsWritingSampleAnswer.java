@@ -33,6 +33,9 @@ public class IeltsWritingSampleAnswer {
     @Column(name = "answer_text", columnDefinition = "TEXT", nullable = false)
     private String answerText;
 
+    @Column(name = "source_type", nullable = false)
+    private String sourceType;
+
     @Column(name = "display_order")
     private Integer displayOrder;
 }
