@@ -325,6 +325,7 @@
 
 .googleButton {
   width: 100%;
+  box-sizing: border-box;
   min-height: 54px;
   padding: 0 20px;
   background: #ffffff;
@@ -344,6 +345,83 @@
 .googleButton:hover {
   border-color: #0e3377;
   background-color: #f8fbff;
+}
+
+.socialLogin {
+  margin-top: 24px;
+}
+
+.googleButton > div {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.googleButton iframe {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+.facebookButton {
+  width: 100%;
+  min-height: 54px;
+  margin-top: 12px;
+  padding: 0 20px;
+  background: var(--primary);
+  border: 2px solid var(--primary);
+  border-radius: 9999px;
+  color: var(--surface);
+  cursor: pointer;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.facebookButton:hover {
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+}
+
+.googleButton:disabled,
+.facebookButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.resendBox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: -6px 0 18px;
+  text-align: left;
+}
+
+.resendBox input {
+  width: 100%;
+  height: 46px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  border: 1px solid var(--outline);
+  border-radius: 12px;
+  font: inherit;
+}
+
+.secondaryButton {
+  min-height: 44px;
+  padding: 0 18px;
+  background: var(--surface);
+  border: 1px solid var(--primary);
+  border-radius: 9999px;
+  color: var(--primary);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.secondaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 @media (max-width: 768px) {

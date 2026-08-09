@@ -30,6 +30,7 @@ public class DataInitializer implements CommandLineRunner {
                     .role(Role.ADMIN)
                     .status("ACTIVE")
                     .emailVerified(true)
+                    .provider("LOCAL")
                     .build();
             userRepository.save(adminUser);
             System.out.println("Admin user created successfully");
@@ -46,7 +47,8 @@ public class DataInitializer implements CommandLineRunner {
                     .fullName("Normal User")
                     .role(Role.USER)
                     .status("ACTIVE")
-                    .emailVerified(false)
+                    .emailVerified(true)
+                    .provider("LOCAL")
                     .build();
             userRepository.save(normalUser);
             System.out.println("Default user created successfully");

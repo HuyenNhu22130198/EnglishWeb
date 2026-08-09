@@ -20,6 +20,8 @@ import Infor from './pages/Infor';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import ToeicPractice from './pages/ToeicPractice';
 import ToeicResult from './pages/ToeicResult';
 import ToeicExamDetail from './pages/ToeicExamDetail';
@@ -48,7 +50,13 @@ function App() {
     });
   }, [location.pathname, location.search]);
 
-  const noLayoutPages = ['/login', '/register', '/forgot-password'];
+  const noLayoutPages = [
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/reset-password',
+    '/verify-email',
+  ];
   const isPracticePage =
     location.pathname.startsWith('/practice/toeic/') ||
     location.pathname.startsWith('/practice/ielts/');
@@ -151,6 +159,8 @@ function App() {
           <Route path="/register" element={<Register />} />
 
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
         </Routes>
 
         <FloatingDictionary />
