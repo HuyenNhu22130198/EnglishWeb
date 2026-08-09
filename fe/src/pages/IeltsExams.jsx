@@ -40,15 +40,6 @@ const IeltsExams = () => {
 
   return (
     <main className={styles.page}>
-      <section className={styles.hero}>
-        <span className={styles.eyebrow}>Kho đề IELTS</span>
-        <h1>Danh sách đề IELTS</h1>
-        <p>
-          Luyện đề IELTS theo dữ liệu thật trong hệ thống. Hiện tại hệ thống hỗ trợ làm bài và
-          chấm điểm cho Listening, Reading.
-        </p>
-      </section>
-
       <section className={styles.filters}>
         <div className={styles.searchWrap}>
           <input

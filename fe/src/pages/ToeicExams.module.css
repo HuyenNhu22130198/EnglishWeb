@@ -4,43 +4,10 @@
   color: #111827;
 }
 
-.pageHeader {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 56px 56px 28px;
-}
-
-.eyebrow {
-  display: inline-block;
-  color: #0e3377;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 1.8px;
-  text-transform: uppercase;
-  margin-bottom: 14px;
-}
-
-.pageHeader h1 {
-  margin: 0;
-  color: #111827;
-  font-size: 42px;
-  line-height: 1.2;
-  font-weight: 850;
-  letter-spacing: -0.6px;
-}
-
-.pageHeader p {
-  max-width: 780px;
-  margin: 18px 0 0;
-  color: #596275;
-  font-size: 17px;
-  line-height: 1.7;
-}
-
 .searchSection {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 0 56px;
+  padding: 28px 56px 0;
 }
 
 .searchCard {
@@ -255,16 +222,8 @@
 }
 
 @media (max-width: 900px) {
-  .pageHeader {
-    padding: 42px 22px 24px;
-  }
-
-  .pageHeader h1 {
-    font-size: 34px;
-  }
-
   .searchSection {
-    padding: 0 22px;
+    padding: 24px 22px 0;
   }
 
   .searchCard {
@@ -286,10 +245,6 @@
 }
 
 @media (max-width: 520px) {
-  .pageHeader h1 {
-    font-size: 30px;
-  }
-
   .examInfoGrid {
     grid-template-columns: 1fr;
   }
