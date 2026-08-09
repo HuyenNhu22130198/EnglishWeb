@@ -20,6 +20,12 @@ public final class AdminExamDtos {
             String listeningAudioUrl,
             @NotBlank(message = "Trạng thái không được để trống") String status) {}
 
+    public record ExamCreateRequest(
+            @NotBlank(message = "Mã đề không được để trống") String examCode,
+            @NotBlank(message = "Tên đề không được để trống") String examName,
+            @NotBlank(message = "Trạng thái không được để trống") String status,
+            String listeningAudioUrl) {}
+
     public record StatusUpdateRequest(@NotBlank(message = "Trạng thái không được để trống") String status) {}
 
     public record OptionDetail(Integer id, String label, String text, Integer displayOrder) {}
@@ -49,4 +55,18 @@ public final class AdminExamDtos {
             String correctAnswer, String label, String type, String content, String assetUrl,
             String answerText, String answerKey, String topicTitle, String sampleAnswer,
             Integer displayOrder, Integer minWords, Integer maxAnswers) {}
+
+    /** DTO phẳng dùng chung khi thêm node mới; parentId là id của node cha trực tiếp. */
+    public record ContentCreateRequest(
+            String title, String instruction, String sharedText, String text, String questionText,
+            String promptText, String explanation, String transcript, String imageUrl, String audioUrl,
+            String correctAnswer, String label, String type, String content, String assetUrl,
+            String answerText, String answerKey, String topicTitle, String sampleAnswer,
+            Integer displayOrder, Integer minWords, Integer maxAnswers,
+            Integer parentId, String skill, Integer partNo, Integer groupNo, Integer blockNo,
+            Integer taskNo, Integer questionNo, String optionKey, String optionLabel) {}
+
+    public record MediaUploadResponse(String url, String publicId) {}
+
+    public record ImportError(String sheet, Integer row, String message) {}
 }

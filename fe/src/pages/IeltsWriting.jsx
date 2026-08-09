@@ -219,7 +219,7 @@ const IeltsWriting = () => {
 
     const confirmed = await confirm({
       title: 'Nộp bài IELTS Writing?',
-      message: 'Bài viết của bạn sẽ được gửi để chấm điểm và không thể chỉnh sửa sau khi nộp.',
+      message: 'Bài viết của bạn sẽ được AI chấm điểm ngay sau khi nộp và không thể chỉnh sửa sau khi nộp.',
       confirmLabel: 'Nộp bài',
     });
     if (!confirmed) return;
@@ -295,7 +295,7 @@ const IeltsWriting = () => {
             </div>
 
             <button type="button" className={styles.submitButton} onClick={handleSubmit} disabled={submitting}>
-              {submitting ? 'Đang nộp...' : 'Nộp bài'}
+              {submitting ? 'Đang nộp' : 'Nộp bài'}
             </button>
           </div>
         </div>

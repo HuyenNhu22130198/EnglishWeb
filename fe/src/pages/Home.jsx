@@ -130,8 +130,6 @@ const Home = () => {
         )}
         <div className={styles.heroInner}>
           <div className={styles.heroCopy}>
-            <h1>Luyện đề thông minh, chinh phục TOEIC &amp; IELTS</h1>
-
             <div className={styles.heroActions}>
               <Link to="/exams/toeic" className={styles.primaryAction}>
                 Luyện đề TOEIC

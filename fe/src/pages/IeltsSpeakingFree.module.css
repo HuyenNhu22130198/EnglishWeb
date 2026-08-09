@@ -1,0 +1,74 @@
+.page { min-height: 100vh; padding-bottom: 100px; background: #f4f7fb; color: #172033; }
+.header { position: sticky; top: 0; z-index: 20; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 20px; padding: 16px 28px; border-bottom: 1px solid #dce4ef; background: rgba(255,255,255,.97); }
+.header button, .state button, .controls button { min-height: 42px; padding: 0 16px; border: 1px solid #c9d4e3; border-radius: 9px; background: #fff; color: #173b77; font: inherit; font-weight: 800; cursor: pointer; }
+.header span, .resultHeader span { color: #718096; font-size: 11px; font-weight: 900; letter-spacing: .08em; }
+.header h1 { margin: 3px 0 0; font-size: 21px; }
+.progress { color: #0e3377; font-weight: 850; }
+.layout { display: grid; grid-template-columns: 240px minmax(0, 900px); justify-content: center; gap: 28px; padding: 28px; }
+.sidebar { align-self: start; position: sticky; top: 98px; max-height: calc(100vh - 126px); overflow: auto; padding: 18px; border: 1px solid #dce4ef; border-radius: 14px; background: white; box-shadow: 0 8px 24px rgba(24,45,78,.06); }
+.sidebar section + section { margin-top: 20px; }
+.sidebar h2 { margin: 0 0 8px; font-size: 15px; }
+.sidebar button { display: flex; align-items: center; gap: 9px; width: 100%; margin: 5px 0; padding: 10px; border: 1px solid transparent; border-radius: 8px; background: #f7f9fc; color: #334155; font: inherit; font-weight: 750; cursor: pointer; }
+.sidebar button.active { border-color: #8db2ec; background: #edf4ff; color: #0e3377; }
+.sidebar i { width: 9px; height: 9px; border-radius: 50%; background: #cbd5e1; }
+.sidebar i.done { background: #16a36a; }
+.content { min-width: 0; padding: 30px; border: 1px solid #dce4ef; border-radius: 14px; background: white; box-shadow: 0 8px 24px rgba(24,45,78,.06); }
+.content > h2 { margin: 8px 0; font-size: 28px; }
+.partBadge { display: inline-block; padding: 5px 9px; border-radius: 6px; background: #e8f0ff; color: #0e3377; font-size: 12px; font-weight: 900; }
+.instruction { color: #64748b; line-height: 1.6; }
+.question, .cueCard { margin: 24px 0; padding: 20px; border-left: 4px solid #2c65b6; border-radius: 8px; background: #f4f8ff; }
+.question { display: grid; gap: 8px; }
+.question span { color: #64748b; font-size: 12px; font-weight: 800; text-transform: uppercase; }
+.question strong { font-size: 20px; line-height: 1.5; }
+.cueCard h3 { margin: 0 0 12px; }
+.cueCard p { margin: 8px 0; line-height: 1.5; }
+.recorder { display: grid; grid-template-columns: 1fr auto; gap: 16px; padding: 20px; border: 1px solid #d4deeb; border-radius: 12px; background: #fbfcfe; }
+.recorder h3, .recorder p { margin: 0; }
+.recorder p { margin-top: 5px; color: #64748b; }
+.timer { color: #a52b35; font-size: 18px; font-weight: 900; }
+.controls { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; }
+.controls button:last-child { border-color: #0e3377; background: #0e3377; color: white; }
+.controls .recordButton { border-color: #c43d48; background: #c43d48; color: white; }
+.controls .stopButton { border-color: #8e2832; background: white; color: #a52b35; }
+.controls button:disabled, .sidebar button:disabled { cursor: not-allowed; opacity: .55; }
+.recorder audio, .result audio { grid-column: 1 / -1; width: 100%; margin-top: 4px; }
+.processing { grid-column: 1 / -1; display: flex; align-items: center; gap: 13px; padding: 14px; border-radius: 9px; background: #edf4ff; color: #173b77; }
+.processing span { width: 22px; height: 22px; border: 3px solid #b9ccec; border-top-color: #17499c; border-radius: 50%; animation: spin .8s linear infinite; }
+.processing p { color: #526987; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.notice { margin-top: 18px; padding: 14px 16px; border: 1px solid #f1c36d; border-radius: 9px; background: #fff8e8; color: #7a4c08; line-height: 1.5; }
+.transcriptEditor { display: grid; gap: 12px; margin-top: 22px; padding: 20px; border: 1px solid #d4deeb; border-radius: 12px; background: #fbfcfe; }
+.transcriptEditor label { color: #173b77; font-weight: 850; }
+.transcriptEditor textarea { width: 100%; box-sizing: border-box; resize: vertical; padding: 14px; border: 1px solid #bfcde0; border-radius: 9px; color: #172033; font: inherit; line-height: 1.6; }
+.transcriptEditor textarea:focus { outline: 2px solid #9bbbea; border-color: #2c65b6; }
+.transcriptEditor button { justify-self: end; min-height: 44px; padding: 0 22px; border: 0; border-radius: 9px; background: #0e3377; color: #fff; font: inherit; font-weight: 850; cursor: pointer; }
+.transcriptEditor button:disabled { cursor: not-allowed; opacity: .55; }
+.result { margin-top: 22px; border: 1px solid #cddbea; border-radius: 12px; overflow: hidden; }
+.resultHeader { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 20px; background: #f7faff; }
+.resultHeader h2 { margin: 5px 0 0; font-size: 22px; }
+.resultHeader time { color: #64748b; font-weight: 800; }
+.resultSection { padding: 20px; border-top: 1px solid #e3e9f1; }
+.resultSection h3, .resultSection h4 { margin: 0 0 14px; }
+.resultSection h4 { margin-top: 22px; }
+.transcript, .corrected { padding: 16px; border-radius: 8px; background: #f7f9fc; line-height: 1.7; }
+.scoreGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+.scoreGrid div { padding: 13px; border: 1px solid #e5ebf3; border-radius: 8px; background: white; }
+.scoreGrid span { display: block; color: #64748b; font-size: 12px; }
+.scoreGrid strong { display: block; margin-top: 5px; color: #087443; font-size: 19px; }
+.unavailable { padding: 13px; border-radius: 8px; background: #fff5f5; color: #9b2c36; line-height: 1.5; }
+.errorList { display: grid; gap: 10px; }
+.errorList article { padding: 14px; border-left: 3px solid #d49036; border-radius: 6px; background: #fffaf0; }
+.errorList p { margin: 7px 0 0; line-height: 1.5; }
+.sampleAnswer { padding: 20px; border-top: 1px solid #e3e9f1; background: #f7faff; }
+.sampleAnswer h3 { margin: 0; color: #0e3377; }
+.sampleAnswer p { margin: 15px 0 0; line-height: 1.7; }
+.state { min-height: 70vh; display: grid; place-content: center; justify-items: center; padding: 30px; text-align: center; }
+@media (max-width: 800px) {
+  .header { position: static; grid-template-columns: 1fr auto; padding: 14px; }
+  .header > div:first-of-type { grid-column: 1 / -1; grid-row: 1; }
+  .layout { grid-template-columns: 1fr; padding: 14px; }
+  .sidebar { position: static; max-height: none; display: flex; gap: 14px; overflow-x: auto; }
+  .sidebar section { min-width: 150px; margin: 0; }
+  .content { padding: 20px 15px; }
+  .scoreGrid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}

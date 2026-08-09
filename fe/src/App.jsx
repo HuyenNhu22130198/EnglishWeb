@@ -13,7 +13,7 @@ import IeltsExams from './pages/IeltsExams';
 import IeltsExamDetail from './pages/IeltsExamDetail';
 import IeltsPractice from './pages/IeltsPractice';
 import IeltsWriting from './pages/IeltsWriting';
-import IeltsSpeaking from './pages/IeltsSpeaking';
+import IeltsSpeakingFree from './pages/IeltsSpeakingFree';
 import IeltsResult from './pages/IeltsResult';
 import Flashcard from './pages/Flashcard';
 import Infor from './pages/Infor';
@@ -32,6 +32,7 @@ import AdminUsers from "./admin/AdminUsers";
 import AdminBanners from "./admin/banners/AdminBanners";
 import AdminExams from "./admin/exams/AdminExams";
 import AdminExamDetail from "./admin/exams/AdminExamDetail";
+import AdminExamCreate from "./admin/exams/AdminExamCreate";
 
 
 function App() {
@@ -74,6 +75,7 @@ function App() {
             <Route path="dictionary" element={<AdminDictionaryPage />} />
             <Route path="banners" element={<AdminBanners />} />
             <Route path="toeic-exams" element={<AdminExams />} />
+            <Route path="exams/:type/new" element={<AdminExamCreate />} />
             <Route path="exams/:type/:id" element={<AdminExamDetail />} />
           </Route>
 
@@ -105,10 +107,10 @@ function App() {
             }
           />
           <Route
-            path="/practice/ielts/:examId/speaking"
+            path="/practice/ielts/:examId/speaking/free"
             element={
               <ProtectedRoute>
-                <IeltsSpeaking />
+                <IeltsSpeakingFree />
               </ProtectedRoute>
             }
           />

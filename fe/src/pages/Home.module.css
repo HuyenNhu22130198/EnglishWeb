@@ -997,13 +997,21 @@
   }
 }
 .heroInner {
+  position: absolute;
+  bottom: 50px;
+  left: 0;
   max-width: none;
   margin: 0;
   padding: 0 84px;
 }
 
+.heroActions {
+  margin: 0;
+}
+
 @media (max-width: 640px) {
   .heroInner {
+    bottom: 38px;
     padding: 0 34px;
   }
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminPageHeader from "../components/AdminPageHeader";
 import Pagination from "../components/Pagination";
-import { RefreshIcon, SearchIcon } from "../components/AdminIcons";
+import { FileTextIcon, RefreshIcon, SearchIcon } from "../components/AdminIcons";
 import { useConfirmDialog } from "../../contexts/useConfirmDialog";
 import { adminExamService } from "./adminExamService";
 import shared from "../AdminShared.module.css";
@@ -58,6 +58,7 @@ export default function AdminExams() {
   return <div className={shared.page}>
     <AdminPageHeader title="Quản lý đề thi" subtitle="Quản lý đề TOEIC và IELTS hiện có, trạng thái hiển thị và nội dung câu hỏi.">
       <button className={shared.secondaryButton} type="button" onClick={() => setRefresh((x) => x + 1)} disabled={loading}><RefreshIcon size={18}/> Làm mới</button>
+      <button className={shared.primaryButton} type="button" onClick={() => navigate(`/admin/exams/${type}/new`)}><FileTextIcon size={18}/> Tạo đề mới</button>
     </AdminPageHeader>
     <div className={styles.tabs} role="tablist">
       {['toeic','ielts'].map((item) => <button key={item} className={type === item ? styles.activeTab : ""} onClick={() => switchType(item)}>{item.toUpperCase()}</button>)}

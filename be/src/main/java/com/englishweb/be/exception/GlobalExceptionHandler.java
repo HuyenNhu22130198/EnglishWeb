@@ -13,10 +13,24 @@ import org.springframework.dao.DataAccessException;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+
+import com.englishweb.be.admin.exam.dto.AdminExamDtos.ImportError;
 
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ExamImportValidationException.class)
+    public ResponseEntity<ApiResponse<List<ImportError>>> handleExamImportValidationException(
+            ExamImportValidationException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.<List<ImportError>>builder()
+                        .success(false)
+                        .message(e.getMessage())
+                        .data(e.getErrors())
+                        .build());
+    }
 
     @ExceptionHandler(IeltsSubmissionException.class)
     public ResponseEntity<ApiResponse<String>> handleIeltsSubmissionException(IeltsSubmissionException e) {

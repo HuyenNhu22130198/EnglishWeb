@@ -159,6 +159,60 @@ export const ieltsAPI = {
     return this.speakingRequest(`/exams/${examId}/attempts/${attemptId}/complete`, { method: 'POST' });
   },
 
+  async transcribeFreeSpeakingAnswer(examId, attemptId, formData) {
+    const response = await fetch(
+      `${API_BASE_URL}/ielts/speaking/free/exams/${examId}/attempts/${attemptId}/answers`,
+      {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+        },
+        body: formData,
+      }
+    );
+    const data = await parseApiResponse(response);
+    if (!response.ok) {
+      throw createApiError(response, data, 'Không thể tạo transcript Speaking tự do');
+    }
+    return data;
+  },
+
+  async submitFreeSpeakingAnswer(freeAnswerId, payload) {
+    const response = await fetch(
+      `${API_BASE_URL}/ielts/speaking/free/answers/${freeAnswerId}/submit`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+    const data = await parseApiResponse(response);
+    if (!response.ok) {
+      throw createApiError(response, data, 'Không thể chấm câu trả lời Speaking tự do');
+    }
+    return data;
+  },
+
+  async gradeWritingAnswer(userAnswerId) {
+    const response = await fetch(
+      `${API_BASE_URL}/ielts/exams/writing/answers/${userAnswerId}/grade`,
+      {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+        },
+      }
+    );
+    const data = await parseApiResponse(response);
+    if (!response.ok) {
+      throw createApiError(response, data, 'Không thể chấm bài Writing bằng AI');
+    }
+    return data;
+  },
+
   async speakingRequest(path, options = {}) {
     const response = await fetch(`${API_BASE_URL}/ielts/speaking${path}`, {
       ...options,

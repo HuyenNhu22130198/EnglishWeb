@@ -147,7 +147,13 @@
   line-height: 1.65;
 }
 
-.skillCard button {
+.skillActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.skillActions button {
   height: 46px;
   border: none;
   border-radius: 8px;
@@ -159,13 +165,19 @@
   cursor: pointer;
 }
 
-.skillCard button:hover:not(:disabled) {
+.skillActions button:hover:not(:disabled) {
   background: #17499c;
 }
 
-.skillCard button:disabled {
+.skillActions button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.skillActions .freeSpeakingButton {
+  border: 1px solid #0e3377;
+  background: #ffffff;
+  color: #0e3377;
 }
 
 .emptyState {

@@ -14,7 +14,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -47,14 +46,57 @@ public class IeltsWritingUserAnswer {
     @Column(name = "word_count", nullable = false)
     private Integer wordCount;
 
-    @Column(name = "matched_word_count", nullable = false)
-    private Integer matchedWordCount;
-
-    @Column(name = "similarity_percent", precision = 5, scale = 2, nullable = false)
-    private BigDecimal similarityPercent;
-
     @Column(name = "submitted_at")
     private LocalDateTime submittedAt;
+
+    // AI grading (Gemini) fields — populated by a separate "grade" step, not by submit().
+    @Column(name = "gemini_status")
+    private String geminiStatus;
+
+    @Column(name = "gemini_error", columnDefinition = "TEXT")
+    private String geminiError;
+
+    @Column(name = "topic_relevance")
+    private String topicRelevance;
+
+    @Column(name = "answers_question")
+    private Boolean answersQuestion;
+
+    @Column(name = "task_response_percent")
+    private Integer taskResponsePercent;
+
+    @Column(name = "coherence_percent")
+    private Integer coherencePercent;
+
+    @Column(name = "vocabulary_percent")
+    private Integer vocabularyPercent;
+
+    @Column(name = "grammar_percent")
+    private Integer grammarPercent;
+
+    @Column(name = "overall_quality_percent")
+    private Integer overallQualityPercent;
+
+    @Column(name = "gemini_summary", columnDefinition = "TEXT")
+    private String geminiSummary;
+
+    @Column(name = "task_requirements_json", columnDefinition = "TEXT")
+    private String taskRequirementsJson;
+
+    @Column(name = "strengths_json", columnDefinition = "TEXT")
+    private String strengthsJson;
+
+    @Column(name = "errors_json", columnDefinition = "TEXT")
+    private String errorsJson;
+
+    @Column(name = "corrected_answer_text", columnDefinition = "TEXT")
+    private String correctedAnswerText;
+
+    @Column(name = "gemini_raw_json", columnDefinition = "TEXT")
+    private String geminiRawJson;
+
+    @Column(name = "graded_at")
+    private LocalDateTime gradedAt;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default

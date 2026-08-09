@@ -19,6 +19,9 @@ Thumbs.db
 !.env.example
 *.local
 
+# Whisper.cpp models downloaded by docker-compose (see docker-compose.yml)
+/whisper-models/
+
 # Logs
 *.log
 logs/
