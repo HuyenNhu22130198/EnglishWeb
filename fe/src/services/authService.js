@@ -26,7 +26,8 @@ export const getStoredToken = () => {
 
 export const storeUser = (userData) => {
   const storedUser = authAPI.getStoredUser() || {};
-  const { password, ...safeUserData } = userData || {};
+  const safeUserData = { ...(userData || {}) };
+  delete safeUserData.password;
   const token = safeUserData.token || storedUser.token || localStorage.getItem('token') || '';
 
   localStorage.setItem('user', JSON.stringify({

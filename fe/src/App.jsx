@@ -24,6 +24,8 @@ import ToeicPractice from './pages/ToeicPractice';
 import ToeicResult from './pages/ToeicResult';
 import ToeicExamDetail from './pages/ToeicExamDetail';
 import Forum from './pages/Forum';
+import Guide from './pages/Guide';
+import Contact from './pages/Contact';
 
 import AdminRoute from './admin/AdminRoute';
 import AdminLayout from './admin/AdminLayout';
@@ -132,6 +134,8 @@ function App() {
           />
 
           <Route path="/forum" element={<Forum />} />
+          <Route path="/guide" element={<Guide />} />
+          <Route path="/contact" element={<Contact />} />
 
           <Route
             path="/infor"
