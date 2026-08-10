@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ExamSessionProvider } from './contexts/ExamSessionContext';
 import { ConfirmDialogProvider } from './contexts/ConfirmDialogContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -68,6 +69,7 @@ function App() {
   return (
     <ConfirmDialogProvider>
       <AuthProvider>
+        <ExamSessionProvider>
         <div>
         {!hideLayout && <Header />}
 
@@ -166,6 +168,7 @@ function App() {
         <FloatingDictionary />
         {!hideLayout && <Footer />}
         </div>
+        </ExamSessionProvider>
       </AuthProvider>
     </ConfirmDialogProvider>
   );

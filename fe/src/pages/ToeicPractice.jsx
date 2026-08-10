@@ -1,6 +1,7 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useExamSession } from '../contexts/ExamSessionContext';
 import { useConfirmDialog } from '../contexts/useConfirmDialog';
 import { authAPI, getStoredToken } from '../services/authService';
 import { toeicAPI } from '../services/toeicService';
@@ -345,6 +346,7 @@ const removeAudioMarkersFromStorage = (examId) => {
 const ToeicPractice = () => {
   const confirm = useConfirmDialog();
   const { user } = useAuth();
+  const { setExamContext, clearExamContext } = useExamSession();
   const { testId } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -415,6 +417,21 @@ const ToeicPractice = () => {
     setElapsedSeconds(0);
     setReviewQuestionIds(new Set());
   }, [testId]);
+
+  // Ghi nhận ngữ cảnh đề đang làm để chatbot tra nhanh theo số câu.
+  useEffect(() => {
+    if (!examData) {
+      return undefined;
+    }
+    setExamContext({
+      examType: 'TOEIC',
+      examId: examData.examId,
+      examCode: examData.examCode,
+      examName: examData.examName,
+      partNo: activePart,
+    });
+    return () => clearExamContext();
+  }, [examData, activePart, setExamContext, clearExamContext]);
 
   useEffect(() => {
     if (!examData || loading) {

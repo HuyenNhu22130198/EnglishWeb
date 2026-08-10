@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useExamSession } from '../contexts/ExamSessionContext';
 import { useConfirmDialog } from '../contexts/useConfirmDialog';
 import { getStoredToken } from '../services/authService';
 import { ieltsAPI } from '../services/ieltsService';
@@ -542,6 +543,7 @@ const usesSelectedOptionKey = (question, block, skill) => {
 const IeltsPractice = ({ mode = 'practice', initialPractice = null, reviewResult = null }) => {
   const confirm = useConfirmDialog();
   const { user } = useAuth();
+  const { setExamContext, clearExamContext } = useExamSession();
   const navigate = useNavigate();
   const { examId: routeExamId } = useParams();
   const [searchParams] = useSearchParams();
@@ -627,6 +629,21 @@ const IeltsPractice = ({ mode = 'practice', initialPractice = null, reviewResult
       mounted = false;
     };
   }, [examId, initialPractice, isReviewMode, skill]);
+
+  // Ghi nhận ngữ cảnh đề đang làm để chatbot tra nhanh theo số câu.
+  useEffect(() => {
+    if (!practice || !examId) {
+      return undefined;
+    }
+    setExamContext({
+      examType: 'IELTS',
+      examId,
+      examCode: practice.examCode,
+      examName: practice.examName,
+      skill,
+    });
+    return () => clearExamContext();
+  }, [practice, examId, skill, setExamContext, clearExamContext]);
 
   useEffect(() => {
     if (!isReviewMode || !reviewResult) return;
