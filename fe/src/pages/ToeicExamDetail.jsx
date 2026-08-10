@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import ExamDetailHeader from '../components/ExamDetailHeader';
 import { toeicAPI } from '../services/toeicService';
 import styles from './ToeicExamDetail.module.css';
 
@@ -104,13 +105,12 @@ const ToeicExamDetail = () => {
 
   return (
     <main className={styles.detailPage}>
-      <section className={styles.header}>
-        <button type="button" className={styles.backButton} onClick={() => navigate('/exams/toeic')}>
-          Quay lại kho đề
-        </button>
-
-        <h1>{exam.title}</h1>
-      </section>
+      <ExamDetailHeader
+        onBack={() => navigate('/exams/toeic')}
+        eyebrow={exam.examCode || (exam.year ? `ETS ${exam.year}` : '')}
+        title={exam.title}
+        description={exam.description}
+      />
 
       <section className={styles.panel}>
         <div className={styles.tabs}>

@@ -10,12 +10,14 @@ export const AuthProvider = ({ children }) => {
 
   // Kiểm tra user khi app load
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     const storedUser = authAPI.getStoredUser();
     if (storedUser && authAPI.isAuthenticated()) {
       setUser(storedUser);
       setIsAuthenticated(true);
     }
     setLoading(false);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   const login = (userData) => {
@@ -48,6 +50,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

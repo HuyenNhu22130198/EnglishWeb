@@ -724,6 +724,49 @@
   align-items: start;
 }
 
+.resizableExamLayout {
+  grid-template-columns: minmax(280px, var(--source-pane-width, 52%)) 12px minmax(280px, 1fr);
+  gap: 6px;
+}
+
+.paneResizeHandle {
+  position: relative;
+  align-self: stretch;
+  width: 12px;
+  min-height: 120px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.paneResizeHandle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  border-radius: 2px;
+  background: #dfe5ef;
+  transform: translateX(-50%);
+  transition: width 0.18s ease, background-color 0.18s ease;
+}
+
+.paneResizeHandle:hover::before,
+.paneResizeHandle:focus-visible::before,
+.paneResizeHandleActive::before {
+  width: 4px;
+  background: var(--primary);
+}
+
+.paneResizeHandle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 .sourcePane,
 .answerPane {
   min-width: 0;
@@ -1338,6 +1381,10 @@
 
   .ieltsExamLayout {
     grid-template-columns: 1fr;
+  }
+
+  .paneResizeHandle {
+    display: none;
   }
 
   .sourcePane,

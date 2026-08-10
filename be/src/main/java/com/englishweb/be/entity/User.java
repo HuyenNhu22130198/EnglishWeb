@@ -79,6 +79,13 @@ public class User {
     @Builder.Default
     private Boolean emailVerified = false;
 
+    @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'LOCAL'")
+    @Builder.Default
+    private String provider = "LOCAL";
+
+    @Column(name = "provider_id", length = 255)
+    private String providerId;
+
     @Column(nullable = false, length = 10)
     @Builder.Default
     private String status = "ACTIVE";

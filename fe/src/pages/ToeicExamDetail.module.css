@@ -6,34 +6,9 @@
   box-sizing: border-box;
 }
 
-.header,
 .panel {
   width: min(1040px, 100%);
   margin: 0 auto;
-}
-
-.header {
-  padding-bottom: 28px;
-  text-align: center;
-}
-
-.backButton {
-  height: 38px;
-  padding: 0 16px;
-  border: 1px solid #dfe5ef;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #0e3377;
-  font-family: inherit;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.header h1 {
-  margin: 24px 0 0;
-  font-size: 40px;
-  line-height: 1.2;
-  font-weight: 850;
 }
 
 .panel {
@@ -101,13 +76,25 @@
   display: grid;
   grid-template-columns: 22px minmax(0, 1fr);
   gap: 12px;
-  align-items: start;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid #edf0f6;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.partRow:has(input:checked) {
+  border-color: #0e3377;
+  background: #f5f8ff;
 }
 
 .partRow input {
   width: 16px;
   height: 16px;
-  margin-top: 4px;
+  margin: 0;
+  accent-color: #0e3377;
 }
 
 .partRow strong {
@@ -189,10 +176,6 @@
 @media (max-width: 720px) {
   .detailPage {
     padding: 32px 16px 56px;
-  }
-
-  .header h1 {
-    font-size: 30px;
   }
 
   .tabs button {

@@ -38,6 +38,9 @@ public class ChatbotService {
     private static final Pattern NON_ALNUM = Pattern.compile("[^\\p{IsAlphabetic}\\p{IsDigit}]+");
     private static final Pattern QUESTION_PREFIX = Pattern.compile("^(cau|question|q)\\s*\\d+\\s*[:.)-]*\\s*");
     private static final Pattern OPTION_PREFIX = Pattern.compile("(?m)^\\s*[a-d]\\s*[:.)-]\\s*");
+    // Chỉ khớp khi cả tin nhắn thực chất chỉ là "số câu": "câu 1", "cau 12", "q3", "question 5", "1".
+    private static final Pattern QUESTION_NUMBER_ONLY = Pattern.compile("^(?:cau|câu|question|q|no|num|so)?\\s*[:.#]?\\s*(\\d{1,3})\\s*$",
+            Pattern.CASE_INSENSITIVE);
 
     private final ToeicQuestionRepository toeicQuestionRepository;
     private final ToeicQuestionOptionRepository toeicQuestionOptionRepository;
@@ -47,6 +50,23 @@ public class ChatbotService {
     @Transactional(readOnly = true)
     public ChatbotResponse ask(ChatbotRequest request) {
         String userMessage = request.getMessage() == null ? "" : request.getMessage().trim();
+
+        // Ưu tiên: nếu người dùng chỉ gõ số câu (vd "câu 1") thì tra thẳng theo ngữ cảnh đề đang làm.
+        Integer questionNo = extractQuestionNo(userMessage);
+        if (questionNo != null) {
+            ChatbotResponse contextResponse = lookupByContext(request, questionNo);
+            if (contextResponse != null) {
+                return contextResponse;
+            }
+            // Chỉ có số câu nhưng không có ngữ cảnh đề -> không thể tra, gợi ý người dùng.
+            return ChatbotResponse.builder()
+                    .found(false)
+                    .message("Bạn hãy mở đề đang làm rồi gõ số câu (vd \"câu 1\"), "
+                            + "hoặc dán nguyên câu hỏi để mình tra giúp.")
+                    .matchScore(0.0)
+                    .build();
+        }
+
         List<QueryVariant> queryVariants = buildQueryVariants(userMessage);
         List<ToeicQuestion> toeicQuestions = toeicQuestionRepository.findAllForChatbot();
         Map<Integer, List<ToeicQuestionOption>> toeicOptionsByQuestionId = loadToeicOptions(toeicQuestions);
@@ -94,6 +114,69 @@ public class ChatbotService {
         }
 
         return buildIeltsResponse(ieltsMatch.value(), ieltsScore);
+    }
+
+    private Integer extractQuestionNo(String message) {
+        if (message == null) {
+            return null;
+        }
+        var matcher = QUESTION_NUMBER_ONLY.matcher(message.trim());
+        if (!matcher.matches()) {
+            return null;
+        }
+        try {
+            int value = Integer.parseInt(matcher.group(1));
+            return value > 0 ? value : null;
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    /**
+     * Tra câu hỏi trực tiếp theo số câu dựa vào ngữ cảnh đề đang làm.
+     * Trả về null khi thiếu ngữ cảnh (để {@link #ask} rơi về fuzzy match cũ),
+     * hoặc trả response found=false khi có ngữ cảnh nhưng không thấy câu.
+     */
+    private ChatbotResponse lookupByContext(ChatbotRequest request, int questionNo) {
+        Integer examId = request.getExamId();
+        String examType = safe(request.getExamType()).trim().toUpperCase(Locale.ROOT);
+
+        if (examId == null || examType.isEmpty()) {
+            return null; // Không có ngữ cảnh -> để luồng fuzzy match xử lý/gợi ý.
+        }
+
+        if (examType.equals("IELTS")) {
+            String skill = safe(request.getSkill()).trim();
+            if (skill.isEmpty()) {
+                return notFoundInContext(questionNo);
+            }
+            IeltsQuestion question = ieltsQuestionRepository
+                    .findForChatbotByExamSkillAndQuestionNo(examId, skill, questionNo)
+                    .stream()
+                    .findFirst()
+                    .orElse(null);
+            return question == null ? notFoundInContext(questionNo) : buildIeltsResponse(question, 1.0);
+        }
+
+        if (examType.equals("TOEIC")) {
+            ToeicQuestion question = toeicQuestionRepository
+                    .findForChatbotByExamAndQuestionNo(examId, questionNo)
+                    .stream()
+                    .findFirst()
+                    .orElse(null);
+            return question == null ? notFoundInContext(questionNo) : buildToeicResponse(question, 1.0);
+        }
+
+        return null;
+    }
+
+    private ChatbotResponse notFoundInContext(int questionNo) {
+        return ChatbotResponse.builder()
+                .found(false)
+                .message("Không tìm thấy câu " + questionNo + " trong đề bạn đang làm. "
+                        + "Hãy kiểm tra lại số câu hoặc dán nguyên câu hỏi để mình tra giúp.")
+                .matchScore(0.0)
+                .build();
     }
 
     private ChatbotResponse buildToeicResponse(ToeicQuestion question, double matchScore) {

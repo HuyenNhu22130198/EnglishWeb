@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import ExamDetailHeader from '../components/ExamDetailHeader';
 import { ieltsAPI } from '../services/ieltsService';
 import styles from './IeltsExamDetail.module.css';
 
@@ -109,15 +110,12 @@ const IeltsExamDetail = () => {
 
   return (
     <main className={styles.detailPage}>
-      <section className={styles.header}>
-        <button type="button" className={styles.backButton} onClick={() => navigate('/exams/ielts')}>
-          Quay lại kho đề
-        </button>
-
-        <span className={styles.eyebrow}>{exam.examCode}</span>
-        <h1>{exam.title}</h1>
-        {exam.description ? <p>{exam.description}</p> : null}
-      </section>
+      <ExamDetailHeader
+        onBack={() => navigate('/exams/ielts')}
+        eyebrow={exam.examCode}
+        title={exam.title}
+        description={exam.description}
+      />
 
       <section className={styles.panel}>
         <div className={styles.summaryGrid}>

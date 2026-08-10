@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useExamSession } from '../contexts/ExamSessionContext';
 import { useConfirmDialog } from '../contexts/useConfirmDialog';
 import { getStoredToken } from '../services/authService';
 import { ieltsAPI } from '../services/ieltsService';
@@ -542,6 +543,7 @@ const usesSelectedOptionKey = (question, block, skill) => {
 const IeltsPractice = ({ mode = 'practice', initialPractice = null, reviewResult = null }) => {
   const confirm = useConfirmDialog();
   const { user } = useAuth();
+  const { setExamContext, clearExamContext } = useExamSession();
   const navigate = useNavigate();
   const { examId: routeExamId } = useParams();
   const [searchParams] = useSearchParams();
@@ -577,6 +579,8 @@ const IeltsPractice = ({ mode = 'practice', initialPractice = null, reviewResult
     )
   );
   const [activeQuestionId, setActiveQuestionId] = useState(null);
+  const [sourcePanePercent, setSourcePanePercent] = useState(52);
+  const [resizingGroupId, setResizingGroupId] = useState(null);
 
   const resultByQuestionId = useMemo(
     () => new Map((reviewResult?.questionResults || []).map((item) => [Number(item.questionId), item])),
@@ -625,6 +629,21 @@ const IeltsPractice = ({ mode = 'practice', initialPractice = null, reviewResult
       mounted = false;
     };
   }, [examId, initialPractice, isReviewMode, skill]);
+
+  // Ghi nhận ngữ cảnh đề đang làm để chatbot tra nhanh theo số câu.
+  useEffect(() => {
+    if (!practice || !examId) {
+      return undefined;
+    }
+    setExamContext({
+      examType: 'IELTS',
+      examId,
+      examCode: practice.examCode,
+      examName: practice.examName,
+      skill,
+    });
+    return () => clearExamContext();
+  }, [practice, examId, skill, setExamContext, clearExamContext]);
 
   useEffect(() => {
     if (!isReviewMode || !reviewResult) return;
@@ -721,6 +740,83 @@ const IeltsPractice = ({ mode = 'practice', initialPractice = null, reviewResult
       },
     }));
   };
+
+  const updatePaneWidth = (event) => {
+    const layout = event.currentTarget.parentElement;
+
+    if (!layout) return;
+
+    const bounds = layout.getBoundingClientRect();
+    const dividerWidth = event.currentTarget.offsetWidth;
+    const minimumPaneWidth = 280;
+    const availableWidth = Math.max(bounds.width - dividerWidth, minimumPaneWidth * 2);
+    const minimumPercent = (minimumPaneWidth / availableWidth) * 100;
+    const maximumPercent = 100 - minimumPercent;
+    const pointerPercent = ((event.clientX - bounds.left) / availableWidth) * 100;
+    const nextPercent = Math.min(maximumPercent, Math.max(minimumPercent, pointerPercent));
+
+    setSourcePanePercent(nextPercent);
+  };
+
+  const handleResizePointerDown = (event, groupId) => {
+    if (event.button !== 0) return;
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setResizingGroupId(groupId);
+    updatePaneWidth(event);
+  };
+
+  const handleResizePointerMove = (event) => {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+
+    updatePaneWidth(event);
+  };
+
+  const finishPaneResize = (event) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    setResizingGroupId(null);
+  };
+
+  const handleResizeKeyDown = (event) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home'].includes(event.key)) return;
+
+    event.preventDefault();
+
+    if (event.key === 'Home') {
+      setSourcePanePercent(52);
+      return;
+    }
+
+    const direction = event.key === 'ArrowLeft' ? -1 : 1;
+    setSourcePanePercent((current) => Math.min(70, Math.max(30, current + direction * 2)));
+  };
+
+  const renderPaneResizeHandle = (groupId) => (
+    <button
+      type="button"
+      className={`${styles.paneResizeHandle} ${
+        resizingGroupId === groupId ? styles.paneResizeHandleActive : ''
+      }`}
+      onPointerDown={(event) => handleResizePointerDown(event, groupId)}
+      onPointerMove={handleResizePointerMove}
+      onPointerUp={finishPaneResize}
+      onPointerCancel={finishPaneResize}
+      onLostPointerCapture={() => setResizingGroupId(null)}
+      onKeyDown={handleResizeKeyDown}
+      onDoubleClick={() => setSourcePanePercent(52)}
+      role="separator"
+      aria-label="Điều chỉnh độ rộng giữa nội dung đề và câu hỏi"
+      aria-orientation="vertical"
+      aria-valuemin={30}
+      aria-valuemax={70}
+      aria-valuenow={Math.round(sourcePanePercent)}
+      title="Kéo để thay đổi độ rộng hai khung; nhấp đúp để đặt lại"
+    />
+  );
 
   const scrollToQuestion = (questionId) => {
     setActiveQuestionId(Number(questionId));
@@ -1102,7 +1198,10 @@ const IeltsPractice = ({ mode = 'practice', initialPractice = null, reviewResult
               </div>
             )}
 
-            <div className={styles.ieltsExamLayout}>
+            <div
+              className={`${styles.ieltsExamLayout} ${!isReviewMode ? styles.resizableExamLayout : ''}`}
+              style={!isReviewMode ? { '--source-pane-width': `${sourcePanePercent}%` } : undefined}
+            >
               <div className={styles.sourcePane}>
                 {visualAssets.length > 0 && (
                   <div className={styles.materialGrid}>
@@ -1137,6 +1236,8 @@ const IeltsPractice = ({ mode = 'practice', initialPractice = null, reviewResult
                   </div>
                 ) : null}
               </div>
+
+              {!isReviewMode ? renderPaneResizeHandle(group.groupId) : null}
 
               <div className={styles.answerPane}>
                 {group.blocks.map((block) => {
@@ -1255,7 +1356,10 @@ const IeltsPractice = ({ mode = 'practice', initialPractice = null, reviewResult
               </p>
             ) : null}
 
-            <div className={styles.ieltsExamLayout}>
+            <div
+              className={`${styles.ieltsExamLayout} ${!isReviewMode ? styles.resizableExamLayout : ''}`}
+              style={!isReviewMode ? { '--source-pane-width': `${sourcePanePercent}%` } : undefined}
+            >
               <div className={styles.sourcePane}>
                 {!showOnlyPassageText && visualAssets.length > 0 && (
                   <div className={styles.materialGrid}>
@@ -1292,6 +1396,8 @@ const IeltsPractice = ({ mode = 'practice', initialPractice = null, reviewResult
                   </div>
                 ) : null}
               </div>
+
+              {!isReviewMode ? renderPaneResizeHandle(group.groupId) : null}
 
               <div className={styles.answerPane}>
                 {group.blocks.map((block) => {

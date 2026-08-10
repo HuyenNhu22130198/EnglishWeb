@@ -26,15 +26,23 @@ const createApiError = (response, data, fallbackMessage) => {
 };
 
 export const chatbotAPI = {
-  async ask(message) {
+  async ask(message, context) {
+    const payload = { message };
+
+    // Kèm ngữ cảnh đề đang làm (nếu có) để tra nhanh theo số câu.
+    if (context?.examId && context?.examType) {
+      payload.examType = context.examType;
+      payload.examId = context.examId;
+      if (context.partNo != null) payload.partNo = context.partNo;
+      if (context.skill) payload.skill = context.skill;
+    }
+
     const response = await fetch(`${API_BASE_URL}/ask`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        message,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await parseApiResponse(response);

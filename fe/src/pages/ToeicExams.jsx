@@ -45,18 +45,6 @@ const ToeicExams = () => {
 
   return (
     <main className={styles.toeicPage}>
-      <section className={styles.pageHeader}>
-        <div>
-          <span className={styles.eyebrow}>Kho đề TOEIC</span>
-
-          <h1>Danh sách đề thi TOEIC</h1>
-
-          <p>
-            Luyện tập với các đề ETS full test gồm đầy đủ Listening và Reading.
-          </p>
-        </div>
-      </section>
-
       <section className={styles.searchSection}>
         <div className={styles.searchCard}>
           <div className={styles.searchBox}>

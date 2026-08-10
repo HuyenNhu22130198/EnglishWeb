@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ExamSessionProvider } from './contexts/ExamSessionContext';
 import { ConfirmDialogProvider } from './contexts/ConfirmDialogContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -20,10 +21,14 @@ import Infor from './pages/Infor';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import ToeicPractice from './pages/ToeicPractice';
 import ToeicResult from './pages/ToeicResult';
 import ToeicExamDetail from './pages/ToeicExamDetail';
 import Forum from './pages/Forum';
+import Guide from './pages/Guide';
+import Contact from './pages/Contact';
 
 import AdminRoute from './admin/AdminRoute';
 import AdminLayout from './admin/AdminLayout';
@@ -46,7 +51,13 @@ function App() {
     });
   }, [location.pathname, location.search]);
 
-  const noLayoutPages = ['/login', '/register', '/forgot-password'];
+  const noLayoutPages = [
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/reset-password',
+    '/verify-email',
+  ];
   const isPracticePage =
     location.pathname.startsWith('/practice/toeic/') ||
     location.pathname.startsWith('/practice/ielts/');
@@ -58,6 +69,7 @@ function App() {
   return (
     <ConfirmDialogProvider>
       <AuthProvider>
+        <ExamSessionProvider>
         <div>
         {!hideLayout && <Header />}
 
@@ -132,6 +144,8 @@ function App() {
           />
 
           <Route path="/forum" element={<Forum />} />
+          <Route path="/guide" element={<Guide />} />
+          <Route path="/contact" element={<Contact />} />
 
           <Route
             path="/infor"
@@ -147,11 +161,14 @@ function App() {
           <Route path="/register" element={<Register />} />
 
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
         </Routes>
 
         <FloatingDictionary />
         {!hideLayout && <Footer />}
         </div>
+        </ExamSessionProvider>
       </AuthProvider>
     </ConfirmDialogProvider>
   );

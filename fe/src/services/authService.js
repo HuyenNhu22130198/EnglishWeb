@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080/api';
+const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
+const API_BASE_URL = configuredApiBaseUrl.endsWith('/api')
+  ? configuredApiBaseUrl
+  : `${configuredApiBaseUrl}/api`;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -26,7 +29,8 @@ export const getStoredToken = () => {
 
 export const storeUser = (userData) => {
   const storedUser = authAPI.getStoredUser() || {};
-  const { password, ...safeUserData } = userData || {};
+  const safeUserData = { ...(userData || {}) };
+  delete safeUserData.password;
   const token = safeUserData.token || storedUser.token || localStorage.getItem('token') || '';
 
   localStorage.setItem('user', JSON.stringify({
@@ -53,7 +57,12 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Các endpoint xác thực (login / oauth / register / forgot / reset...) tự hiển thị lỗi
+    // ngay trên trang, không được redirect kẻo mất thông báo lỗi + nút gửi lại xác thực.
+    const requestUrl = error.config?.url || '';
+    const isAuthEndpoint = requestUrl.includes('/auth/');
+
+    if (error.response?.status === 401 && !isAuthEndpoint) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
@@ -89,6 +98,48 @@ export const authAPI = {
       storeUser(loginData);
     }
 
+    return apiResponse;
+  },
+
+  verifyEmail: async (token) => {
+    const response = await api.get('/auth/verify-email', { params: { token } });
+    return response.data;
+  },
+
+  resendVerification: async (email) => {
+    const response = await api.post('/auth/resend-verification', { email });
+    return response.data;
+  },
+
+  forgotPassword: async (email) => {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  resetPassword: async (token, password, confirmPassword) => {
+    const response = await api.post('/auth/reset-password', {
+      token,
+      password,
+      confirmPassword,
+    });
+    return response.data;
+  },
+
+  oauthGoogle: async (credential) => {
+    const response = await api.post('/auth/oauth/google', { credential });
+    const apiResponse = response.data;
+    if (apiResponse?.success && apiResponse.data?.token) {
+      storeUser(apiResponse.data);
+    }
+    return apiResponse;
+  },
+
+  oauthFacebook: async (credential) => {
+    const response = await api.post('/auth/oauth/facebook', { credential });
+    const apiResponse = response.data;
+    if (apiResponse?.success && apiResponse.data?.token) {
+      storeUser(apiResponse.data);
+    }
     return apiResponse;
   },
 

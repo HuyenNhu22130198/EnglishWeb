@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/authService';
+import SocialLoginButtons from '../components/SocialLoginButtons';
 import styles from './Auth.module.css';
 
 const EyeIcon = () => (
@@ -258,6 +259,11 @@ const Register = () => {
               </button>
             </div>
           </form>
+
+          <SocialLoginButtons
+            onError={setError}
+            onSuccess={setSuccess}
+          />
 
           <p className={styles.switchText}>
             Đã có tài khoản?{' '}

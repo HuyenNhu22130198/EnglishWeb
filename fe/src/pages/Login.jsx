@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
+import SocialLoginButtons from '../components/SocialLoginButtons';
 import styles from './Auth.module.css';
 
 const EyeIcon = () => (
@@ -61,6 +62,16 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [resending, setResending] = useState(false);
+
+  const showLoginError = (message) => {
+    const isUnverified = message.includes('EMAIL_NOT_VERIFIED');
+    setNeedsVerification(isUnverified);
+    setVerificationEmail(emailOrUsername.includes('@') ? emailOrUsername.trim() : '');
+    setError(message.replace(/^EMAIL_NOT_VERIFIED:\s*/, ''));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -79,7 +90,7 @@ const Login = () => {
       const response = await authAPI.login(emailOrUsername, password);
 
       if (!response.success) {
-        setError(response.message || 'Đăng nhập thất bại');
+        showLoginError(response.message || 'Đăng nhập thất bại');
         return;
       }
 
@@ -110,10 +121,28 @@ const Login = () => {
         }
       }, 700);
     } catch (err) {
-      setError(err.response?.data?.message || 'Lỗi kết nối đến server');
+      showLoginError(err.response?.data?.message || 'Lỗi kết nối đến server');
       console.error('Login error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!verificationEmail.trim()) {
+      setError('Vui lòng nhập email tài khoản để gửi lại liên kết xác thực.');
+      return;
+    }
+
+    setResending(true);
+    setSuccess('');
+    try {
+      const response = await authAPI.resendVerification(verificationEmail.trim());
+      setSuccess(response.message);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Không thể gửi lại email xác thực.');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -142,6 +171,26 @@ const Login = () => {
           {success && (
             <div className={`${styles.authMessage} ${styles.successAlert}`}>
               ✅ {success}
+            </div>
+          )}
+
+          {needsVerification && (
+            <div className={styles.resendBox}>
+              <input
+                type="email"
+                value={verificationEmail}
+                onChange={(e) => setVerificationEmail(e.target.value)}
+                placeholder="Email tài khoản"
+                aria-label="Email nhận lại liên kết xác thực"
+              />
+              <button
+                type="button"
+                className={styles.secondaryButton}
+                onClick={handleResendVerification}
+                disabled={resending}
+              >
+                {resending ? 'Đang gửi...' : 'Gửi lại email xác thực'}
+              </button>
             </div>
           )}
 
@@ -204,6 +253,14 @@ const Login = () => {
               {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
             </button>
           </form>
+
+          <SocialLoginButtons
+            onError={(message) => {
+              setNeedsVerification(false);
+              setError(message);
+            }}
+            onSuccess={setSuccess}
+          />
 
           <p className={styles.switchText}>
             Chưa có tài khoản?{' '}

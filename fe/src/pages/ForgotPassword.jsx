@@ -1,25 +1,29 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { authAPI } from '../services/authService';
 import styles from './Auth.module.css';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [step, setStep] = useState('email');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!email) return;
+    if (!email.trim()) return;
 
     setLoading(true);
-
-    // Hiện tại BE của mình chưa có API forgot password,
-    // nên phần này mới giả lập gửi email.
-    setTimeout(() => {
+    setError('');
+    try {
+      await authAPI.forgotPassword(email.trim());
       setStep('success');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Không thể gửi email đặt lại mật khẩu.');
+    } finally {
       setLoading(false);
-    }, 700);
+    }
   };
 
   return (
@@ -39,6 +43,12 @@ const ForgotPassword = () => {
                   Nhập email đã đăng ký để nhận hướng dẫn đặt lại mật khẩu.
                 </p>
               </div>
+
+              {error && (
+                <div className={`${styles.authMessage} ${styles.errorMessage}`}>
+                  ❌ {error}
+                </div>
+              )}
 
               <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={styles.inputGroup}>

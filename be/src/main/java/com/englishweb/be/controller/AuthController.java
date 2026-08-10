@@ -1,15 +1,25 @@
 package com.englishweb.be.controller;
 
 import com.englishweb.be.dto.ApiResponse;
+import com.englishweb.be.dto.ForgotPasswordRequest;
 import com.englishweb.be.dto.LoginRequest;
 import com.englishweb.be.dto.LoginResponse;
+import com.englishweb.be.dto.OAuthLoginRequest;
 import com.englishweb.be.dto.RegisterRequest;
+import com.englishweb.be.dto.ResendVerificationRequest;
+import com.englishweb.be.dto.ResetPasswordRequest;
 import com.englishweb.be.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -35,6 +45,67 @@ public class AuthController {
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         try {
             LoginResponse response = authService.login(request);
+            return ResponseEntity.ok(ApiResponse.success(response.getMessage(), response));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<ApiResponse<String>> verifyEmail(@RequestParam String token) {
+        try {
+            String message = authService.verifyEmail(token);
+            return ResponseEntity.ok(ApiResponse.success(message, null));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<ApiResponse<String>> resendVerification(
+            @Valid @RequestBody ResendVerificationRequest request) {
+        String message = authService.resendVerification(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.success(message, null));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<String>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        String message = authService.forgotPassword(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.success(message, null));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<String>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        try {
+            String message = authService.resetPassword(request);
+            return ResponseEntity.ok(ApiResponse.success(message, null));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/oauth/google")
+    public ResponseEntity<ApiResponse<LoginResponse>> googleLogin(
+            @Valid @RequestBody OAuthLoginRequest request) {
+        return oauthLogin("GOOGLE", request);
+    }
+
+    @PostMapping("/oauth/facebook")
+    public ResponseEntity<ApiResponse<LoginResponse>> facebookLogin(
+            @Valid @RequestBody OAuthLoginRequest request) {
+        return oauthLogin("FACEBOOK", request);
+    }
+
+    private ResponseEntity<ApiResponse<LoginResponse>> oauthLogin(
+            String provider,
+            OAuthLoginRequest request) {
+        try {
+            LoginResponse response = authService.oauthLogin(provider, request);
             return ResponseEntity.ok(ApiResponse.success(response.getMessage(), response));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
