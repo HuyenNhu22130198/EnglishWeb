@@ -1,4 +1,6 @@
-const API = "http://localhost:8080/api/admin/exams";
+import { API_BASE } from '../../config/apiBase';
+
+const API = `${API_BASE}/admin/exams`;
 
 function token() {
   return localStorage.getItem("token") || localStorage.getItem("accessToken") || "";

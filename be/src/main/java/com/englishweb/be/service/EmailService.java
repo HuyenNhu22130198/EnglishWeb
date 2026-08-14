@@ -4,9 +4,12 @@ import com.englishweb.be.entity.User;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -17,6 +20,8 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class EmailService {
 
+    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+
     private final JavaMailSender mailSender;
 
     @Value("${spring.mail.username:}")
@@ -25,6 +30,7 @@ public class EmailService {
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
+    @Async("mailTaskExecutor")
     public void sendVerificationEmail(User user, String token) {
         String url = buildFrontendUrl("/verify-email", token);
         String body = """
@@ -37,6 +43,7 @@ public class EmailService {
         sendHtml(user.getEmail(), "Xác thực email StudyEnglishWithNhu", body);
     }
 
+    @Async("mailTaskExecutor")
     public void sendPasswordResetEmail(User user, String token) {
         String url = buildFrontendUrl("/reset-password", token);
         String body = """
@@ -74,6 +81,7 @@ public class EmailService {
             helper.setText(body, true);
             mailSender.send(message);
         } catch (MessagingException exception) {
+            log.error("Không thể gửi email '{}' đến người nhận {}", subject, recipient, exception);
             throw new RuntimeException("Không thể gửi email. Vui lòng thử lại sau.", exception);
         }
     }

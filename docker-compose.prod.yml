@@ -1,0 +1,82 @@
+# Các biến ${...} được lấy từ file .env ở thư mục gốc (xem .env.prod.example).
+# Secret ứng dụng nằm trong be/.env. Các biến DB_URL, DB_USERNAME, DB_PASSWORD,
+# SPRING_PROFILES_ACTIVE, APP_FRONTEND_URL và APP_CORS_ALLOWED_ORIGINS được Compose
+# ghi đè, nên không cần đặt trong be/.env (nếu có đặt thì vẫn bị ghi đè).
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  whisper:
+    image: ghcr.io/ggml-org/whisper.cpp:main
+    restart: unless-stopped
+    volumes:
+      - ./whisper-models:/app/models
+    entrypoint: ["bash", "-c"]
+    command:
+      - "test -f /app/models/ggml-small.en.bin || curl -L -o /app/models/ggml-small.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin; whisper-server -m /app/models/ggml-small.en.bin --host 0.0.0.0 --port 8080 --convert -l en"
+
+  backend:
+    build:
+      context: ./be
+      dockerfile: Dockerfile
+    env_file:
+      - be/.env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      WHISPER_SERVER_URL: http://whisper:8080
+      APP_FRONTEND_URL: https://${DOMAIN}
+      APP_CORS_ALLOWED_ORIGINS: https://${DOMAIN}
+    depends_on:
+      db:
+        condition: service_healthy
+      whisper:
+        condition: service_started
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./fe
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
+        VITE_FACEBOOK_APP_ID: ${VITE_FACEBOOK_APP_ID}
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  db-data:
+  caddy-data:
+  caddy-config:

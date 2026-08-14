@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8080/api/dictionary';
+import { API_BASE } from '../config/apiBase';
+
+const API_BASE_URL = `${API_BASE}/dictionary`;
 
 export const dictionaryAPI = {
   async lookupWord(word, signal) {

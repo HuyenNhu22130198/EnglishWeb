@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8080/api/admin/banners';
+import { API_BASE } from '../../config/apiBase';
+
+const API_BASE_URL = `${API_BASE}/admin/banners`;
 
 const getToken = () => {
   try {
