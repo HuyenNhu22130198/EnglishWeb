@@ -14,7 +14,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ielts/speaking")
-@CrossOrigin(origins = "http://localhost:5173")
 @RequiredArgsConstructor
 public class IeltsSpeakingController {
     private final IeltsSpeakingService speakingService;

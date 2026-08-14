@@ -17,7 +17,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/toeic/exams")
-@CrossOrigin(origins = "http://localhost:5173")
 @RequiredArgsConstructor
 public class ToeicExamController {
 
