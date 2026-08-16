@@ -1,0 +1,144 @@
+.termCell {
+  min-width: 160px;
+  color: #172b4d;
+  font-weight: 700;
+}
+
+.meaningCell {
+  max-width: 280px;
+  overflow: hidden;
+  color: #667085;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activePillButton,
+.inactivePillButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.activePillButton {
+  background: #e9f9ef;
+  border-color: #b7ebc6;
+  color: #137a45;
+}
+
+.inactivePillButton {
+  background: #f2f4f7;
+  border-color: #d0d5dd;
+  color: #667085;
+}
+
+.activePillButton:hover,
+.inactivePillButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(16, 24, 40, 0.08);
+}
+
+.activePillButton:disabled,
+.inactivePillButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.actions button {
+  border: 1px solid #d0d5dd;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #344054;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 7px 10px;
+}
+
+.actions .deleteButton {
+  border-color: #fecdca;
+  color: #b42318;
+}
+
+.form {
+  display: grid;
+  gap: 18px;
+}
+
+.form label {
+  display: grid;
+  gap: 8px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.form input:not([type='checkbox']),
+.form select {
+  width: 100%;
+  height: 42px;
+  box-sizing: border-box;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #101828;
+  font: inherit;
+  padding: 0 12px;
+}
+
+.form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #101828;
+  font: inherit;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.wideField {
+  grid-column: 1 / -1;
+}
+
+.switchField {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+}
+
+.switchField input {
+  width: 18px;
+  height: 18px;
+  accent-color: #995400;
+}
+
+@media (max-width: 680px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}

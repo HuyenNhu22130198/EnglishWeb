@@ -35,6 +35,7 @@ import AdminLayout from './admin/AdminLayout';
 import AdminDictionaryPage from './admin/dictionary/AdminDictionaryPage';
 import AdminUsers from "./admin/AdminUsers";
 import AdminBanners from "./admin/banners/AdminBanners";
+import AdminFlashcards from "./admin/flashcards/AdminFlashcards";
 import AdminExams from "./admin/exams/AdminExams";
 import AdminExamDetail from "./admin/exams/AdminExamDetail";
 import AdminExamCreate from "./admin/exams/AdminExamCreate";
@@ -86,6 +87,7 @@ function App() {
             <Route path="users" element={<AdminUsers />} />
             <Route path="dictionary" element={<AdminDictionaryPage />} />
             <Route path="banners" element={<AdminBanners />} />
+            <Route path="flashcards" element={<AdminFlashcards />} />
             <Route path="toeic-exams" element={<AdminExams />} />
             <Route path="exams/:type/new" element={<AdminExamCreate />} />
             <Route path="exams/:type/:id" element={<AdminExamDetail />} />

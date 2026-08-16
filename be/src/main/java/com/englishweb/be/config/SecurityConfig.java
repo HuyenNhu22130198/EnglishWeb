@@ -71,6 +71,7 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.GET, "/api/dictionary/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/banners").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/flashcards/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ielts/exams/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/dictionary/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/banners").permitAll()

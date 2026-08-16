@@ -64,6 +64,15 @@ const AdminLayout = () => {
             Quản lý banner
           </NavLink>
           <NavLink
+            to="/admin/flashcards"
+            className={({ isActive }) =>
+              isActive ? `${styles.navItem} ${styles.active}` : styles.navItem
+            }
+          >
+            Quản lý flashcard
+          </NavLink>
+
+          <NavLink
             to="/admin/toeic-exams"
             className={({ isActive }) =>
               isActive ? `${styles.navItem} ${styles.active}` : styles.navItem
