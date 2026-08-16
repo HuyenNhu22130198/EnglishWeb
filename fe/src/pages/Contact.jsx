@@ -44,20 +44,20 @@ const Contact = () => {
       return;
     }
 
-    const subject = encodeURIComponent(`Liên hệ StudyEnglishWithNhu từ ${formData.fullName.trim()}`);
+    const subject = encodeURIComponent(`Liên hệ EngWise từ ${formData.fullName.trim()}`);
     const body = encodeURIComponent(
       `Họ tên: ${formData.fullName.trim()}\nEmail: ${formData.email.trim()}\n\nNội dung:\n${formData.message.trim()}`,
     );
 
     setErrors({});
     setSuccess('Thông tin hợp lệ. Ứng dụng email của bạn đang được mở.');
-    window.location.href = `mailto:contact@studyenglishwithnhu.edu.vn?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:contact@engwise.id.vn?subject=${subject}&body=${body}`;
   };
 
   return (
     <main className={styles.contactPage}>
       <section className={styles.intro}>
-        <span>StudyEnglishWithNhu</span>
+        <span>EngWise</span>
         <h1>Liên hệ với chúng tôi</h1>
         <p>Gửi câu hỏi hoặc góp ý để cùng hoàn thiện trải nghiệm luyện tiếng Anh.</p>
       </section>
@@ -66,15 +66,15 @@ const Contact = () => {
         <section className={styles.information}>
           <h2>Thông tin liên hệ</h2>
           <p>
-            StudyEnglishWithNhu là đồ án tốt nghiệp xây dựng nền tảng luyện đề tiếng Anh,
+            EngWise là đồ án tốt nghiệp xây dựng nền tảng luyện đề tiếng Anh,
             hỗ trợ người học ôn tập chủ động và theo dõi tiến độ.
           </p>
           <dl>
             <div>
               <dt>Email</dt>
               <dd>
-                <a href="mailto:contact@studyenglishwithnhu.edu.vn">
-                  contact@studyenglishwithnhu.edu.vn
+                <a href="mailto:contact@engwise.id.vn">
+                  contact@engwise.id.vn
                 </a>
               </dd>
             </div>

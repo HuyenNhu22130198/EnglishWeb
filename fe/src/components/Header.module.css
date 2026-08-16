@@ -41,6 +41,11 @@
   font-size: 18px;
 }
 
+.logoIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
 .logoText {
   color: #0e3377;
   font-size: 22px;

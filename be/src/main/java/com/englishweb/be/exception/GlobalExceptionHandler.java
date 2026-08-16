@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.List;
 
 import com.englishweb.be.admin.exam.dto.AdminExamDtos.ImportError;
+import com.englishweb.be.flashcard.dto.FlashcardImportRowError;
 
 @RestControllerAdvice
 @Slf4j
@@ -26,6 +27,17 @@ public class GlobalExceptionHandler {
             ExamImportValidationException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.<List<ImportError>>builder()
+                        .success(false)
+                        .message(e.getMessage())
+                        .data(e.getErrors())
+                        .build());
+    }
+
+    @ExceptionHandler(FlashcardImportException.class)
+    public ResponseEntity<ApiResponse<List<FlashcardImportRowError>>> handleFlashcardImportException(
+            FlashcardImportException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.<List<FlashcardImportRowError>>builder()
                         .success(false)
                         .message(e.getMessage())
                         .data(e.getErrors())

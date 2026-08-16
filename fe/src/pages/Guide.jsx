@@ -8,7 +8,7 @@ const Guide = () => {
         <span className={styles.eyebrow}>Bắt đầu thật dễ dàng</span>
         <h1>Hướng dẫn sử dụng</h1>
         <p>
-          Khám phá các công cụ luyện đề và học tập trên StudyEnglishWithNhu để xây dựng
+          Khám phá các công cụ luyện đề và học tập trên EngWise để xây dựng
           lộ trình ôn luyện phù hợp với mục tiêu của bạn.
         </p>
       </section>

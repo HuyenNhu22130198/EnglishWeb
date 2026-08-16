@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getFlashcardNextIdKey, getFlashcardStorageKey } from '../utils/flashcardStorage';
+import { flashcardAPI } from '../services/flashcardService';
 import styles from './Flashcard.module.css';
 
 const emptyForm = {
@@ -37,7 +38,26 @@ const speakText = (text) => {
   window.speechSynthesis.speak(utterance);
 };
 
-const FlashcardWorkspace = ({ user, storageKey, nextIdKey }) => {
+const ModeTabs = ({ mode, onModeChange }) => (
+  <div className={styles.modeTabs}>
+    <button
+      type="button"
+      className={mode === 'mine' ? styles.modeTabActive : styles.modeTab}
+      onClick={() => onModeChange('mine')}
+    >
+      Của tôi
+    </button>
+    <button
+      type="button"
+      className={mode === 'system' ? styles.modeTabActive : styles.modeTab}
+      onClick={() => onModeChange('system')}
+    >
+      Có sẵn
+    </button>
+  </div>
+);
+
+const FlashcardWorkspace = ({ user, storageKey, nextIdKey, mode, onModeChange }) => {
   const [customCards, setCustomCards] = useState(() => loadStoredJson(storageKey, []));
   const [nextCustomId, setNextCustomId] = useState(() => loadStoredJson(nextIdKey, 1));
   const [screen, setScreen] = useState('list');
@@ -359,6 +379,7 @@ const FlashcardWorkspace = ({ user, storageKey, nextIdKey }) => {
       <main className={styles.flashcardPage}>
         <section className={styles.deckSection}>
           <div className="container">
+            <ModeTabs mode={mode} onModeChange={onModeChange} />
             <div className={styles.pageHeader}>
               <div>
                 <p className={styles.pageKicker}>Flashcards</p>
@@ -408,6 +429,7 @@ const FlashcardWorkspace = ({ user, storageKey, nextIdKey }) => {
       <main className={styles.flashcardPage}>
         <section className={styles.studySection}>
           <div className="container">
+            <ModeTabs mode={mode} onModeChange={onModeChange} />
             <button type="button" className={styles.topBackButton} onClick={goBackToList}>
               ← Quay lại
             </button>
@@ -571,17 +593,287 @@ const FlashcardWorkspace = ({ user, storageKey, nextIdKey }) => {
   );
 };
 
+const SystemFlashcardWorkspace = ({ mode, onModeChange }) => {
+  const [decks, setDecks] = useState([]);
+  const [loadingDecks, setLoadingDecks] = useState(true);
+  const [decksError, setDecksError] = useState('');
+  const [screen, setScreen] = useState('list');
+  const [selectedDeck, setSelectedDeck] = useState(null);
+  const [deckCards, setDeckCards] = useState([]);
+  const [loadingCards, setLoadingCards] = useState(false);
+  const [cardsError, setCardsError] = useState('');
+  const [practiceIndex, setPracticeIndex] = useState(0);
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    flashcardAPI
+      .getSystemDecks()
+      .then((data) => {
+        if (!cancelled) setDecks(data || []);
+      })
+      .catch((err) => {
+        if (!cancelled) setDecksError(err.message || 'Không thể tải danh sách bộ flashcard.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDecks(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const resetPractice = () => {
+    setPracticeIndex(0);
+    setIsFlipped(false);
+  };
+
+  const openDeck = (deck) => {
+    setSelectedDeck(deck);
+    setScreen('deck');
+    setCardsError('');
+    setLoadingCards(true);
+    resetPractice();
+
+    flashcardAPI
+      .getSystemDeckCards(deck.id)
+      .then((data) => setDeckCards(data || []))
+      .catch((err) => setCardsError(err.message || 'Không thể tải flashcard trong bộ này.'))
+      .finally(() => setLoadingCards(false));
+  };
+
+  const openPractice = () => {
+    setScreen('practice');
+    resetPractice();
+  };
+
+  const goBackToList = () => {
+    setScreen('list');
+    setSelectedDeck(null);
+    setDeckCards([]);
+    resetPractice();
+  };
+
+  const goBackToDeck = () => {
+    setScreen('deck');
+    resetPractice();
+  };
+
+  const goToPracticeCard = (direction) => {
+    if (!deckCards.length) return;
+
+    setPracticeIndex((currentIndex) => {
+      const nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1 + deckCards.length;
+      return nextIndex % deckCards.length;
+    });
+    setIsFlipped(false);
+  };
+
+  const practiceCard = deckCards[practiceIndex] || null;
+
+  if (screen === 'practice') {
+    return (
+      <main className={styles.flashcardPage}>
+        <section className={styles.practiceSection}>
+          <div className="container">
+            <button type="button" className={styles.backButton} onClick={goBackToDeck}>
+              ← Quay lại
+            </button>
+
+            <div className={styles.practiceCard}>
+              <span className={styles.newWordBadge}>Từ mới</span>
+
+              {practiceCard ? (
+                <div
+                  className={styles.practiceFlipArea}
+                  onClick={() => setIsFlipped((current) => !current)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setIsFlipped((current) => !current);
+                    }
+                  }}
+                >
+                  {isFlipped ? (
+                    <span className={styles.practiceMeaning}>
+                      <strong>{practiceCard.meaning}</strong>
+                      {practiceCard.example ? <small>{practiceCard.example}</small> : null}
+                    </span>
+                  ) : (
+                    <span className={styles.practiceTerm}>
+                      <strong>{practiceCard.term}</strong>
+                      <button
+                        type="button"
+                        className={styles.soundButton}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          speakText(practiceCard.term);
+                        }}
+                      >
+                        🔊
+                      </button>
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div className={styles.emptyState}>
+                  <h2>Chưa có từ trong bộ thẻ này</h2>
+                </div>
+              )}
+
+              <button
+                type="button"
+                className={styles.flipIcon}
+                onClick={() => setIsFlipped((current) => !current)}
+              >
+                ↻
+              </button>
+            </div>
+
+            {deckCards.length > 1 ? (
+              <div className={styles.practiceActions}>
+                <button type="button" onClick={() => goToPracticeCard('prev')}>
+                  Trước
+                </button>
+                <span>
+                  {practiceIndex + 1}/{deckCards.length}
+                </span>
+                <button type="button" onClick={() => goToPracticeCard('next')}>
+                  Sau
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (screen === 'deck' && selectedDeck) {
+    return (
+      <main className={styles.flashcardPage}>
+        <section className={styles.deckDetailSection}>
+          <div className="container">
+            <button type="button" className={styles.topBackButton} onClick={goBackToList}>
+              ← Quay lại
+            </button>
+
+            <div className={styles.deckDetailHeader}>
+              <div>
+                <p className={styles.pageKicker}>Deck detail</p>
+                <h1 className={styles.deckTitle}>{selectedDeck.name}</h1>
+                <p className={styles.deckSubtitle}>{deckCards.length} từ trong bộ này</p>
+              </div>
+
+              <button type="button" className={styles.practiceButton} onClick={openPractice}>
+                Luyện tập flashcards
+              </button>
+            </div>
+
+            {cardsError ? <p className={styles.formError}>{cardsError}</p> : null}
+
+            <div className={styles.wordList}>
+              {loadingCards ? (
+                <div className={styles.emptyState}>
+                  <h2>Đang tải flashcard...</h2>
+                </div>
+              ) : (
+                deckCards.map((card) => (
+                  <article key={card.id} className={styles.wordItem}>
+                    <div className={styles.wordItemHeader}>
+                      <strong>{card.term}</strong>
+                      <button type="button" onClick={() => speakText(card.term)}>
+                        🔊
+                      </button>
+                    </div>
+
+                    <p>
+                      <b>Định nghĩa:</b>
+                      {card.wordType ? (
+                        <span className={styles.wordType}>({card.wordType})</span>
+                      ) : null}
+                      <span>{card.meaning}</span>
+                    </p>
+                  </article>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className={styles.flashcardPage}>
+      <section className={styles.deckSection}>
+        <div className="container">
+          <ModeTabs mode={mode} onModeChange={onModeChange} />
+          <div className={styles.pageHeader}>
+            <div>
+              <p className={styles.pageKicker}>Flashcards</p>
+              <h1 className={styles.deckTitle}>Bộ flashcard có sẵn</h1>
+              <p className={styles.deckSubtitle}>Chọn một bộ để ôn tập từ vựng.</p>
+            </div>
+
+            <div className={styles.pageStats}>
+              <span className={styles.statPill}>{decks.length} bộ thẻ</span>
+            </div>
+          </div>
+
+          {decksError ? <p className={styles.formError}>{decksError}</p> : null}
+
+          {loadingDecks ? (
+            <div className={styles.emptyState}>
+              <h2>Đang tải bộ flashcard...</h2>
+            </div>
+          ) : decks.length === 0 ? (
+            <div className={styles.emptyState}>
+              <h2>Chưa có bộ flashcard nào được thêm.</h2>
+            </div>
+          ) : (
+            <div className={styles.deckGrid}>
+              {decks.map((deck) => (
+                <button
+                  key={deck.id}
+                  type="button"
+                  className={styles.deckCard}
+                  onClick={() => openDeck(deck)}
+                >
+                  <strong>{deck.name}</strong>
+                  <span className={styles.deckCount}>▣ {deck.cardCount} từ</span>
+                  {deck.level ? <span className={styles.deckAuthor}>{deck.level}</span> : null}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    </main>
+  );
+};
+
 const Flashcard = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const storageKey = useMemo(() => getFlashcardStorageKey(user), [user]);
   const nextIdKey = useMemo(() => getFlashcardNextIdKey(user), [user]);
+  const [mode, setMode] = useState('mine');
+
+  if (mode === 'system') {
+    return <SystemFlashcardWorkspace mode={mode} onModeChange={setMode} />;
+  }
 
   if (loading) {
     return (
       <main className={styles.flashcardPage}>
         <section className={styles.deckSection}>
           <div className="container">
+            <ModeTabs mode={mode} onModeChange={setMode} />
             <div className={styles.emptyState}>
               <h2>Đang tải dữ liệu flashcard...</h2>
             </div>
@@ -596,6 +888,7 @@ const Flashcard = () => {
       <main className={styles.flashcardPage}>
         <section className={styles.deckSection}>
           <div className="container">
+            <ModeTabs mode={mode} onModeChange={setMode} />
             <div className={styles.pageHeader}>
               <div>
                 <p className={styles.pageKicker}>Flashcards</p>
@@ -628,6 +921,8 @@ const Flashcard = () => {
       user={user}
       storageKey={storageKey}
       nextIdKey={nextIdKey}
+      mode={mode}
+      onModeChange={setMode}
     />
   );
 };
