@@ -167,7 +167,7 @@ const Home = () => {
 
       <section className={styles.examSection} id="courses">
         <div className={styles.sectionHeader}>
-          <span>Tại sao chọn EnglishWeb?</span>
+          <span>Tại sao chọn EngWise?</span>
           <h2>Nền tảng luyện đề gọn gàng, đủ công cụ để học và theo dõi tiến bộ</h2>
           <p>
             Tập trung vào trải nghiệm làm đề trực tiếp, xem lại kết quả và ôn tập ngay sau mỗi lần luyện để việc học

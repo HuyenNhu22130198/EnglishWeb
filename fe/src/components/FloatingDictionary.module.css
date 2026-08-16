@@ -9,12 +9,12 @@
 
 .sideDock {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   justify-items: center;
-  padding: 12px 8px;
+  padding: 14px 10px;
   border: 1px solid #e5eaf3;
   border-right: none;
-  border-radius: 8px 0 0 8px;
+  border-radius: 16px 0 0 16px;
   background: #ffffff;
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
 }
@@ -23,53 +23,71 @@
 .topButton {
   border: none;
   background: transparent;
-  color: #647086;
+  color: #52607a;
   font: inherit;
   cursor: pointer;
 }
 
 .dictionaryTab {
   display: grid;
-  gap: 7px;
+  gap: 6px;
   justify-items: center;
-  width: 50px;
-  padding: 0;
-  font-size: 14px;
-  font-weight: 600;
+  width: 54px;
+  padding: 6px 0;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.bookIcon {
-  display: inline-grid;
-  width: 24px;
-  height: 24px;
-  place-items: center;
-  border-radius: 5px;
-  background: #b94b50;
-  color: #ffffff;
-  font-size: 10px;
-  font-weight: 800;
-  transform: rotate(-8deg);
+.dictionaryTab:hover {
+  background: #eef4ff;
+  color: #0e3377;
 }
 
+.bookIcon,
 .chatIcon {
   display: inline-grid;
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
   place-items: center;
-  border-radius: 999px;
+  border-radius: 50%;
   background: #0e3377;
   color: #ffffff;
-  font-size: 14px;
-  font-weight: 900;
+  box-shadow: 0 6px 14px rgba(14, 51, 119, 0.28);
+  transition: transform 0.15s ease;
+}
+
+.dictionaryTab:hover .bookIcon,
+.dictionaryTab:hover .chatIcon {
+  transform: translateY(-2px);
+}
+
+.bookIcon svg,
+.chatIcon svg {
+  width: 16px;
+  height: 16px;
 }
 
 .topButton {
-  width: 34px;
-  height: 28px;
-  border-top: 1px solid #e5eaf3;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 32px;
+  margin-top: 2px;
+  border-top: 1px solid #eef1f6;
   color: #91a0b3;
-  font-size: 24px;
-  line-height: 1;
+  border-radius: 0 0 4px 4px;
+  transition: color 0.15s ease;
+}
+
+.topButton:hover {
+  color: #0e3377;
+}
+
+.topButton svg {
+  width: 14px;
+  height: 14px;
 }
 
 .panel {
@@ -764,12 +782,32 @@
   }
 
   .sideDock {
-    padding: 10px 7px;
+    gap: 8px;
+    padding: 10px 8px;
+    border-radius: 14px 0 0 14px;
   }
 
   .dictionaryTab {
-    width: 46px;
-    font-size: 13px;
+    width: 44px;
+    gap: 4px;
+    font-size: 10px;
+  }
+
+  .bookIcon,
+  .chatIcon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .bookIcon svg,
+  .chatIcon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .topButton {
+    width: 32px;
+    height: 28px;
   }
 
   .searchForm {

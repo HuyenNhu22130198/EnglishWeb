@@ -39,6 +39,11 @@
   font-weight: 700;
 }
 
+.logoCircleFooter svg {
+  width: 22px;
+  height: 22px;
+}
+
 .footerTitle,
 .footerColumn h4 {
   color: var(--on-surface);
