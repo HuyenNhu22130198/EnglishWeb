@@ -1021,3 +1021,82 @@
     max-width: 980px;
   }
 }
+
+/* Show the full banner width on phones/tablets instead of cropping it via object-fit: cover */
+@media (max-width: 900px) {
+  .hero {
+    display: block;
+    min-height: 0;
+    padding-top: 12px;
+    padding-bottom: 20px;
+  }
+
+  .heroBannerLayer {
+    position: relative;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    display: block;
+    width: calc(100% - 28px);
+    height: auto;
+    aspect-ratio: 16 / 9;
+    margin: 0 auto 14px;
+    border-radius: 8px;
+  }
+
+  .heroBanner,
+  .activeHeroBanner {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    background: #ffffff;
+  }
+
+  .heroInner {
+    position: static;
+    padding: 0 14px;
+  }
+
+  .heroNavigation {
+    position: absolute;
+    top: 0;
+    right: 14px;
+    bottom: auto;
+    left: 14px;
+    width: auto;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+
+  .heroActions {
+    gap: 10px;
+  }
+
+  .primaryAction,
+  .secondaryAction {
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 7px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroActions {
+    gap: 8px;
+  }
+
+  .primaryAction,
+  .secondaryAction {
+    min-height: 40px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+}
