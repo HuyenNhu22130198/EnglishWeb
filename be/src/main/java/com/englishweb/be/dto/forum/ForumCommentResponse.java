@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 @Builder
 public class ForumCommentResponse {
     private Integer id;
+    private Integer postId;
     private String content;
     private ForumAuthorResponse author;
     private LocalDateTime createdAt;

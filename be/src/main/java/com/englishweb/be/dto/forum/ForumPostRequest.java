@@ -14,4 +14,6 @@ public class ForumPostRequest {
     @NotBlank(message = "Noi dung khong duoc de trong")
     @Size(max = 5000, message = "Noi dung toi da 5000 ky tu")
     private String content;
+
+    private String category;
 }

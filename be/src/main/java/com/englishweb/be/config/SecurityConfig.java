@@ -65,6 +65,8 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.POST, "/api/chatbot/ask").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/forum/posts").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/forum/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/forum/categories").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/toeic/exams/**").permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/ielts/exams").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ielts/exams/*/practice").permitAll()

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import NotificationBell from './NotificationBell';
 import styles from './Header.module.css';
 
 const Header = () => {
@@ -103,6 +104,7 @@ const Header = () => {
         <div className={styles.desktopActions}>
           {isAuthenticated ? (
             <>
+              <NotificationBell />
               <Link to="/infor" className={styles.userChip}>
                 <span className={styles.userAvatar}>
                   {user?.fullName?.charAt(0)?.toUpperCase() || 'U'}
@@ -167,9 +169,15 @@ const Header = () => {
 
           <div className={styles.mobileActions}>
             {isAuthenticated ? (
-              <button className={styles.btnLogout} onClick={handleLogout}>
-                Đăng xuất
-              </button>
+              <>
+                <div className={styles.mobileNotificationRow}>
+                  <span>Thông báo</span>
+                  <NotificationBell />
+                </div>
+                <button className={styles.btnLogout} onClick={handleLogout}>
+                  Đăng xuất
+                </button>
+              </>
             ) : (
               <>
                 <Link to="/login" className={styles.btnLogin} onClick={closeMobileMenu}>

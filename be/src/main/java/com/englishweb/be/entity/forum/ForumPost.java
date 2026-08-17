@@ -31,6 +31,15 @@ public class ForumPost {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    // Nullable at the DB level on purpose: this column was added after forum_posts already had rows,
+    // and ddl-auto=update issues a plain ALTER TABLE ADD COLUMN (no DEFAULT) for new columns, which
+    // Postgres rejects as NOT NULL against existing data. Non-null is instead guaranteed by the service
+    // (normalizeCategoryOrDefault) for every row written from now on; old rows just read back as null
+    // and are treated as "KHAC" when building the response.
+    @Column(length = 20)
+    @Builder.Default
+    private String category = "KHAC";
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
