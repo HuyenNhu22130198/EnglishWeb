@@ -8,28 +8,24 @@ const IELTS_SKILLS = [
   {
     key: 'LISTENING',
     title: 'Listening',
-    description: 'Luyện nghe với các câu hỏi và tài liệu âm thanh của đề.',
     questionField: 'listeningQuestions',
     path: (examId) => `/practice/ielts/${examId}?skill=LISTENING`,
   },
   {
     key: 'READING',
     title: 'Reading',
-    description: 'Luyện đọc với bài đọc, câu hỏi và đáp án của đề.',
     questionField: 'readingQuestions',
     path: (examId) => `/practice/ielts/${examId}?skill=READING`,
   },
   {
     key: 'WRITING',
     title: 'Writing',
-    description: 'Luyện viết theo các dạng bài IELTS Writing Task 1 và Task 2.',
     questionField: null,
     path: (examId) => `/practice/ielts/${examId}/writing`,
   },
   {
     key: 'SPEAKING',
     title: 'Speaking',
-    description: 'Luyện nói với các chủ đề và câu hỏi mô phỏng IELTS Speaking, AI chấm điểm.',
     questionField: null,
     path: (examId) => `/practice/ielts/${examId}/speaking/free`,
   },
@@ -142,31 +138,22 @@ const IeltsExamDetail = () => {
           <span>{exam.status}</span>
         </div>
 
-        <div className={styles.skillGrid}>
+        <div className={styles.skillList}>
           {IELTS_SKILLS.map((skill) => {
             const isAvailable = skill.key === 'WRITING' || availableSkills.has(skill.key);
             const questionCount = skill.questionField ? exam[skill.questionField] || 0 : null;
-            const isRouteReady = Boolean(skill.path);
 
             return (
-              <article key={skill.key} className={styles.skillCard}>
+              <div key={skill.key} className={styles.skillRow}>
                 <div>
                   <strong>{skill.title}</strong>
-                  <p>{skill.description}</p>
+                  <span>{questionCount !== null ? `${questionCount} câu hỏi` : 'Không giới hạn'}</span>
                 </div>
 
-                <span>{questionCount === null ? 'Đang cập nhật' : `${questionCount} câu hỏi`}</span>
-
-                <div className={styles.skillActions}>
-                <button
-                  type="button"
-                  onClick={() => startSkill(skill)}
-                  disabled={!isAvailable || !isRouteReady}
-                >
-                  Làm {skill.title}
+                <button type="button" onClick={() => startSkill(skill)} disabled={!isAvailable}>
+                  {isAvailable ? 'Luyện tập' : 'Chưa mở'}
                 </button>
-                </div>
-              </article>
+              </div>
             );
           })}
         </div>
