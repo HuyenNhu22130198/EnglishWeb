@@ -80,6 +80,15 @@ const AdminLayout = () => {
           >
             Quản lý đề thi
           </NavLink>
+
+          <NavLink
+            to="/admin/forum"
+            className={({ isActive }) =>
+              isActive ? `${styles.navItem} ${styles.active}` : styles.navItem
+            }
+          >
+            Quản lý diễn đàn
+          </NavLink>
         </nav>
       </aside>
 

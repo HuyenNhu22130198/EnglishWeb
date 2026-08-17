@@ -276,6 +276,16 @@
   margin-top: 12px;
 }
 
+.mobileNotificationRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  color: #334155;
+  font-weight: 700;
+  font-size: 15px;
+}
+
 .mobileActions .btnLogin,
 .mobileActions .btnRegister,
 .mobileActions .btnLogout {

@@ -34,8 +34,7 @@
   background: #fbf9f8;
 }
 
-.summaryGrid span,
-.skillCard span {
+.summaryGrid span {
   display: block;
   color: #7a8496;
   font-size: 13px;
@@ -77,74 +76,64 @@
   white-space: nowrap;
 }
 
-.skillGrid {
+.skillList {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
 }
 
-.skillCard {
+.skillRow {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   gap: 16px;
-  padding: 22px;
+  padding: 18px 20px;
   border: 1px solid #edf0f6;
   border-radius: 8px;
   background: #ffffff;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
-.skillCard:hover {
+.skillRow:hover {
   border-color: #0e3377;
-  transform: translateY(-2px);
 }
 
-.skillCard strong {
+.skillRow strong {
   display: block;
   color: #111827;
-  font-size: 20px;
-  line-height: 1.35;
+  font-size: 17px;
+  line-height: 1.4;
 }
 
-.skillCard p {
-  margin: 8px 0 0;
-  color: #596275;
-  font-size: 15px;
-  line-height: 1.65;
+.skillRow > div > span {
+  display: block;
+  margin-top: 4px;
+  color: #7a8496;
+  font-size: 13px;
+  font-weight: 750;
 }
 
-.skillActions {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-  margin-top: auto;
-}
-
-.skillActions button {
-  height: 46px;
+.skillRow button {
+  flex-shrink: 0;
+  height: 42px;
+  padding: 0 20px;
   border: none;
   border-radius: 8px;
   background: #0e3377;
   color: #ffffff;
   font-family: inherit;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 850;
   cursor: pointer;
 }
 
-.skillActions button:hover:not(:disabled) {
+.skillRow button:hover:not(:disabled) {
   background: #17499c;
 }
 
-.skillActions button:disabled {
-  opacity: 0.5;
+.skillRow button:disabled {
+  background: #edf0f6;
+  color: #7a8496;
   cursor: not-allowed;
-}
-
-.skillActions .freeSpeakingButton {
-  border: 1px solid #0e3377;
-  background: #ffffff;
-  color: #0e3377;
 }
 
 .emptyState {
@@ -182,13 +171,21 @@
     padding: 22px 16px;
   }
 
-  .summaryGrid,
-  .skillGrid {
+  .summaryGrid {
     grid-template-columns: 1fr;
   }
 
   .sectionHeader {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .skillRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .skillRow button {
+    width: 100%;
   }
 }

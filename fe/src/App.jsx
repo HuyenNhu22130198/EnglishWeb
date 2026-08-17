@@ -27,6 +27,7 @@ import ToeicPractice from './pages/ToeicPractice';
 import ToeicResult from './pages/ToeicResult';
 import ToeicExamDetail from './pages/ToeicExamDetail';
 import Forum from './pages/Forum';
+import ForumPostDetail from './pages/ForumPostDetail';
 import Guide from './pages/Guide';
 import Contact from './pages/Contact';
 
@@ -39,6 +40,7 @@ import AdminFlashcards from "./admin/flashcards/AdminFlashcards";
 import AdminExams from "./admin/exams/AdminExams";
 import AdminExamDetail from "./admin/exams/AdminExamDetail";
 import AdminExamCreate from "./admin/exams/AdminExamCreate";
+import AdminForum from "./admin/forum/AdminForum";
 
 
 function App() {
@@ -89,6 +91,7 @@ function App() {
             <Route path="banners" element={<AdminBanners />} />
             <Route path="flashcards" element={<AdminFlashcards />} />
             <Route path="toeic-exams" element={<AdminExams />} />
+            <Route path="forum" element={<AdminForum />} />
             <Route path="exams/:type/new" element={<AdminExamCreate />} />
             <Route path="exams/:type/:id" element={<AdminExamDetail />} />
           </Route>
@@ -146,6 +149,7 @@ function App() {
           />
 
           <Route path="/forum" element={<Forum />} />
+          <Route path="/forum/posts/:id" element={<ForumPostDetail />} />
           <Route path="/guide" element={<Guide />} />
           <Route path="/contact" element={<Contact />} />
 

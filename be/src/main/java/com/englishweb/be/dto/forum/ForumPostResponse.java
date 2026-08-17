@@ -12,11 +12,15 @@ public class ForumPostResponse {
     private Integer id;
     private String title;
     private String content;
+    private String category;
     private ForumAuthorResponse author;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private long likeCount;
     private long commentCount;
     private boolean likedByCurrentUser;
+    private boolean savedByCurrentUser;
+    @Builder.Default
+    private long reportCount = 0;
     private List<ForumCommentResponse> comments;
 }

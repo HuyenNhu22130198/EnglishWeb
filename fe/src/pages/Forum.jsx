@@ -1,141 +1,78 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useConfirmDialog } from '../contexts/useConfirmDialog';
-import { forumAPI } from '../services/forumService';
+import { forumAPI, FORUM_CATEGORY_LABELS } from '../services/forumService';
+import { appendComment, updateCommentTree, removeCommentTree } from '../utils/forumCommentTree';
+import ForumPostCard from '../components/forum/ForumPostCard';
 import styles from './Forum.module.css';
 
-const formatDate = (value) => {
-  if (!value) return '';
-  const date = new Date(value);
-  const now = new Date();
-  const diffDays = Math.floor((now.getTime() - date.getTime()) / 86400000);
+const CATEGORY_OPTIONS = [
+  { value: '', label: 'Tất cả chủ đề' },
+  ...Object.entries(FORUM_CATEGORY_LABELS).map(([value, label]) => ({ value, label })),
+];
 
-  if (diffDays <= 0) return 'Hôm nay';
-  if (diffDays < 30) return `${diffDays} ngày trước`;
-  return date.toLocaleDateString('vi-VN');
-};
+const SORT_OPTIONS = [
+  { value: 'NEWEST', label: 'Mới nhất' },
+  { value: 'MOST_LIKED', label: 'Nhiều lượt thích nhất' },
+  { value: 'MOST_COMMENTED', label: 'Nhiều bình luận nhất' },
+];
 
-const resizeTextarea = (textarea) => {
-  if (!textarea) return;
-  textarea.style.height = 'auto';
-  textarea.style.height = `${textarea.scrollHeight}px`;
-};
-
-const AutoTextarea = ({ value, onChange, ...props }) => {
-  const textareaRef = useRef(null);
-
-  useEffect(() => {
-    resizeTextarea(textareaRef.current);
-  }, [value]);
-
-  return (
-    <textarea
-      ref={textareaRef}
-      value={value}
-      onChange={(event) => {
-        onChange(event);
-        resizeTextarea(event.target);
-      }}
-      rows={1}
-      {...props}
-    />
-  );
-};
-
-const appendComment = (comments, parentCommentId, newComment) => {
-  if (!parentCommentId) {
-    return [...comments, newComment];
-  }
-
-  return comments.map((comment) => {
-    if (comment.id === parentCommentId) {
-      return {
-        ...comment,
-        replies: [...(comment.replies || []), newComment],
-      };
-    }
-
-    return {
-      ...comment,
-      replies: appendComment(comment.replies || [], parentCommentId, newComment),
-    };
-  });
-};
-
-const updateCommentTree = (comments, commentId, updater) =>
-  comments.map((comment) => {
-    if (comment.id === commentId) {
-      return updater(comment);
-    }
-
-    return {
-      ...comment,
-      replies: updateCommentTree(comment.replies || [], commentId, updater),
-    };
-  });
-
-const countCommentTree = (comment) =>
-  1 + (comment.replies || []).reduce((total, reply) => total + countCommentTree(reply), 0);
-
-const removeCommentTree = (comments, commentId) =>
-  comments.reduce(
-    (result, comment) => {
-      if (comment.id === commentId) {
-        return {
-          comments: result.comments,
-          removedCount: result.removedCount + countCommentTree(comment),
-        };
-      }
-
-      const nested = removeCommentTree(comment.replies || [], commentId);
-      return {
-        comments: [...result.comments, { ...comment, replies: nested.comments }],
-        removedCount: result.removedCount + nested.removedCount,
-      };
-    },
-    { comments: [], removedCount: 0 }
-  );
+const emptyDraft = { title: '', content: '', category: 'KHAC' };
 
 const Forum = () => {
   const confirm = useConfirmDialog();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
+
   const [posts, setPosts] = useState([]);
+  const [pageInfo, setPageInfo] = useState({ page: 0, hasMore: false, totalItems: 0 });
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState('');
+
+  const [keyword, setKeyword] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [category, setCategory] = useState('');
+  const [sort, setSort] = useState('NEWEST');
+
   const [isComposerOpen, setIsComposerOpen] = useState(false);
-  const [newPost, setNewPost] = useState({ title: '', content: '' });
-  const [commentDrafts, setCommentDrafts] = useState({});
-  const [replyDrafts, setReplyDrafts] = useState({});
-  const [editDrafts, setEditDrafts] = useState({});
-  const [activeReply, setActiveReply] = useState({});
-  const [activeEdit, setActiveEdit] = useState(null);
-  const [expandedComments, setExpandedComments] = useState({});
+  const [draft, setDraft] = useState(emptyDraft);
   const [submitting, setSubmitting] = useState(false);
+
+  const [isSavedOpen, setIsSavedOpen] = useState(false);
+  const [savedPosts, setSavedPosts] = useState([]);
+  const [savedLoading, setSavedLoading] = useState(false);
 
   const userInitial = useMemo(() => {
     const name = user?.fullName || user?.username || 'U';
     return name.charAt(0).toUpperCase();
   }, [user]);
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      setIsLoading(true);
+  const fetchPosts = useCallback(
+    async (page, replace) => {
+      if (page === 0) setIsLoading(true);
+      else setIsLoadingMore(true);
       setError('');
 
       try {
-        const response = await forumAPI.getPosts();
-        setPosts(response.data || []);
+        const response = await forumAPI.getPosts({ page, size: 10, category, keyword, sort });
+        const data = response.data;
+        setPosts((current) => (replace ? data.items : [...current, ...data.items]));
+        setPageInfo({ page: data.page, hasMore: data.hasMore, totalItems: data.totalItems });
       } catch (err) {
         setError(err.response?.data?.message || 'Không thể tải diễn đàn.');
       } finally {
         setIsLoading(false);
+        setIsLoadingMore(false);
       }
-    };
+    },
+    [category, keyword, sort]
+  );
 
-    fetchPosts();
-  }, []);
+  useEffect(() => {
+    fetchPosts(0, true);
+  }, [fetchPosts]);
 
   const requireLogin = () => {
     if (!isAuthenticated) {
@@ -146,26 +83,26 @@ const Forum = () => {
   };
 
   const openComposer = () => {
-    if (requireLogin()) {
-      setIsComposerOpen(true);
-    }
+    if (!requireLogin()) return;
+    setDraft(emptyDraft);
+    setIsComposerOpen(true);
   };
 
   const handleCreatePost = async (event) => {
     event.preventDefault();
     if (!requireLogin()) return;
 
-    const title = newPost.title.trim();
-    const content = newPost.content.trim();
+    const title = draft.title.trim();
+    const content = draft.content.trim();
     if (!title || !content) return;
 
     setSubmitting(true);
     setError('');
 
     try {
-      const response = await forumAPI.createPost({ title, content });
-      setPosts((current) => [response.data, ...current]);
-      setNewPost({ title: '', content: '' });
+      const response = await forumAPI.createPost({ title, content, category: draft.category });
+      setPosts((current) => [{ ...response.data, commentsLoaded: true }, ...current]);
+      setDraft(emptyDraft);
       setIsComposerOpen(false);
     } catch (err) {
       setError(err.response?.data?.message || 'Chưa thể đăng bài viết.');
@@ -174,19 +111,45 @@ const Forum = () => {
     }
   };
 
-  const handleLike = async (postId) => {
-    if (!requireLogin()) return;
+  const handleEditSubmit = async (postId, payload) => {
+    try {
+      const response = await forumAPI.updatePost(postId, payload);
+      setPosts((current) =>
+        current.map((post) =>
+          post.id === postId
+            ? { ...post, ...response.data, comments: post.comments, commentsLoaded: post.commentsLoaded }
+            : post
+        )
+      );
+    } catch (err) {
+      setError(err.response?.data?.message || 'Chưa thể lưu bài viết.');
+    }
+  };
 
+  const handleDeletePost = async (postId) => {
+    const confirmed = await confirm({
+      title: 'Xóa bài viết?',
+      message: 'Bài viết và toàn bộ bình luận bên dưới sẽ bị xóa vĩnh viễn.',
+      confirmLabel: 'Xóa bài viết',
+      tone: 'danger',
+    });
+    if (!confirmed) return;
+
+    try {
+      await forumAPI.deletePost(postId);
+      setPosts((current) => current.filter((post) => post.id !== postId));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Chưa thể xóa bài viết.');
+    }
+  };
+
+  const handleLike = async (postId) => {
     try {
       const response = await forumAPI.toggleLike(postId);
       setPosts((current) =>
         current.map((post) =>
           post.id === postId
-            ? {
-                ...post,
-                likeCount: response.data.likeCount,
-                likedByCurrentUser: response.data.likedByCurrentUser,
-              }
+            ? { ...post, likeCount: response.data.likeCount, likedByCurrentUser: response.data.likedByCurrentUser }
             : post
         )
       );
@@ -195,15 +158,49 @@ const Forum = () => {
     }
   };
 
-  const handleComment = async (event, postId, parentCommentId = null) => {
-    event.preventDefault();
-    if (!requireLogin()) return;
+  const handleSave = async (postId) => {
+    try {
+      const response = await forumAPI.toggleSave(postId);
+      setPosts((current) =>
+        current.map((post) =>
+          post.id === postId ? { ...post, savedByCurrentUser: response.data.savedByCurrentUser } : post
+        )
+      );
+    } catch (err) {
+      setError(err.response?.data?.message || 'Chưa thể cập nhật lưu bài viết.');
+    }
+  };
 
-    const draftKey = parentCommentId || postId;
-    const source = parentCommentId ? replyDrafts : commentDrafts;
-    const content = (source[draftKey] || '').trim();
-    if (!content) return;
+  const handleReportPost = async (postId, reason) => {
+    try {
+      await forumAPI.reportPost(postId, reason);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Chưa thể gửi báo cáo.');
+    }
+  };
 
+  const handleReportComment = async (commentId, reason) => {
+    try {
+      await forumAPI.reportComment(commentId, reason);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Chưa thể gửi báo cáo.');
+    }
+  };
+
+  const handleExpandComments = async (postId) => {
+    try {
+      const response = await forumAPI.getPostDetail(postId);
+      setPosts((current) =>
+        current.map((post) =>
+          post.id === postId ? { ...post, comments: response.data.comments, commentsLoaded: true } : post
+        )
+      );
+    } catch (err) {
+      setError(err.response?.data?.message || 'Chưa thể tải bình luận.');
+    }
+  };
+
+  const handleAddComment = async (postId, parentCommentId, content) => {
     try {
       const response = await forumAPI.addComment(postId, content, parentCommentId);
       setPosts((current) =>
@@ -217,72 +214,56 @@ const Forum = () => {
             : post
         )
       );
-
-      if (parentCommentId) {
-        setReplyDrafts((current) => ({ ...current, [parentCommentId]: '' }));
-        setActiveReply((current) => ({ ...current, [postId]: null }));
-      } else {
-        setCommentDrafts((current) => ({ ...current, [postId]: '' }));
-      }
-
-      setExpandedComments((current) => ({ ...current, [postId]: true }));
     } catch (err) {
       setError(err.response?.data?.message || 'Chưa thể gửi bình luận.');
     }
   };
 
-  const handleCommentLike = async (commentId) => {
-    if (!requireLogin()) return;
-
+  const handleCommentLike = async (postId, commentId) => {
     try {
       const response = await forumAPI.toggleCommentLike(commentId);
       setPosts((current) =>
-        current.map((post) => ({
-          ...post,
-          comments: updateCommentTree(post.comments || [], commentId, (comment) => ({
-            ...comment,
-            likeCount: response.data.likeCount,
-            likedByCurrentUser: response.data.likedByCurrentUser,
-          })),
-        }))
+        current.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                comments: updateCommentTree(post.comments || [], commentId, (comment) => ({
+                  ...comment,
+                  likeCount: response.data.likeCount,
+                  likedByCurrentUser: response.data.likedByCurrentUser,
+                })),
+              }
+            : post
+        )
       );
     } catch (err) {
       setError(err.response?.data?.message || 'Chưa thể cập nhật lượt thích bình luận.');
     }
   };
 
-  const startEditComment = (comment) => {
-    setActiveEdit(comment.id);
-    setEditDrafts((current) => ({ ...current, [comment.id]: comment.content }));
-  };
-
-  const handleUpdateComment = async (event, commentId) => {
-    event.preventDefault();
-    if (!requireLogin()) return;
-
-    const content = (editDrafts[commentId] || '').trim();
-    if (!content) return;
-
+  const handleUpdateComment = async (postId, commentId, content) => {
     try {
       const response = await forumAPI.updateComment(commentId, content);
       setPosts((current) =>
-        current.map((post) => ({
-          ...post,
-          comments: updateCommentTree(post.comments || [], commentId, (comment) => ({
-            ...comment,
-            content: response.data.content,
-            updatedAt: response.data.updatedAt,
-          })),
-        }))
+        current.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                comments: updateCommentTree(post.comments || [], commentId, (comment) => ({
+                  ...comment,
+                  content: response.data.content,
+                  updatedAt: response.data.updatedAt,
+                })),
+              }
+            : post
+        )
       );
-      setActiveEdit(null);
     } catch (err) {
       setError(err.response?.data?.message || 'Chưa thể sửa bình luận.');
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
-    if (!requireLogin()) return;
+  const handleDeleteComment = async (postId, commentId) => {
     const confirmed = await confirm({
       title: 'Xóa bình luận?',
       message: 'Bình luận và tất cả câu trả lời bên dưới sẽ bị xóa. Thao tác này không thể hoàn tác.',
@@ -295,12 +276,9 @@ const Forum = () => {
       await forumAPI.deleteComment(commentId);
       setPosts((current) =>
         current.map((post) => {
+          if (post.id !== postId) return post;
           const result = removeCommentTree(post.comments || [], commentId);
-          return {
-            ...post,
-            commentCount: Math.max(0, post.commentCount - result.removedCount),
-            comments: result.comments,
-          };
+          return { ...post, commentCount: Math.max(0, post.commentCount - result.removedCount), comments: result.comments };
         })
       );
     } catch (err) {
@@ -308,108 +286,35 @@ const Forum = () => {
     }
   };
 
-  const toggleComments = (postId) => {
-    setExpandedComments((current) => ({ ...current, [postId]: !current[postId] }));
+  const openSavedPosts = async () => {
+    if (!requireLogin()) return;
+    setIsSavedOpen(true);
+    setSavedLoading(true);
+    try {
+      const response = await forumAPI.getSavedPosts({ page: 0, size: 20 });
+      setSavedPosts(response.data.items);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Chưa thể tải danh sách bài đã lưu.');
+    } finally {
+      setSavedLoading(false);
+    }
   };
 
-  const renderComment = (postId, comment, depth = 0) => {
-    const replies = comment.replies || [];
-    const isReplying = activeReply[postId] === comment.id;
-    const isEditing = activeEdit === comment.id;
-    const isOwnComment = String(comment.author?.id) === String(user?.id);
+  const handleUnsaveFromModal = async (postId) => {
+    try {
+      await forumAPI.toggleSave(postId);
+      setSavedPosts((current) => current.filter((post) => post.id !== postId));
+      setPosts((current) =>
+        current.map((post) => (post.id === postId ? { ...post, savedByCurrentUser: false } : post))
+      );
+    } catch (err) {
+      setError(err.response?.data?.message || 'Chưa thể bỏ lưu bài viết.');
+    }
+  };
 
-    return (
-      <div key={comment.id} className={`${styles.commentThread} ${depth > 0 ? styles.replyThread : ''}`}>
-        <div className={styles.comment}>
-          <span className={styles.avatar}>{comment.author?.initial || 'U'}</span>
-          <div className={styles.commentBody}>
-            <div className={styles.commentBubble}>
-              <div className={styles.commentInfo}>
-                <strong>{comment.author?.fullName || comment.author?.username}</strong>
-                <span>{formatDate(comment.createdAt)}</span>
-              </div>
-
-              {isEditing ? (
-                <form className={styles.editForm} onSubmit={(event) => handleUpdateComment(event, comment.id)}>
-                  <AutoTextarea
-                    value={editDrafts[comment.id] || ''}
-                    onChange={(event) =>
-                      setEditDrafts((current) => ({ ...current, [comment.id]: event.target.value }))
-                    }
-                    placeholder="Sửa bình luận..."
-                  />
-                  <div className={styles.inlineActions}>
-                    <button type="button" onClick={() => setActiveEdit(null)}>
-                      Hủy
-                    </button>
-                    <button type="submit">Lưu</button>
-                  </div>
-                </form>
-              ) : (
-                <>
-                  <p>{comment.content}</p>
-                  {comment.updatedAt && comment.updatedAt !== comment.createdAt && (
-                    <span className={styles.editedMark}>Đã chỉnh sửa</span>
-                  )}
-                </>
-              )}
-            </div>
-
-            {!isEditing && (
-              <div className={styles.commentActions}>
-                <button
-                  type="button"
-                  className={comment.likedByCurrentUser ? styles.commentLiked : ''}
-                  onClick={() => handleCommentLike(comment.id)}
-                >
-                  {comment.likedByCurrentUser ? 'Đã thích' : 'Thích'}
-                </button>
-                {comment.likeCount > 0 && <span>{comment.likeCount}</span>}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (requireLogin()) {
-                      setActiveReply((current) => ({ ...current, [postId]: isReplying ? null : comment.id }));
-                    }
-                  }}
-                >
-                  Trả lời
-                </button>
-                {isOwnComment && (
-                  <>
-                    <button type="button" onClick={() => startEditComment(comment)}>
-                      Sửa
-                    </button>
-                    <button type="button" onClick={() => handleDeleteComment(comment.id)}>
-                      Xóa
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-
-            {isReplying && (
-              <form className={styles.replyForm} onSubmit={(event) => handleComment(event, postId, comment.id)}>
-                <AutoTextarea
-                  value={replyDrafts[comment.id] || ''}
-                  onChange={(event) =>
-                    setReplyDrafts((current) => ({ ...current, [comment.id]: event.target.value }))
-                  }
-                  placeholder={`Trả lời ${comment.author?.fullName || comment.author?.username || 'bình luận'}...`}
-                />
-                <button type="submit">Gửi</button>
-              </form>
-            )}
-          </div>
-        </div>
-
-        {replies.length > 0 && (
-          <div className={styles.replies}>
-            {replies.map((reply) => renderComment(postId, reply, depth + 1))}
-          </div>
-        )}
-      </div>
-    );
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    setKeyword(searchInput.trim());
   };
 
   return (
@@ -423,6 +328,39 @@ const Forum = () => {
             <span aria-hidden="true">♡</span>
             Câu hỏi mới
           </button>
+          <button type="button" className={styles.savedButton} onClick={openSavedPosts}>
+            <span aria-hidden="true">★</span>
+            Bài đã lưu
+          </button>
+        </div>
+
+        <div className={styles.toolbar}>
+          <form className={styles.toolbarSearch} onSubmit={handleSearchSubmit}>
+            <input
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              placeholder="Tìm kiếm bài viết..."
+            />
+            <button type="submit" className={styles.toolbarSearchBtn}>
+              Tìm
+            </button>
+          </form>
+
+          <select className={styles.toolbarSelect} value={category} onChange={(event) => setCategory(event.target.value)}>
+            {CATEGORY_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+
+          <select className={styles.toolbarSelect} value={sort} onChange={(event) => setSort(event.target.value)}>
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         {isComposerOpen && (
@@ -432,23 +370,36 @@ const Forum = () => {
               <strong>{user?.fullName || user?.username}</strong>
             </div>
             <input
-              value={newPost.title}
-              onChange={(event) => setNewPost((current) => ({ ...current, title: event.target.value }))}
+              value={draft.title}
+              onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
               placeholder="Tiêu đề câu hỏi"
               maxLength={160}
             />
             <textarea
-              value={newPost.content}
-              onChange={(event) => setNewPost((current) => ({ ...current, content: event.target.value }))}
+              value={draft.content}
+              onChange={(event) => setDraft((current) => ({ ...current, content: event.target.value }))}
               placeholder="Nội dung bạn muốn chia sẻ hoặc thảo luận"
               rows={5}
               maxLength={5000}
             />
+            <div className={styles.postFormRow}>
+              <select
+                className={styles.toolbarSelect}
+                value={draft.category}
+                onChange={(event) => setDraft((current) => ({ ...current, category: event.target.value }))}
+              >
+                {CATEGORY_OPTIONS.filter((option) => option.value).map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className={styles.composerActions}>
               <button type="button" onClick={() => setIsComposerOpen(false)}>
                 Hủy
               </button>
-              <button type="submit" disabled={submitting || !newPost.title.trim() || !newPost.content.trim()}>
+              <button type="submit" disabled={submitting || !draft.title.trim() || !draft.content.trim()}>
                 Đăng bài
               </button>
             </div>
@@ -460,79 +411,82 @@ const Forum = () => {
         {isLoading ? (
           <div className={styles.stateBox}>Đang tải bài viết...</div>
         ) : posts.length === 0 ? (
-          <div className={styles.stateBox}>Chưa có bài viết nào. Hãy là người mở đầu cuộc thảo luận.</div>
+          <div className={styles.stateBox}>Chưa có bài viết nào phù hợp. Hãy là người mở đầu cuộc thảo luận.</div>
         ) : (
-          <div className={styles.postList}>
-            {posts.map((post) => {
-              const comments = post.comments || [];
-              const showComments = !!expandedComments[post.id];
+          <>
+            <div className={styles.postList}>
+              {posts.map((post) => (
+                <ForumPostCard
+                  key={post.id}
+                  post={post}
+                  currentUser={user}
+                  requireLogin={requireLogin}
+                  onLike={handleLike}
+                  onSave={handleSave}
+                  onEditSubmit={handleEditSubmit}
+                  onDeletePost={handleDeletePost}
+                  onReportPost={handleReportPost}
+                  onExpandComments={handleExpandComments}
+                  onAddComment={handleAddComment}
+                  onCommentLike={handleCommentLike}
+                  onUpdateComment={handleUpdateComment}
+                  onDeleteComment={handleDeleteComment}
+                  onReportComment={handleReportComment}
+                />
+              ))}
+            </div>
 
-              return (
-                <article key={post.id} className={styles.postCard}>
-                  <div className={styles.postHeader}>
-                    <span className={styles.avatar}>{post.author?.initial || 'U'}</span>
-                    <div>
-                      <strong>{post.author?.fullName || post.author?.username}</strong>
-                      <span>{formatDate(post.createdAt)}</span>
-                    </div>
-                  </div>
-
-                  <h2>{post.title}</h2>
-                  <p>{post.content}</p>
-
-                  <div className={styles.postMeta}>
-                    <span>{post.likeCount} lượt thích</span>
-                    <button type="button" onClick={() => toggleComments(post.id)}>
-                      {post.commentCount} bình luận
-                    </button>
-                  </div>
-
-                  <div className={styles.postActions}>
-                    <button
-                      type="button"
-                      className={post.likedByCurrentUser ? styles.liked : ''}
-                      onClick={() => handleLike(post.id)}
-                      aria-pressed={post.likedByCurrentUser}
-                    >
-                      <span aria-hidden="true">{post.likedByCurrentUser ? '♥' : '♡'}</span>
-                      {post.likedByCurrentUser ? 'Đã thích' : 'Thích'}
-                    </button>
-                    <button type="button" onClick={() => toggleComments(post.id)}>
-                      <span aria-hidden="true">◌</span>
-                      Bình luận
-                    </button>
-                    <button type="button" onClick={() => navigator.clipboard?.writeText(window.location.href)}>
-                      <span aria-hidden="true">↗</span>
-                      Chia sẻ
-                    </button>
-                  </div>
-
-                  {showComments && (
-                    <div className={styles.comments}>
-                      {comments.length > 0 ? (
-                        comments.map((comment) => renderComment(post.id, comment))
-                      ) : (
-                        <div className={styles.emptyComments}>Chưa có bình luận nào.</div>
-                      )}
-
-                      <form className={styles.commentForm} onSubmit={(event) => handleComment(event, post.id)}>
-                        <AutoTextarea
-                          value={commentDrafts[post.id] || ''}
-                          onChange={(event) =>
-                            setCommentDrafts((current) => ({ ...current, [post.id]: event.target.value }))
-                          }
-                          placeholder="Viết bình luận..."
-                        />
-                        <button type="submit">Gửi</button>
-                      </form>
-                    </div>
-                  )}
-                </article>
-              );
-            })}
-          </div>
+            {pageInfo.hasMore && (
+              <div className={styles.loadMoreWrap}>
+                <button
+                  type="button"
+                  className={styles.loadMoreBtn}
+                  onClick={() => fetchPosts(pageInfo.page + 1, false)}
+                  disabled={isLoadingMore}
+                >
+                  {isLoadingMore ? 'Đang tải...' : 'Xem thêm bài viết'}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
+
+      {isSavedOpen && (
+        <div role="presentation" className={styles.modalOverlay} onClick={() => setIsSavedOpen(false)}>
+          <div role="dialog" aria-modal="true" className={styles.modalCard} onClick={(event) => event.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <strong>Bài viết đã lưu</strong>
+              <button type="button" className={styles.modalClose} onClick={() => setIsSavedOpen(false)} aria-label="Đóng">
+                ×
+              </button>
+            </div>
+
+            {savedLoading ? (
+              <div className={styles.stateBox}>Đang tải...</div>
+            ) : savedPosts.length === 0 ? (
+              <div className={styles.stateBox}>Bạn chưa lưu bài viết nào.</div>
+            ) : (
+              <div className={styles.savedList}>
+                {savedPosts.map((post) => (
+                  <div key={post.id} className={styles.savedItem}>
+                    <Link to={`/forum/posts/${post.id}`} onClick={() => setIsSavedOpen(false)}>
+                      {post.title}
+                    </Link>
+                    <p>
+                      {post.content.slice(0, 120)}
+                      {post.content.length > 120 ? '…' : ''}
+                    </p>
+                    <button type="button" className={styles.unsaveBtn} onClick={() => handleUnsaveFromModal(post.id)}>
+                      Bỏ lưu
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 };

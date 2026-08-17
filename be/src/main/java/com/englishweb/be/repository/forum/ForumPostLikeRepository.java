@@ -14,4 +14,6 @@ public interface ForumPostLikeRepository extends JpaRepository<ForumPostLike, In
     boolean existsByPostIdAndUserId(Integer postId, Integer userId);
 
     Optional<ForumPostLike> findByPostIdAndUserId(Integer postId, Integer userId);
+
+    void deleteByPostId(Integer postId);
 }

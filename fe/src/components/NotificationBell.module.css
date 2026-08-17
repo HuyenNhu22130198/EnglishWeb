@@ -1,0 +1,99 @@
+.wrap {
+  position: relative;
+}
+
+.bellBtn {
+  position: relative;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 21px;
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  padding: 6px;
+}
+
+.badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: var(--secondary);
+  color: #ffffff;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  min-width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+
+.dropdown {
+  position: absolute;
+  right: 0;
+  top: 110%;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  max-height: 420px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid var(--outline);
+  border-radius: 10px;
+  box-shadow: 0 14px 32px rgba(14, 51, 119, 0.16);
+  z-index: 200;
+}
+
+.dropdownHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--outline);
+}
+
+.dropdownHeader strong {
+  font-size: 14px;
+  color: #020617;
+}
+
+.markAllBtn {
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.state {
+  padding: 20px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid #f1f3f6;
+  background: #ffffff;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #111827;
+}
+
+.itemUnread {
+  background: rgba(14, 51, 119, 0.05);
+}
+
+.itemTime {
+  color: #9ca3af;
+  font-size: 11px;
+  margin-top: 4px;
+}
